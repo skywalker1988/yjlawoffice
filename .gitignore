@@ -4,8 +4,9 @@ dist_test/
 dist_final/
 dist2/
 
-# 데이터베이스
-backend/data/
+# 데이터베이스 (WAL/SHM은 임시 파일이므로 제외)
+backend/data/db/*.db-shm
+backend/data/db/*.db-wal
 
 # 업로드 파일
 backend/uploads/*.mp4
