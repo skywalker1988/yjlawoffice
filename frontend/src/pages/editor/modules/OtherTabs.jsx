@@ -16,7 +16,7 @@ import { MARGIN_PRESETS, PAGE_SIZES, HIGHLIGHT_COLORS } from "./constants";
 const ICON_SIZE = 12;
 
 /* ══════════════════════════════ DESIGN ══════════════════════════════ */
-export function DesignTab({ pageColor, setPageColor, watermarkText, setWatermarkText }) {
+export function DesignTab({ pageColor, setPageColor, watermarkText, setWatermarkText, onOpenPageBorderDialog, onOpenWatermarkDialog }) {
   const THEME_COLORS = ["#ffffff","#f8f9fa","#fff8dc","#f0f8ff","#f5f5dc","#faf0e6","#f0fff0","#ffe4e1","#e6e6fa","#fffff0","#ffefd5","#f0e68c","#e0ffff","#ffdab9","#ffe4c4"];
   const THEMES = [
     { name: "기본", bg: "#fff", accent: "#1e3a5f" },
@@ -62,10 +62,16 @@ export function DesignTab({ pageColor, setPageColor, watermarkText, setWatermark
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <Droplets size={ICON_SIZE} color="#888" />
-            <input type="text" value={watermarkText || ""} onChange={e => setWatermarkText(e.target.value)} placeholder="워터마크"
-              style={{ padding: "2px 6px", border: "1px solid var(--ribbon-input-border, #c0c0c0)", borderRadius: 2, fontSize: 10, width: 90, background: "var(--ribbon-input-bg, #fff)", color: "var(--ribbon-fg, #333)" }} />
+            <RibbonBtn onClick={onOpenWatermarkDialog} title="워터마크 설정" small>
+              <span style={{ fontSize: 10 }}>워터마크</span>
+            </RibbonBtn>
           </div>
         </div>
+      </RibbonGroup>
+      <GroupSep />
+      <RibbonGroup label="페이지 테두리">
+        <RibbonBtnLarge icon={<Palette size={18} />} label="페이지 테두리"
+          onClick={onOpenPageBorderDialog} title="페이지 테두리 설정" />
       </RibbonGroup>
     </div>
   );
@@ -78,7 +84,12 @@ export function LayoutTab({ margins, setMargins, orientation, setOrientation, pa
 
   const insertPageBreak = () => {
     if (!editor) return;
-    editor.chain().focus().setHorizontalRule().run();
+    // 실제 페이지 나누기 노드 삽입 (PageBreak 확장 사용)
+    try {
+      editor.chain().focus().setPageBreak().run();
+    } catch {
+      editor.chain().focus().setHorizontalRule().run();
+    }
   };
 
   return (
@@ -209,7 +220,7 @@ export function LayoutTab({ margins, setMargins, orientation, setOrientation, pa
               <div style={{ fontSize: 10, color: "#888" }}>다음 페이지의 시작 부분으로 이동</div>
             </button>
             <button className="word-dropdown-item"
-              onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().enter().run(); }}>
+              onMouseDown={(e) => { e.preventDefault(); try { editor?.chain().focus().setColumnBreak().run(); } catch { editor?.chain().focus().enter().run(); } }}>
               <div style={{ fontWeight: 500 }}>단 나누기</div>
               <div style={{ fontSize: 10, color: "#888" }}>다음 단의 시작 부분으로 이동</div>
             </button>
@@ -221,12 +232,12 @@ export function LayoutTab({ margins, setMargins, orientation, setOrientation, pa
             <div style={{ height: 1, background: "#e5e5e5", margin: "4px 0" }} />
             <div style={{ fontSize: 10, color: "#888", padding: "4px 8px", fontWeight: 600 }}>구역 나누기</div>
             <button className="word-dropdown-item"
-              onMouseDown={(e) => { e.preventDefault(); insertPageBreak(); }}>
+              onMouseDown={(e) => { e.preventDefault(); try { editor?.chain().focus().setSectionBreak("next-page").run(); } catch { insertPageBreak(); } }}>
               <div style={{ fontWeight: 500 }}>다음 페이지</div>
               <div style={{ fontSize: 10, color: "#888" }}>구역 나누기를 삽입하고 다음 페이지에서 시작</div>
             </button>
             <button className="word-dropdown-item"
-              onMouseDown={(e) => { e.preventDefault(); editor?.chain().focus().setHorizontalRule().run(); }}>
+              onMouseDown={(e) => { e.preventDefault(); try { editor?.chain().focus().setSectionBreak("continuous").run(); } catch { editor?.chain().focus().setHorizontalRule().run(); } }}>
               <div style={{ fontWeight: 500 }}>연속</div>
               <div style={{ fontSize: 10, color: "#888" }}>같은 페이지에서 새 구역 시작</div>
             </button>

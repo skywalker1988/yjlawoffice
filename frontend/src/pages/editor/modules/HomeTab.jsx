@@ -14,12 +14,12 @@ import {
   ChevronLeft, ChevronRight, ChevronDown,
 } from "lucide-react";
 import { RibbonBtn, RibbonBtnLarge, GroupSep, RibbonGroup, DropdownButton, ColorGrid } from "./RibbonParts";
-import { FONT_LIST, FONT_SIZES, LINE_SPACINGS, STYLE_PRESETS, HIGHLIGHT_COLORS, TEXT_COLORS } from "./constants";
+import { FONT_LIST, FONT_SIZES, LINE_SPACINGS, STYLE_PRESETS, HIGHLIGHT_COLORS, TEXT_COLORS, PARAGRAPH_SHADING_COLORS, TEXT_EFFECTS } from "./constants";
 
 const ICON_SIZE = 13; // icon size for inline
 const ICON_SIZE_SMALL = 11; // icon size small
 
-export function HomeTab({ editor, onShowFind, onShowReplace, onOpenFontDialog, onOpenParagraphDialog }) {
+export function HomeTab({ editor, onShowFind, onShowReplace, onOpenFontDialog, onOpenParagraphDialog, onOpenBorderDialog }) {
   const [formatPainting, setFormatPainting] = useState(false);
   const formatMarksRef = useRef(null);
   const styleGalleryRef = useRef(null);
@@ -368,6 +368,78 @@ export function HomeTab({ editor, onShowFind, onShowReplace, onOpenFontDialog, o
             active={safeIsActive("blockquote")} title="인용" small>
             <Quote size={ICON_SIZE_SMALL} />
           </RibbonBtn>
+
+          {/* 테두리 및 음영 */}
+          <DropdownButton trigger={
+            <RibbonBtn title="테두리 및 음영" small>
+              <span style={{ fontSize: 10 }}>▦</span>
+            </RibbonBtn>
+          }>
+            <div style={{ padding: 4, minWidth: 180 }}>
+              <div style={{ fontSize: 10, color: "#888", padding: "4px 8px", fontWeight: 600 }}>테두리</div>
+              {[
+                { label: "바깥쪽 테두리", sides: { top: true, bottom: true, left: true, right: true } },
+                { label: "위쪽 테두리만", sides: { top: true, bottom: false, left: false, right: false } },
+                { label: "아래쪽 테두리만", sides: { top: false, bottom: true, left: false, right: false } },
+                { label: "테두리 없음", sides: null },
+              ].map(opt => (
+                <button key={opt.label} className="word-dropdown-item"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    if (!opt.sides) {
+                      editor.chain().focus().unsetParagraphBorder().run();
+                    } else {
+                      const val = "1px solid #333";
+                      editor.chain().focus().setParagraphBorder({
+                        borderTop: opt.sides.top ? val : "none",
+                        borderBottom: opt.sides.bottom ? val : "none",
+                        borderLeft: opt.sides.left ? val : "none",
+                        borderRight: opt.sides.right ? val : "none",
+                      }).run();
+                    }
+                  }}>
+                  {opt.label}
+                </button>
+              ))}
+              <div style={{ borderTop: "1px solid #eee", margin: "4px 0" }} />
+              <div style={{ fontSize: 10, color: "#888", padding: "4px 8px", fontWeight: 600 }}>음영</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 24px)", gap: 2, padding: "2px 8px" }}>
+                {PARAGRAPH_SHADING_COLORS.slice(0, 10).map(c => (
+                  <button key={c} type="button" style={{ width: 24, height: 18, background: c, border: "1px solid #ddd", borderRadius: 2, cursor: "pointer" }}
+                    onMouseDown={(e) => { e.preventDefault(); editor.chain().focus().setParagraphShading(c).run(); }} />
+                ))}
+              </div>
+              <div style={{ borderTop: "1px solid #eee", margin: "4px 0" }} />
+              <button className="word-dropdown-item" onMouseDown={(e) => { e.preventDefault(); onOpenBorderDialog?.(); }}>
+                테두리 및 음영...
+              </button>
+            </div>
+          </DropdownButton>
+
+          {/* 텍스트 효과 */}
+          <DropdownButton trigger={
+            <RibbonBtn title="텍스트 효과" small>
+              <span style={{ fontSize: 10 }}>✦</span>
+            </RibbonBtn>
+          }>
+            <div style={{ padding: 6, minWidth: 180 }}>
+              <div style={{ fontSize: 10, color: "#888", padding: "2px 8px 6px", fontWeight: 600 }}>텍스트 효과</div>
+              {TEXT_EFFECTS.map(eff => (
+                <button key={eff.id} className="word-dropdown-item"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    if (eff.id === "none") {
+                      editor.chain().focus().unsetTextShadow().run();
+                    } else if (eff.style.textShadow) {
+                      editor.chain().focus().setTextShadow(eff.style.textShadow).run();
+                    }
+                  }}
+                  style={{ ...eff.style, fontSize: 12 }}>
+                  {eff.label} 가나다 Aa
+                </button>
+              ))}
+            </div>
+          </DropdownButton>
         </div>
       </RibbonGroup>
 

@@ -102,6 +102,30 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ data: null, error: "title and year are required", meta: null });
     }
 
+    // 날짜 값 검증
+    const parsedYear = parseInt(year);
+    if (isNaN(parsedYear)) {
+      return res.status(400).json({ data: null, error: "year는 숫자여야 합니다", meta: null });
+    }
+    if (month !== undefined && month !== null) {
+      const m = parseInt(month);
+      if (isNaN(m) || m < 1 || m > 12) {
+        return res.status(400).json({ data: null, error: "month는 1~12 사이의 값이어야 합니다", meta: null });
+      }
+    }
+    if (day !== undefined && day !== null) {
+      const d = parseInt(day);
+      if (isNaN(d) || d < 1 || d > 31) {
+        return res.status(400).json({ data: null, error: "day는 1~31 사이의 값이어야 합니다", meta: null });
+      }
+    }
+    if (importance !== undefined && importance !== null) {
+      const imp = parseInt(importance);
+      if (isNaN(imp) || imp < 1 || imp > 5) {
+        return res.status(400).json({ data: null, error: "importance는 1~5 사이의 값이어야 합니다", meta: null });
+      }
+    }
+
     const [inserted] = await db
       .insert(historyEvents)
       .values({

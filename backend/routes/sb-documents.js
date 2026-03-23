@@ -157,6 +157,14 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ data: null, error: "title and documentType are required", meta: null });
     }
 
+    // importance 범위 검증 (1~5)
+    if (importance !== undefined && importance !== null) {
+      const imp = parseInt(importance);
+      if (isNaN(imp) || imp < 1 || imp > 5) {
+        return res.status(400).json({ data: null, error: "importance는 1~5 사이의 값이어야 합니다", meta: null });
+      }
+    }
+
     const plain = contentPlain
       ? contentPlain
       : contentMarkdown
@@ -210,6 +218,17 @@ router.post("/upload", upload.single("file"), async (req, res) => {
 
     const buffer = req.file.buffer;
     const ext = path.extname(req.file.originalname).toLowerCase().replace(".", "");
+
+    // 허용된 파일 확장자만 처리
+    const ALLOWED_EXTENSIONS = ["pdf", "md", "markdown", "txt", "html", "htm"];
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      return res.status(400).json({
+        data: null,
+        error: `지원하지 않는 파일 형식입니다: .${ext} (허용: ${ALLOWED_EXTENSIONS.join(", ")})`,
+        meta: null,
+      });
+    }
+
     const now = new Date();
     const year = now.getFullYear().toString();
     const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -334,23 +353,32 @@ router.post("/upload-markdown", upload.single("file"), async (req, res) => {
     const createdTagIds = [];
     if (analysis.suggestedTags && analysis.suggestedTags.length > 0) {
       for (const tagName of analysis.suggestedTags.slice(0, 8)) {
-        // Check if tag already exists
-        const [existing] = await db
-          .select()
-          .from(tags)
-          .where(eq(tags.name, tagName));
+        try {
+          // 기존 태그 확인
+          const [existing] = await db
+            .select()
+            .from(tags)
+            .where(eq(tags.name, tagName));
 
-        if (existing) {
-          createdTagIds.push(existing.id);
-        } else {
-          // Create new tag with auto-generated color
-          const colors = ["#3b82f6", "#ef4444", "#f59e0b", "#10b981", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"];
-          const color = colors[Math.floor(Math.random() * colors.length)];
-          const [newTag] = await db
-            .insert(tags)
-            .values({ name: tagName, color })
-            .returning();
-          createdTagIds.push(newTag.id);
+          if (existing) {
+            createdTagIds.push(existing.id);
+          } else {
+            // 새 태그 생성 (동시 요청 시 UNIQUE 제약 위반 가능)
+            const colors = ["#3b82f6", "#ef4444", "#f59e0b", "#10b981", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const [newTag] = await db
+              .insert(tags)
+              .values({ name: tagName, color })
+              .returning();
+            createdTagIds.push(newTag.id);
+          }
+        } catch {
+          // UNIQUE 제약 위반 시 기존 태그 재조회
+          const [existing] = await db
+            .select()
+            .from(tags)
+            .where(eq(tags.name, tagName));
+          if (existing) createdTagIds.push(existing.id);
         }
       }
 
