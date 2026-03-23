@@ -10,7 +10,10 @@ const path = require("path");
 const fs = require("fs");
 const schema = require("./schema");
 
-const DB_DIR = path.join(__dirname, "..", "data", "db");
+// STORAGE_PATH 환경변수로 외부 스토리지 경로 지정 (Dropbox 등)
+// 미설정 시 프로젝트 내부 backend/data/db 사용
+const STORAGE_BASE = process.env.STORAGE_PATH || path.join(__dirname, "..", "data");
+const DB_DIR = path.join(STORAGE_BASE, "db");
 const DB_PATH = path.join(DB_DIR, "second-brain.db");
 
 // Ensure data directory exists

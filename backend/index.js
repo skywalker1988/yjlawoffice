@@ -2,6 +2,7 @@
  * Express 서버 진입점
  * - API 라우트 등록, 정적 파일 서빙, 글로벌 에러 핸들러
  */
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -12,9 +13,10 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
 
-// 업로드된 파일 정적 서빙
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use("/data/files", express.static(path.join(__dirname, "data", "files")));
+// 업로드된 파일 정적 서빙 (STORAGE_PATH 환경변수로 외부 스토리지 지정 가능)
+const STORAGE_PATH = process.env.STORAGE_PATH || path.join(__dirname, "data");
+app.use("/uploads", express.static(path.join(STORAGE_PATH, "uploads")));
+app.use("/data/files", express.static(path.join(STORAGE_PATH, "files")));
 
 // ===== Second Brain API =====
 app.use("/api/sb/documents", require("./routes/sb-documents"));
