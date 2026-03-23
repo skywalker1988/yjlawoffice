@@ -1,6 +1,7 @@
 /** SearchPage — FTS5 전문 검색 페이지 */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import DOMPurify from "dompurify";
 import { Badge } from "../components/ui/Badge";
 import { Input } from "../components/ui/Input";
 import {
@@ -10,6 +11,12 @@ import {
   getTypeColor,
 } from "../utils/document-types";
 import { api } from "../utils/api";
+
+/** FTS5 스니펫에서 <mark> 태그만 허용하는 HTML 정제 함수 */
+function sanitizeSnippet(html) {
+  if (!html) return "";
+  return DOMPurify.sanitize(html, { ALLOWED_TAGS: ["mark"] });
+}
 
 export default function SearchPage() {
   const navigate = useNavigate();
@@ -56,10 +63,14 @@ export default function SearchPage() {
     return () => clearTimeout(debounceRef.current);
   }, [query, doSearch, setSearchParams]);
 
-  // Re-search when type filter changes
+  // 타입 필터 변경 시 즉시 재검색 (디바운스 없이)
+  const prevTypeFilter = useRef(typeFilter);
   useEffect(() => {
-    if (query.trim()) doSearch(query);
-  }, [typeFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (prevTypeFilter.current !== typeFilter) {
+      prevTypeFilter.current = typeFilter;
+      if (query.trim()) doSearch(query);
+    }
+  }, [typeFilter, query, doSearch]);
 
   const filteredResults = typeFilter
     ? results.filter((r) => r.documentType === typeFilter)
@@ -190,7 +201,7 @@ export default function SearchPage() {
                         color: "var(--text-primary)",
                         flex: 1,
                       }}
-                      dangerouslySetInnerHTML={{ __html: doc.title_snippet }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeSnippet(doc.title_snippet) }}
                     />
                   ) : (
                     <span
@@ -219,7 +230,7 @@ export default function SearchPage() {
                       lineHeight: 1.7,
                       marginTop: 4,
                     }}
-                    dangerouslySetInnerHTML={{ __html: doc.content_snippet }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeSnippet(doc.content_snippet) }}
                   />
                 )}
                 {doc.summary && !doc.content_snippet && (

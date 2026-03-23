@@ -178,6 +178,9 @@ function initFTS() {
 
 // FTS5 검색
 function searchFTS(query, limit = 20) {
+  const safeQuery = sanitizeFTSQuery(query);
+  if (!safeQuery) return [];
+
   const stmt = sqlite.prepare(`
     SELECT d.*, rank
     FROM documents_fts fts
@@ -186,11 +189,31 @@ function searchFTS(query, limit = 20) {
     ORDER BY rank
     LIMIT ?
   `);
-  return stmt.all(query, limit);
+  return stmt.all(safeQuery, limit);
+}
+
+/**
+ * FTS5 쿼리 문자열을 안전하게 정제
+ * - 특수 문자를 제거하여 FTS5 구문 오류 방지
+ * - 빈 토큰은 필터링
+ */
+function sanitizeFTSQuery(query) {
+  // FTS5 특수 문자 제거 (AND, OR, NOT, 괄호, 따옴표, *, ^ 등)
+  const cleaned = query
+    .replace(/["""''(){}[\]*^~:]/g, " ")
+    .replace(/\b(AND|OR|NOT|NEAR)\b/gi, " ")
+    .trim();
+  // 각 단어를 쌍따옴표로 감싸서 안전하게 매칭
+  const tokens = cleaned.split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return null;
+  return tokens.map(t => `"${t}"`).join(" ");
 }
 
 // FTS5 스니펫 검색
 function searchFTSWithSnippet(query, limit = 20) {
+  const safeQuery = sanitizeFTSQuery(query);
+  if (!safeQuery) return [];
+
   const stmt = sqlite.prepare(`
     SELECT d.*,
       snippet(documents_fts, 0, '<mark>', '</mark>', '...', 32) as title_snippet,
@@ -202,7 +225,7 @@ function searchFTSWithSnippet(query, limit = 20) {
     ORDER BY rank
     LIMIT ?
   `);
-  return stmt.all(query, limit);
+  return stmt.all(safeQuery, limit);
 }
 
 // Initialize

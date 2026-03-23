@@ -37,6 +37,12 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ data: null, error: "name is required", meta: null });
     }
 
+    // 중복 태그명 확인
+    const [existing] = await db.select().from(tags).where(eq(tags.name, name));
+    if (existing) {
+      return res.status(409).json({ data: null, error: "이미 존재하는 태그 이름입니다", meta: null });
+    }
+
     const [inserted] = await db
       .insert(tags)
       .values({ name, color: color ?? "#b08d57" })

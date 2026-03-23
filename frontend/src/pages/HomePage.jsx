@@ -15,6 +15,15 @@ export default function HomePage() {
   const navigate = useNavigate();
   const ref = useReveal();
   const debounceRef = useRef(null);
+  const blurTimeoutRef = useRef(null);
+
+  // 컴포넌트 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
+    };
+  }, []);
 
   // Dashboard data
   useEffect(() => {
@@ -170,12 +179,13 @@ export default function HomePage() {
                 value={query}
                 onChange={(e) => handleSearch(e.target.value)}
                 onFocus={() => setSearchFocused(true)}
-                onBlur={() =>
-                  setTimeout(() => {
+                onBlur={() => {
+                  if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
+                  blurTimeoutRef.current = setTimeout(() => {
                     setSearchFocused(false);
                     setSearchResults([]);
-                  }, 200)
-                }
+                  }, 200);
+                }}
                 placeholder="법령, 판례, 논문을 검색하세요"
                 style={{
                   flex: 1,

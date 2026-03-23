@@ -83,7 +83,7 @@ export default function GraphPage() {
     });
     ro.observe(wrapRef.current);
     return () => ro.disconnect();
-  }, [loading]);
+  }, []);
 
   // Group key extractor — works for all document types
   const getGroup = useCallback((meta, doc) => {
