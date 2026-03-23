@@ -45,46 +45,56 @@ export const editorStyles = `
 .ProseMirror .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: 0; width: 4px; background: #3b82f6; cursor: col-resize; z-index: 20; }
 
 /* ──── Selection Highlighting ──── */
-.ProseMirror ::selection { background: #b4d7ff; }
+.ProseMirror ::selection { background: #B4D6FA; }
 .ProseMirror .ProseMirror-gapcursor { display: none; pointer-events: none; position: relative; }
 
-/* ──── Word-style ribbon buttons ──── */
+/* ──── Word 365 ribbon buttons ──── */
 .word-ribbon-btn { transition: background 0.08s, border-color 0.08s; }
-.word-ribbon-btn:hover { background: #c8daf0 !important; }
-.word-ribbon-btn:active { background: #a8c4e8 !important; }
-.word-ribbon-btn.active { background: #c8daf0 !important; border-color: #8ab4e8 !important; }
-.word-tab-btn { transition: background 0.08s; }
-.word-tab-btn:hover { background: #e8e8e8 !important; }
+.word-ribbon-btn:hover { background: #E5F1FB !important; }
+.word-ribbon-btn:active { background: #CCE4F7 !important; }
+.word-ribbon-btn.active { background: #CCE4F7 !important; border: 1px solid #98C6EA !important; }
+.word-tab-btn { transition: background 0.08s, color 0.08s; }
+.word-tab-btn:hover { background: transparent !important; color: #185ABD !important; }
+.word-tab-btn.active { color: #185ABD !important; border-bottom: 2px solid #185ABD; font-weight: 600; }
 .word-style-card { transition: border-color 0.1s, box-shadow 0.1s; }
-.word-style-card:hover { border-color: #3b82f6 !important; box-shadow: 0 1px 4px rgba(59,130,246,0.15); }
+.word-style-card:hover { border-color: #185ABD !important; box-shadow: 0 1px 4px rgba(24,90,189,0.15); }
 
-/* ──── Tooltip ──── */
+/* ──── Tooltip (Word 365 스타일) ──── */
 .word-tooltip {
   position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
-  background: #333; color: #fff; padding: 4px 8px; border-radius: 3px;
+  background: #fff; color: #333; padding: 6px 10px; border-radius: 4px;
   font-size: 11px; white-space: nowrap; pointer-events: none; z-index: 1000;
   opacity: 0; transition: opacity 0.15s;
+  border: 1px solid #d1d5db; box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  font-family: 'Segoe UI', '맑은 고딕', sans-serif;
 }
 .word-tooltip::after {
   content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
-  border: 4px solid transparent; border-top-color: #333;
+  border: 5px solid transparent; border-top-color: #fff;
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.08));
 }
 *:hover > .word-tooltip { opacity: 1; }
 
-/* ──── Dropdown menu ──── */
+/* ──── Dropdown menu (Word 365) ──── */
 .word-dropdown-menu {
   position: absolute; top: 100%; left: 0; z-index: 200;
-  background: #fff; border: 1px solid #d1d5db; border-radius: 4px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 150px;
-  padding: 4px 0; max-height: 320px; overflow-y: auto;
+  background: #fff; border: 1px solid #d1d5db; border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.14); min-width: 160px;
+  padding: 4px 0; max-height: 360px; overflow-y: auto;
+  animation: ribbonDropdownIn 0.12s ease-out;
+}
+@keyframes ribbonDropdownIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 .word-dropdown-item {
-  display: block; width: 100%; padding: 5px 12px; border: none; background: transparent;
-  font-size: 12px; text-align: left; cursor: pointer; font-family: '맑은 고딕', sans-serif;
-  transition: background 0.08s; white-space: nowrap;
+  display: flex; align-items: center; width: 100%; padding: 6px 12px; border: none; background: transparent;
+  font-size: 12px; text-align: left; cursor: pointer; font-family: 'Segoe UI', '맑은 고딕', sans-serif;
+  transition: background 0.08s; white-space: nowrap; gap: 8px;
 }
-.word-dropdown-item:hover { background: #eff6ff; }
-.word-dropdown-item.active { background: #dbeafe; font-weight: 600; }
+.word-dropdown-item:hover { background: #E5F1FB; }
+.word-dropdown-item.active { background: #CCE4F7; font-weight: 600; }
+.word-dropdown-sep { height: 1px; background: #e5e5e5; margin: 4px 0; }
 
 /* ──── Dialog / Modal ──── */
 .word-dialog-overlay {
@@ -117,9 +127,9 @@ export const editorStyles = `
 }
 .word-dialog-btn:hover { background: #d5d5d5; }
 .word-dialog-btn.primary {
-  background: #0078d4; color: #fff; border-color: #0068b8;
+  background: #185ABD; color: #fff; border-color: #164EA8;
 }
-.word-dialog-btn.primary:hover { background: #106ebe; }
+.word-dialog-btn.primary:hover { background: #1B4FA0; }
 .word-dialog-label {
   display: block; font-size: 12px; color: #444; margin-bottom: 4px; font-weight: 400;
 }
@@ -127,7 +137,7 @@ export const editorStyles = `
   width: 100%; padding: 4px 8px; border: 1px solid #adadad; border-radius: 2px;
   font-size: 12px; outline: none; box-sizing: border-box; font-family: '맑은 고딕', sans-serif;
 }
-.word-dialog-input:focus { border-color: #0078d4; box-shadow: 0 0 0 1px #0078d4; }
+.word-dialog-input:focus { border-color: #185ABD; box-shadow: 0 0 0 1px #185ABD; }
 .word-dialog-tabs {
   display: flex; border-bottom: 1px solid #d5d5d5; padding: 0 16px; background: #f3f3f3;
 }
@@ -137,7 +147,7 @@ export const editorStyles = `
   font-family: '맑은 고딕', sans-serif;
 }
 .word-dialog-tab:hover { color: #333; }
-.word-dialog-tab.active { color: #0078d4; border-bottom-color: #0078d4; font-weight: 600; }
+.word-dialog-tab.active { color: #185ABD; border-bottom-color: #185ABD; font-weight: 600; }
 
 /* ──── Floating Toolbar ──── */
 .floating-toolbar {
@@ -152,13 +162,16 @@ export const editorStyles = `
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* ──── Backstage View ──── */
+/* ──── Backstage View (Word 365) ──── */
 .backstage-overlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 3000;
-  display: flex;
+  display: flex; animation: backstageFadeIn 0.15s ease-out;
+}
+@keyframes backstageFadeIn {
+  from { opacity: 0; } to { opacity: 1; }
 }
 .backstage-sidebar {
-  width: 300px; background: #1e3a5f; color: #fff; display: flex; flex-direction: column;
+  width: 280px; background: #185ABD; color: #fff; display: flex; flex-direction: column;
   padding: 0; flex-shrink: 0;
 }
 .backstage-content {
@@ -166,12 +179,12 @@ export const editorStyles = `
 }
 .backstage-menu-item {
   display: flex; align-items: center; gap: 12px; padding: 12px 24px;
-  border: none; background: transparent; color: rgba(255,255,255,0.85);
-  font-size: 14px; cursor: pointer; width: 100%; text-align: left;
-  font-family: '맑은 고딕', sans-serif; transition: background 0.1s;
+  border: none; background: transparent; color: rgba(255,255,255,0.9);
+  font-size: 13px; cursor: pointer; width: 100%; text-align: left;
+  font-family: 'Segoe UI', '맑은 고딕', sans-serif; transition: background 0.1s;
 }
-.backstage-menu-item:hover { background: rgba(255,255,255,0.1); }
-.backstage-menu-item.active { background: rgba(255,255,255,0.15); color: #fff; font-weight: 600; }
+.backstage-menu-item:hover { background: rgba(255,255,255,0.12); }
+.backstage-menu-item.active { background: rgba(255,255,255,0.18); color: #fff; font-weight: 600; }
 
 /* ──── Table grid selector ──── */
 .table-grid-cell {
@@ -243,14 +256,17 @@ export const editorStyles = `
 .word-editor-root.dark-mode .ProseMirror code { background: #383838; }
 .word-editor-root.dark-mode .ProseMirror hr { border-top-color: #555; }
 .word-editor-root.dark-mode .ProseMirror ::selection { background: #3a5280; }
-.word-editor-root.dark-mode .word-ribbon-btn:hover { background: #3a3a5c !important; }
-.word-editor-root.dark-mode .word-ribbon-btn.active { background: #3a3a5c !important; border-color: #5b7bb8 !important; }
-.word-editor-root.dark-mode .word-tab-btn:hover { background: #3a3a3a !important; }
+.word-editor-root.dark-mode .word-ribbon-btn:hover { background: #3a3a50 !important; }
+.word-editor-root.dark-mode .word-ribbon-btn.active { background: #3a3a50 !important; border: 1px solid #5b7bb8 !important; }
+.word-editor-root.dark-mode .word-tab-btn:hover { background: transparent !important; color: #7AACF0 !important; }
+.word-editor-root.dark-mode .word-tab-btn.active { color: #7AACF0 !important; border-bottom-color: #7AACF0; }
 .word-editor-root.dark-mode .word-style-card:hover { border-color: #5b7bb8 !important; }
 .word-editor-root.dark-mode .word-dropdown-menu { background: #2d2d2d; border-color: #444; }
 .word-editor-root.dark-mode .word-dropdown-item { color: #e0e0e0; }
 .word-editor-root.dark-mode .word-dropdown-item:hover { background: #3a3a5c; }
 .word-editor-root.dark-mode .floating-toolbar { background: #2d2d2d; border-color: #444; }
+.word-editor-root.dark-mode .word-tooltip { background: #333; color: #e0e0e0; border-color: #555; }
+.word-editor-root.dark-mode .word-tooltip::after { border-top-color: #333; }
 
 /* ──── Print styles ──── */
 @media print {
@@ -288,16 +304,16 @@ export const editorStyles = `
   .ProseMirror blockquote { page-break-inside: avoid; }
 }
 
-/* ──── Splash / Loading screen ──── */
+/* ──── Splash / Loading screen (Word 365) ──── */
 .editor-splash {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+  background: #185ABD;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   z-index: 10000; color: #fff;
   animation: splashFadeIn 0.3s ease-out;
 }
-.editor-splash .logo { font-size: 28px; font-weight: 300; letter-spacing: 4px; margin-bottom: 12px; }
-.editor-splash .subtitle { font-size: 12px; opacity: 0.7; letter-spacing: 2px; }
+.editor-splash .logo { font-size: 42px; font-weight: 700; letter-spacing: -2px; margin-bottom: 8px; }
+.editor-splash .subtitle { font-size: 14px; opacity: 0.85; letter-spacing: 1px; }
 .editor-splash .loading-bar {
   width: 200px; height: 2px; background: rgba(255,255,255,0.2);
   margin-top: 24px; border-radius: 1px; overflow: hidden;
@@ -722,7 +738,7 @@ export const editorStyles = `
   cursor: pointer;
 }
 .editor-status-bar .status-item.clickable:hover {
-  color: #3b82f6;
+  color: #185ABD;
 }
 .editor-status-bar .status-sep {
   width: 1px;
@@ -738,7 +754,7 @@ export const editorStyles = `
 .editor-status-bar .zoom-slider input[type="range"] {
   width: 100px;
   height: 4px;
-  accent-color: #3b82f6;
+  accent-color: #185ABD;
   cursor: pointer;
 }
 

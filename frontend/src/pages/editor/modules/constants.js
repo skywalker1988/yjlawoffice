@@ -35,19 +35,34 @@ export const EMPTY_DOC = {
   tagIds: [],
 };
 
-/* ── 글꼴 목록 ── */
+/* ── 글꼴 목록 (한글 → 영문 순, 총 25종 이상) ── */
 export const FONT_LIST = [
+  /* 한글 글꼴 */
   { value: "malgun", label: "맑은 고딕", family: "'맑은 고딕', 'Malgun Gothic', sans-serif" },
   { value: "batang", label: "바탕", family: "'바탕', Batang, serif" },
   { value: "dotum", label: "돋움", family: "'돋움', Dotum, sans-serif" },
   { value: "gulim", label: "굴림", family: "'굴림', Gulim, sans-serif" },
   { value: "gungsuh", label: "궁서", family: "'궁서', Gungsuh, serif" },
+  { value: "hancom-batang", label: "한컴바탕", family: "'한컴바탕', '한컴 바탕', serif" },
+  { value: "hancom-dotum", label: "한컴돋움", family: "'한컴돋움', '한컴 돋움', sans-serif" },
+  { value: "nanum-gothic", label: "나눔고딕", family: "'나눔고딕', 'NanumGothic', sans-serif" },
+  { value: "nanum-myeongjo", label: "나눔명조", family: "'나눔명조', 'NanumMyeongjo', serif" },
+  { value: "nanum-barun", label: "나눔바른고딕", family: "'나눔바른고딕', 'NanumBarunGothic', sans-serif" },
   { value: "noto-sans", label: "Noto Sans KR", family: "'Noto Sans KR', sans-serif" },
   { value: "noto-serif", label: "Noto Serif KR", family: "'Noto Serif KR', serif" },
+  /* 영문 글꼴 */
   { value: "arial", label: "Arial", family: "Arial, Helvetica, sans-serif" },
-  { value: "times", label: "Times New Roman", family: "'Times New Roman', Times, serif" },
-  { value: "georgia", label: "Georgia", family: "Georgia, serif" },
+  { value: "calibri", label: "Calibri", family: "Calibri, 'Segoe UI', sans-serif" },
+  { value: "cambria", label: "Cambria", family: "Cambria, Georgia, serif" },
+  { value: "comic-sans", label: "Comic Sans MS", family: "'Comic Sans MS', cursive, sans-serif" },
+  { value: "consolas", label: "Consolas", family: "Consolas, 'Courier New', monospace" },
   { value: "courier", label: "Courier New", family: "'Courier New', Courier, monospace" },
+  { value: "georgia", label: "Georgia", family: "Georgia, serif" },
+  { value: "impact", label: "Impact", family: "Impact, 'Arial Black', sans-serif" },
+  { value: "lucida-console", label: "Lucida Console", family: "'Lucida Console', Monaco, monospace" },
+  { value: "tahoma", label: "Tahoma", family: "Tahoma, Geneva, sans-serif" },
+  { value: "times", label: "Times New Roman", family: "'Times New Roman', Times, serif" },
+  { value: "trebuchet", label: "Trebuchet MS", family: "'Trebuchet MS', Helvetica, sans-serif" },
   { value: "verdana", label: "Verdana", family: "Verdana, Geneva, sans-serif" },
 ];
 
@@ -92,6 +107,14 @@ export const STYLE_PRESETS = [
   { id: "subtitle", label: "부제", tag: "h2", fontSize: "14pt", fontWeight: 400, color: "#777", fontFamily: "'맑은 고딕', sans-serif" },
   { id: "quote", label: "인용", tag: "blockquote", fontSize: "11pt", fontWeight: 400, color: "#555", fontStyle: "italic", fontFamily: "'맑은 고딕', sans-serif" },
   { id: "intense-quote", label: "강한 인용", tag: "blockquote", fontSize: "11pt", fontWeight: 600, color: "#3b82f6", fontFamily: "'맑은 고딕', sans-serif" },
+  { id: "list-paragraph", label: "목록 단락", tag: "p", fontSize: "11pt", fontWeight: 400, color: "#333", fontFamily: "'맑은 고딕', sans-serif", marginLeft: "36pt" },
+  { id: "emphasis", label: "강조", tag: "p", fontSize: "11pt", fontWeight: 400, color: "#333", fontStyle: "italic", fontFamily: "'맑은 고딕', sans-serif" },
+  { id: "strong", label: "진하게", tag: "p", fontSize: "11pt", fontWeight: 700, color: "#333", fontFamily: "'맑은 고딕', sans-serif" },
+  { id: "book-title", label: "책 제목", tag: "p", fontSize: "11pt", fontWeight: 700, color: "#333", fontStyle: "italic", fontVariant: "small-caps", letterSpacing: "0.5pt", fontFamily: "'맑은 고딕', sans-serif" },
+  { id: "subtle-emphasis", label: "은은한 강조", tag: "p", fontSize: "11pt", fontWeight: 400, color: "#999", fontStyle: "italic", fontFamily: "'맑은 고딕', sans-serif" },
+  { id: "intense-emphasis", label: "뚜렷한 강조", tag: "p", fontSize: "11pt", fontWeight: 700, color: "#4472C4", fontStyle: "italic", fontFamily: "'맑은 고딕', sans-serif" },
+  { id: "subtle-reference", label: "은은한 참조", tag: "p", fontSize: "11pt", fontWeight: 400, color: "#333", fontVariant: "small-caps", borderBottom: "1px solid #c0c0c0", fontFamily: "'맑은 고딕', sans-serif" },
+  { id: "toc-heading", label: "목차 제목", tag: "h1", fontSize: "16pt", fontWeight: 600, color: "#4472C4", fontFamily: "'맑은 고딕', sans-serif" },
 ];
 
 /* ── 밑줄 스타일 ── */
@@ -110,8 +133,11 @@ export const SPECIAL_CHARS = [
   { category: "도형", chars: ["■", "□", "▪", "▫", "●", "○", "◆", "◇", "▲", "△", "▼", "▽", "◀", "▶", "★", "☆", "♠", "♣", "♥", "♦", "♤", "♧", "♡", "♢"] },
   { category: "괄호", chars: ["「", "」", "『", "』", "【", "】", "〔", "〕", "〈", "〉", "《", "》", "〖", "〗", "⌜", "⌝", "⌞", "⌟"] },
   { category: "수학", chars: ["∀", "∃", "∈", "∉", "∋", "∪", "∩", "⊂", "⊃", "⊆", "⊇", "⊕", "⊗", "⊥", "∠", "∟", "∥", "⌀", "∝", "∴", "∵", "∎"] },
-  { category: "통화", chars: ["₩", "¥", "€", "£", "$", "¢", "₤", "₱", "₹", "₽", "₺", "฿"] },
+  { category: "통화", chars: ["₩", "¥", "€", "£", "$", "¢", "₤", "₱", "₹", "₽", "₺", "฿", "₿", "₫", "₡", "₣", "₦", "₮", "₯", "₰"] },
   { category: "한글 자모", chars: ["ㄱ", "ㄲ", "ㄳ", "ㄴ", "ㄵ", "ㄶ", "ㄷ", "ㄸ", "ㄹ", "ㅀ", "ㅁ", "ㅂ", "ㅃ", "ㅄ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"] },
+  { category: "원문자/괄호숫자", chars: ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧", "⑨", "⑩", "⑪", "⑫", "⑬", "⑭", "⑮", "⑯", "⑰", "⑱", "⑲", "⑳", "㉠", "㉡", "㉢", "㉣", "㉤", "㉥", "㉦", "㉧", "㉨", "㉩", "㉮", "㉯", "㉰", "㉱", "㉲"] },
+  { category: "음악/기타", chars: ["♩", "♪", "♫", "♬", "♭", "♮", "♯", "☀", "☁", "☂", "☃", "☎", "☏", "✂", "✈", "✉", "✎", "✏", "✓", "✕", "✗", "✘", "✚", "❤", "❖", "❝", "❞"] },
+  { category: "로마숫자", chars: ["Ⅰ", "Ⅱ", "Ⅲ", "Ⅳ", "Ⅴ", "Ⅵ", "Ⅶ", "Ⅷ", "Ⅸ", "Ⅹ", "Ⅺ", "Ⅻ", "ⅰ", "ⅱ", "ⅲ", "ⅳ", "ⅴ", "ⅵ", "ⅶ", "ⅷ", "ⅸ", "ⅹ"] },
 ];
 
 /* ── 형광펜 색상 ── */
@@ -167,17 +193,22 @@ export const CAT_NUMBERS = {
  *  아래부터 새로 추가된 상수
  * ================================================================ */
 
-/* ── 1. 테두리 스타일 ── */
+/* ── 1. 테두리 스타일 (Word 365 호환) ── */
 export const BORDER_STYLES = [
-  { value: "none", label: "없음" },
-  { value: "solid", label: "실선 ───" },
-  { value: "dashed", label: "파선 - - -" },
-  { value: "dotted", label: "점선 · · ·" },
-  { value: "double", label: "이중선 ═══" },
-  { value: "groove", label: "홈 파기" },
-  { value: "ridge", label: "돌출" },
-  { value: "inset", label: "안으로" },
-  { value: "outset", label: "밖으로" },
+  { value: "none", label: "없음", css: "none" },
+  { value: "solid", label: "실선 ───", css: "solid" },
+  { value: "dashed", label: "파선 - - -", css: "dashed" },
+  { value: "dotted", label: "점선 · · ·", css: "dotted" },
+  { value: "double", label: "이중선 ═══", css: "double" },
+  { value: "groove", label: "홈 파기", css: "groove" },
+  { value: "ridge", label: "돌출", css: "ridge" },
+  { value: "inset", label: "안으로", css: "inset" },
+  { value: "outset", label: "밖으로", css: "outset" },
+  { value: "dash-dot", label: "일점쇄선 -·-·", css: "dashed" },
+  { value: "dash-dot-dot", label: "이점쇄선 -··-··", css: "dotted" },
+  { value: "thin-thick", label: "가는선-굵은선", css: "double" },
+  { value: "thick-thin", label: "굵은선-가는선", css: "double" },
+  { value: "wave", label: "물결선 ∿∿∿", css: "solid" },
 ];
 
 /* ── 2. 테두리 두께 (px) ── */
@@ -195,6 +226,16 @@ export const TABLE_STYLES = [
   { id: "grid-purple", label: "눈금(보라)", headerBg: "#7c3aed", headerColor: "#fff", borderColor: "#c4b5fd", stripedBg: "#f5f3ff" },
   { id: "list-blue", label: "목록(파랑)", headerBg: "transparent", headerColor: "#2563eb", borderColor: "#2563eb", headerBorderBottom: "2px solid #2563eb" },
   { id: "list-green", label: "목록(초록)", headerBg: "transparent", headerColor: "#16a34a", borderColor: "#16a34a", headerBorderBottom: "2px solid #16a34a" },
+  { id: "grid-table", label: "표 격자", headerBg: "#f8f9fa", headerColor: "#333", borderColor: "#dee2e6", stripedBg: "#f8f9fa" },
+  { id: "table-list-light", label: "표 목록 - 밝게", headerBg: "transparent", headerColor: "#495057", borderColor: "#e9ecef", headerBorderBottom: "2px solid #495057" },
+  { id: "table-list-dark", label: "표 목록 - 어둡게", headerBg: "#343a40", headerColor: "#fff", borderColor: "#495057", stripedBg: "#f8f9fa" },
+  { id: "plain-table-1", label: "일반 표 1", headerBg: "transparent", headerColor: "#333", borderColor: "#d0d0d0" },
+  { id: "plain-table-2", label: "일반 표 2", headerBg: "transparent", headerColor: "#333", borderColor: "#adb5bd", headerBorderBottom: "1px solid #adb5bd", stripedBg: "#f8f9fa" },
+  { id: "plain-table-3", label: "일반 표 3", headerBg: "transparent", headerColor: "#333", borderColor: "transparent", headerBorderTop: "2px solid #333", headerBorderBottom: "2px solid #333" },
+  { id: "grid-accent1", label: "눈금 표 - 강조 1", headerBg: "#4472C4", headerColor: "#fff", borderColor: "#8FAADC", stripedBg: "#D6E4F0" },
+  { id: "grid-accent2", label: "눈금 표 - 강조 2", headerBg: "#ED7D31", headerColor: "#fff", borderColor: "#F4B183", stripedBg: "#FBE5D6" },
+  { id: "grid-accent3", label: "눈금 표 - 강조 3", headerBg: "#A5A5A5", headerColor: "#fff", borderColor: "#C9C9C9", stripedBg: "#EDEDED" },
+  { id: "grid-accent4", label: "눈금 표 - 강조 4", headerBg: "#FFC000", headerColor: "#fff", borderColor: "#FFD966", stripedBg: "#FFF2CC" },
 ];
 
 /* ── 4. 단락 음영 배경색 (파스텔 계열) ── */
@@ -249,14 +290,20 @@ export const WATERMARK_PRESETS = [
   "보안", "비밀", "원본", "검토용", "최종",
 ];
 
-/* ── 10. 머리글/바닥글 프리셋 레이아웃 ── */
+/* ── 10. 머리글/바닥글 프리셋 레이아웃 (Word 365 호환) ── */
 export const HEADER_FOOTER_PRESETS = [
-  { id: "blank", label: "비어있음" },
-  { id: "title-only", label: "제목만" },
-  { id: "title-date", label: "제목 + 날짜" },
-  { id: "title-page", label: "제목 + 페이지" },
-  { id: "page-center", label: "페이지 번호 (가운데)" },
-  { id: "page-right", label: "페이지 번호 (오른쪽)" },
+  { id: "blank", label: "비어있음", layout: { left: "", center: "", right: "" } },
+  { id: "title-only", label: "제목만", layout: { left: "{title}", center: "", right: "" } },
+  { id: "title-date", label: "제목 + 날짜", layout: { left: "{title}", center: "", right: "{date}" } },
+  { id: "title-page", label: "제목 + 페이지", layout: { left: "{title}", center: "", right: "{page}" } },
+  { id: "page-center", label: "페이지 번호 (가운데)", layout: { left: "", center: "{page}", right: "" } },
+  { id: "page-right", label: "페이지 번호 (오른쪽)", layout: { left: "", center: "", right: "{page}" } },
+  { id: "author-date", label: "작성자 + 날짜", layout: { left: "{author}", center: "", right: "{date}" } },
+  { id: "confidential", label: "기밀 문서", layout: { left: "기밀", center: "{title}", right: "{date}" } },
+  { id: "page-of-total", label: "페이지 X/Y", layout: { left: "", center: "", right: "{page}/{totalPages}" } },
+  { id: "line-separator", label: "구분선 포함", layout: { left: "{title}", center: "", right: "{page}" }, borderBottom: true },
+  { id: "logo-title", label: "로고 + 제목", layout: { left: "{logo}", center: "{title}", right: "" } },
+  { id: "date-page-center", label: "날짜 + 페이지 (가운데)", layout: { left: "", center: "{date} | {page}/{totalPages}", right: "" } },
 ];
 
 /* ── 11. 수식 기호 (카테고리별 그룹) ── */
@@ -277,3 +324,90 @@ export const FIND_REPLACE_OPTIONS = {
   useRegex: false,
   matchFormat: false,
 };
+
+/* ================================================================
+ *  Word 365 추가 상수
+ * ================================================================ */
+
+/* ── 13. 번호매기기 형식 (Word 365 호환) ── */
+export const NUMBERING_FORMATS = [
+  { id: "decimal", label: "1, 2, 3", prefix: "", suffix: ".", generate: (n) => String(n) },
+  { id: "lower-alpha", label: "a, b, c", prefix: "", suffix: ".", generate: (n) => String.fromCharCode(96 + n) },
+  { id: "upper-alpha", label: "A, B, C", prefix: "", suffix: ".", generate: (n) => String.fromCharCode(64 + n) },
+  { id: "lower-roman", label: "i, ii, iii", prefix: "", suffix: ".", generate: (n) => toRomanLower(n) },
+  { id: "upper-roman", label: "I, II, III", prefix: "", suffix: ".", generate: (n) => toRomanUpper(n) },
+  { id: "korean-ga", label: "가, 나, 다", prefix: "", suffix: ".", generate: (n) => "가나다라마바사아자차카타파하"[n - 1] || String(n) },
+  { id: "korean-consonant", label: "ㄱ, ㄴ, ㄷ", prefix: "", suffix: ".", generate: (n) => "ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ"[n - 1] || String(n) },
+  { id: "circled", label: "①, ②, ③", prefix: "", suffix: "", generate: (n) => String.fromCharCode(9311 + n) },
+  { id: "parenthesized", label: "(1), (2), (3)", prefix: "(", suffix: ")", generate: (n) => String(n) },
+  { id: "bracket-alpha", label: "(a), (b), (c)", prefix: "(", suffix: ")", generate: (n) => String.fromCharCode(96 + n) },
+];
+
+/**
+ * 로마숫자 변환 헬퍼 (소문자)
+ * @param {number} num - 변환할 양의 정수
+ * @returns {string} 로마숫자 소문자 문자열
+ */
+function toRomanLower(num) {
+  const vals = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+  const syms = ["m", "cm", "d", "cd", "c", "xc", "l", "xl", "x", "ix", "v", "iv", "i"];
+  let result = "";
+  for (let i = 0; i < vals.length; i++) {
+    while (num >= vals[i]) {
+      result += syms[i];
+      num -= vals[i];
+    }
+  }
+  return result;
+}
+
+/**
+ * 로마숫자 변환 헬퍼 (대문자)
+ * @param {number} num - 변환할 양의 정수
+ * @returns {string} 로마숫자 대문자 문자열
+ */
+function toRomanUpper(num) {
+  return toRomanLower(num).toUpperCase();
+}
+
+/* ── 14. 빠른 문서 요소 (Quick Parts) ── */
+export const QUICK_PARTS = [
+  { id: "cover-page", label: "표지", category: "문서 구성", description: "문서 표지 삽입", content: "<h1 style='text-align:center;margin-top:40%;font-size:28pt;'>{title}</h1><p style='text-align:center;font-size:14pt;color:#666;'>{subtitle}</p><p style='text-align:center;margin-top:20%;'>{author}<br/>{date}</p>" },
+  { id: "toc-placeholder", label: "목차", category: "문서 구성", description: "자동 목차 자리표시자", content: "<h1 style='color:#4472C4;'>목차</h1><p style='color:#999;'>[자동 목차가 여기에 생성됩니다]</p>" },
+  { id: "date-field", label: "날짜 필드", category: "필드", description: "현재 날짜 삽입", content: "{date}" },
+  { id: "author-field", label: "작성자 필드", category: "필드", description: "문서 작성자 삽입", content: "{author}" },
+  { id: "page-break", label: "페이지 나누기", category: "구조", description: "페이지 나누기 삽입", content: "<div style='page-break-after:always;'></div>" },
+  { id: "section-break", label: "구역 나누기", category: "구조", description: "구역 나누기 삽입", content: "<hr style='border:none;border-top:1px solid #ccc;margin:24pt 0;'/>" },
+  { id: "signature-block", label: "서명란", category: "법률", description: "서명란 삽입", content: "<div style='margin-top:48pt;'><p style='border-top:1px solid #333;width:200px;padding-top:4pt;'>서명: __________________</p><p>날짜: ____년 ____월 ____일</p></div>" },
+  { id: "legal-disclaimer", label: "면책조항", category: "법률", description: "법적 면책조항 삽입", content: "<p style='font-size:9pt;color:#666;border-top:1px solid #ccc;padding-top:8pt;'>본 문서는 정보 제공 목적으로 작성되었으며, 법적 자문을 구성하지 않습니다. 구체적인 법적 사안에 대해서는 전문 법률가와 상담하시기 바랍니다.</p>" },
+  { id: "reference-list", label: "참고문헌", category: "학술", description: "참고문헌 섹션 삽입", content: "<h2>참고문헌</h2><ol style='font-size:10pt;line-height:2;'><li>[저자] (연도). 제목. 출판사.</li></ol>" },
+  { id: "abstract-block", label: "초록", category: "학술", description: "논문 초록 섹션 삽입", content: "<div style='margin:16pt 40pt;'><h3 style='text-align:center;'>초록</h3><p style='font-size:10pt;line-height:1.8;text-align:justify;'>[초록 내용을 입력하세요]</p></div>" },
+];
+
+/* ── 15. 페이지 번호 형식/위치 프리셋 ── */
+export const PAGE_NUMBER_FORMATS = [
+  { id: "bottom-center", label: "아래쪽 - 가운데", position: "footer", align: "center", format: "{page}" },
+  { id: "bottom-right", label: "아래쪽 - 오른쪽", position: "footer", align: "right", format: "{page}" },
+  { id: "bottom-left", label: "아래쪽 - 왼쪽", position: "footer", align: "left", format: "{page}" },
+  { id: "top-center", label: "위쪽 - 가운데", position: "header", align: "center", format: "{page}" },
+  { id: "top-right", label: "위쪽 - 오른쪽", position: "header", align: "right", format: "{page}" },
+  { id: "top-left", label: "위쪽 - 왼쪽", position: "header", align: "left", format: "{page}" },
+  { id: "x-of-y-bottom", label: "X/Y (아래쪽 가운데)", position: "footer", align: "center", format: "{page}/{totalPages}" },
+  { id: "x-of-y-top", label: "X/Y (위쪽 오른쪽)", position: "header", align: "right", format: "{page}/{totalPages}" },
+  { id: "page-dash-bottom", label: "- X - (아래쪽 가운데)", position: "footer", align: "center", format: "- {page} -" },
+  { id: "page-korean", label: "X 페이지 (아래쪽 가운데)", position: "footer", align: "center", format: "{page} 페이지" },
+];
+
+/* ── 16. 테마 글꼴 쌍 (제목 + 본문) ── */
+export const THEME_FONTS = [
+  { id: "office", label: "Office", heading: "'맑은 고딕', sans-serif", body: "'맑은 고딕', sans-serif" },
+  { id: "calibri-cambria", label: "Calibri / Cambria", heading: "Calibri, sans-serif", body: "Cambria, serif" },
+  { id: "arial-times", label: "Arial / Times New Roman", heading: "Arial, sans-serif", body: "'Times New Roman', serif" },
+  { id: "nanum-pair", label: "나눔고딕 / 나눔명조", heading: "'나눔고딕', sans-serif", body: "'나눔명조', serif" },
+  { id: "noto-pair", label: "Noto Sans / Noto Serif", heading: "'Noto Sans KR', sans-serif", body: "'Noto Serif KR', serif" },
+  { id: "malgun-batang", label: "맑은 고딕 / 바탕", heading: "'맑은 고딕', sans-serif", body: "'바탕', serif" },
+  { id: "georgia-verdana", label: "Georgia / Verdana", heading: "Georgia, serif", body: "Verdana, sans-serif" },
+  { id: "trebuchet-georgia", label: "Trebuchet / Georgia", heading: "'Trebuchet MS', sans-serif", body: "Georgia, serif" },
+  { id: "hancom-pair", label: "한컴돋움 / 한컴바탕", heading: "'한컴돋움', sans-serif", body: "'한컴바탕', serif" },
+  { id: "consolas-cambria", label: "Consolas / Cambria (코드)", heading: "Consolas, monospace", body: "Cambria, serif" },
+];

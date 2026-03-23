@@ -591,9 +591,10 @@ export default function EditorPage() {
   }, [pageW]);
 
   const RIBBON_TABS = [
-    { id: "file", label: "파일" },
+    { id: "file", label: "파일", isFile: true },
     { id: "home", label: "홈" },
     { id: "insert", label: "삽입" },
+    { id: "draw", label: "그리기" },
     { id: "design", label: "디자인" },
     { id: "layout", label: "레이아웃" },
     { id: "references", label: "참조" },
@@ -611,8 +612,11 @@ export default function EditorPage() {
       {/* ──── Splash Screen ──── */}
       {loading && (
         <div className="editor-splash">
-          <div className="logo">YJ Editor</div>
-          <div className="subtitle">윤정 법률사무소 문서 편집기</div>
+          <div className="logo">
+            <span style={{ fontWeight: 700, fontSize: 42, letterSpacing: -2 }}>W</span>
+          </div>
+          <div className="subtitle" style={{ fontSize: 14, marginTop: 8, letterSpacing: 1 }}>Word</div>
+          <div style={{ fontSize: 10, marginTop: 4, opacity: 0.5 }}>윤정 법률사무소</div>
           <div className="loading-bar" />
         </div>
       )}
@@ -663,36 +667,41 @@ export default function EditorPage() {
       {/* ──── Right: Editor Area (MS Word clone) ──── */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minWidth: 0 }}>
 
-        {/* ═══ Title Bar ═══ */}
+        {/* ═══ Title Bar (MS Word 365 스타일) ═══ */}
         <div style={{
-          height: 34, background: darkMode ? "#1a1a2e" : "#1e3a5f", display: "flex", alignItems: "center",
-          justifyContent: "space-between", padding: "0 10px", flexShrink: 0, color: "#fff",
-          fontFamily: "'Segoe UI', '맑은 고딕', sans-serif",
+          height: 32, background: darkMode ? "#1e1e1e" : "#185ABD", display: "flex", alignItems: "center",
+          padding: "0 8px", flexShrink: 0, color: "#fff",
+          fontFamily: "'Segoe UI', '맑은 고딕', sans-serif", userSelect: "none",
         }}>
-          {/* Quick Access Toolbar */}
-          <div style={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <FileText size={14} style={{ marginRight: 6, opacity: 0.8 }} />
+          {/* Quick Access Toolbar (QAT) */}
+          <div style={{ display: "flex", alignItems: "center", gap: 0, flexShrink: 0 }}>
+            {/* Word 아이콘 */}
+            <div style={{ width: 16, height: 16, marginRight: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: -1 }}>W</span>
+            </div>
             {[
-              { icon: <Save size={13} />, title: "저장 (Ctrl+S)", fn: () => handleSave(false) },
-              { icon: <Undo2 size={13} />, title: "실행 취소 (Ctrl+Z)", fn: () => editor?.chain().focus().undo().run() },
-              { icon: <Redo2 size={13} />, title: "다시 실행 (Ctrl+Y)", fn: () => editor?.chain().focus().redo().run() },
+              { icon: <Save size={12} />, title: "저장 (Ctrl+S)", fn: () => handleSave(false) },
+              { icon: <Undo2 size={12} />, title: "실행 취소 (Ctrl+Z)", fn: () => editor?.chain().focus().undo().run() },
+              { icon: <Redo2 size={12} />, title: "다시 실행 (Ctrl+Y)", fn: () => editor?.chain().focus().redo().run() },
             ].map((btn, i) => (
               <button key={i} type="button" onClick={btn.fn} title={btn.title}
-                style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", padding: "3px 5px", borderRadius: 3, display: "flex", alignItems: "center" }}
-                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}
-                onMouseLeave={e => e.currentTarget.style.background = "none"}>{btn.icon}</button>
+                style={{ background: "none", border: "none", color: "rgba(255,255,255,0.85)", cursor: "pointer", padding: "4px 6px", borderRadius: 2, display: "flex", alignItems: "center", lineHeight: 1 }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.18)"; e.currentTarget.style.color = "#fff"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "rgba(255,255,255,0.85)"; }}>{btn.icon}</button>
             ))}
-            {/* Dark mode toggle */}
+            {/* QAT 구분선 */}
+            <div style={{ width: 1, height: 16, background: "rgba(255,255,255,0.2)", margin: "0 4px" }} />
+            {/* 다크 모드 */}
             <button type="button" onClick={() => setDarkMode(!darkMode)} title="다크 모드"
-              style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", padding: "3px 5px", borderRadius: 3, display: "flex", alignItems: "center", marginLeft: 4 }}
-              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}
-              onMouseLeave={e => e.currentTarget.style.background = "none"}>
-              {darkMode ? <Sun size={13} /> : <Moon size={13} />}
+              style={{ background: "none", border: "none", color: "rgba(255,255,255,0.85)", cursor: "pointer", padding: "4px 6px", borderRadius: 2, display: "flex", alignItems: "center", lineHeight: 1 }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.18)"; e.currentTarget.style.color = "#fff"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "none"; e.currentTarget.style.color = "rgba(255,255,255,0.85)"; }}>
+              {darkMode ? <Sun size={12} /> : <Moon size={12} />}
             </button>
           </div>
 
-          {/* Document Title */}
-          <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+          {/* Document Title (가운데 정렬) */}
+          <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", minWidth: 0 }}>
             <input
               ref={titleRef} type="text"
               value={doc.title ? doc.title + " - Word" : "문서 - Word"}
@@ -708,23 +717,32 @@ export default function EditorPage() {
               style={{
                 maxWidth: 400, textAlign: "center", fontSize: 11, fontWeight: 400,
                 border: "none", outline: "none", background: "transparent", color: "#fff",
-                fontFamily: "'맑은 고딕', 'Segoe UI', sans-serif", width: "100%",
+                fontFamily: "'Segoe UI', '맑은 고딕', sans-serif", width: "100%",
+                letterSpacing: 0.2,
               }}
             />
           </div>
 
-          {/* Save status */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 10, color: saveStatus === "오류" ? "#ff8888" : "rgba(255,255,255,0.75)" }}>
+          {/* 오른쪽: 저장 상태 + 최소화/최대화/닫기 */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
+            <span style={{ fontSize: 10, color: saveStatus === "오류" ? "#ff8888" : "rgba(255,255,255,0.7)", marginRight: 4 }}>
               {saveStatus}
             </span>
+            {/* 창 제어 버튼 (Word 365 스타일) */}
+            <button type="button" onClick={() => setMetaOpen(true)} title="문서 속성"
+              style={{ background: "none", border: "none", color: "rgba(255,255,255,0.7)", cursor: "pointer", padding: "4px 6px", borderRadius: 2, display: "flex", alignItems: "center" }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.18)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "none"; }}>
+              <Settings size={13} />
+            </button>
           </div>
         </div>
 
-        {/* ═══ Ribbon Tabs ═══ */}
+        {/* ═══ Ribbon Tabs (MS Word 365 스타일) ═══ */}
         <div style={{
-          height: 32, background: darkMode ? "#2d2d2d" : "#f3f3f3", borderBottom: "1px solid var(--ribbon-sep, #d1d5db)",
-          display: "flex", alignItems: "flex-end", padding: "0 4px", flexShrink: 0,
+          height: 36, background: darkMode ? "#2d2d2d" : "#f3f3f3",
+          borderBottom: "none",
+          display: "flex", alignItems: "stretch", padding: "0 4px 0 0", flexShrink: 0,
         }}>
           {RIBBON_TABS.map(tab => (
             <button
@@ -733,30 +751,54 @@ export default function EditorPage() {
                 if (tab.id === "file") {
                   setShowBackstage(true);
                 } else {
-                  setActiveTab(tab.id);
+                  if (ribbonCollapsed && activeTab === tab.id) {
+                    setRibbonCollapsed(false);
+                  } else if (!ribbonCollapsed && activeTab === tab.id) {
+                    setRibbonCollapsed(true);
+                  } else {
+                    setActiveTab(tab.id);
+                    if (ribbonCollapsed) setRibbonCollapsed(false);
+                  }
                 }
               }}
               style={{
-                padding: "6px 14px 5px", border: "none",
-                borderBottom: activeTab === tab.id ? "2px solid #3b82f6" : "2px solid transparent",
-                background: activeTab === tab.id ? "#ffffff" : "transparent",
-                color: tab.id === "file" ? "#fff" : activeTab === tab.id ? "#1e3a5f" : "#555",
-                fontSize: 11, fontWeight: activeTab === tab.id ? 600 : 400,
-                cursor: "pointer", borderRadius: activeTab === tab.id ? "2px 2px 0 0" : 0,
-                fontFamily: "'맑은 고딕', sans-serif",
-                ...(tab.id === "file" ? { background: "#1e3a5f", borderRadius: "2px 2px 0 0", marginRight: 4 } : {}),
+                padding: "0 14px", border: "none", borderBottom: "none",
+                background: tab.isFile
+                  ? (darkMode ? "#0078D4" : "#185ABD")
+                  : activeTab === tab.id && !ribbonCollapsed
+                    ? (darkMode ? "#3a3a3a" : "#ffffff")
+                    : "transparent",
+                color: tab.isFile
+                  ? "#fff"
+                  : activeTab === tab.id && !ribbonCollapsed
+                    ? (darkMode ? "#fff" : "#185ABD")
+                    : (darkMode ? "#ccc" : "#444"),
+                fontSize: 12, fontWeight: activeTab === tab.id ? 600 : 400,
+                cursor: "pointer",
+                fontFamily: "'Segoe UI', '맑은 고딕', sans-serif",
+                display: "flex", alignItems: "center",
+                borderTop: activeTab === tab.id && !ribbonCollapsed && !tab.isFile
+                  ? `2px solid ${darkMode ? "#0078D4" : "#185ABD"}`
+                  : "2px solid transparent",
+                marginTop: 2,
+                borderRadius: 0,
+                letterSpacing: 0.3,
+                transition: "color 0.1s, background 0.1s",
               }}
             >{tab.label}</button>
           ))}
           <div style={{ flex: 1 }} />
-          <button type="button" onClick={() => setMetaOpen(true)} title="문서 속성" className="word-tab-btn"
-            style={{ padding: "4px 10px", border: "none", background: "transparent", color: "var(--ribbon-label, #777)", fontSize: 10, cursor: "pointer", marginRight: 4, display: "flex", alignItems: "center", gap: 3 }}>
-            <Settings size={10} /> 속성
-          </button>
-          <button type="button" onClick={() => setRibbonCollapsed(!ribbonCollapsed)} title={ribbonCollapsed ? "리본 펼치기" : "리본 접기"}
-            className="word-tab-btn"
-            style={{ padding: "4px 6px", border: "none", background: "transparent", color: "var(--ribbon-label, #777)", fontSize: 10, cursor: "pointer", display: "flex", alignItems: "center" }}>
-            {ribbonCollapsed ? <PanelTop size={12} /> : <PanelTopClose size={12} />}
+          {/* 리본 접기/펼치기 버튼 */}
+          <button type="button" onClick={() => setRibbonCollapsed(!ribbonCollapsed)}
+            title={ribbonCollapsed ? "리본 표시 (Ctrl+F1)" : "리본 최소화 (Ctrl+F1)"}
+            style={{
+              padding: "0 8px", border: "none", background: "transparent",
+              color: darkMode ? "#888" : "#666", cursor: "pointer",
+              display: "flex", alignItems: "center", fontSize: 10,
+            }}
+            onMouseEnter={e => { e.currentTarget.style.background = darkMode ? "#3a3a3a" : "#e5f1fb"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>
+            {ribbonCollapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
           </button>
         </div>
 
@@ -777,6 +819,13 @@ export default function EditorPage() {
             onOpenBookmarkDialog={() => setDialogOpen("bookmark")}
             onOpenCrossRefDialog={() => setDialogOpen("crossref")}
           />
+        )}
+        {!ribbonCollapsed && viewMode === "edit" && activeTab === "draw" && (
+          <div style={{ display: "flex", alignItems: "stretch", background: "var(--ribbon-bg, #fff)", borderBottom: "1px solid var(--ribbon-sep, #d1d5db)", flexShrink: 0, minHeight: 94, padding: "0 8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", color: "var(--ribbon-fg, #888)" }}>
+              <span style={{ fontSize: 12 }}>그리기 도구는 준비 중입니다. 터치 기기에서 펜, 형광펜, 지우개 등을 사용할 수 있습니다.</span>
+            </div>
+          </div>
         )}
         {!ribbonCollapsed && viewMode === "edit" && activeTab === "design" && (
           <DesignTab pageColor={pageColor} setPageColor={setPageColor}
@@ -812,38 +861,95 @@ export default function EditorPage() {
 
         {findBarMode && <FindReplaceBar editor={editor} showReplace={findBarMode === "replace"} onClose={() => setFindBarMode(null)} />}
 
-        {/* ═══ Ruler ═══ */}
+        {/* ═══ Ruler (MS Word 365 스타일 - cm 눈금) ═══ */}
         {showRuler && (
           <div style={{
-            height: 22, background: "#f5f5f5", borderBottom: "1px solid #e0e0e0",
+            height: 24, background: darkMode ? "#2d2d2d" : "#f5f5f5",
+            borderBottom: `1px solid ${darkMode ? "#444" : "#ddd"}`,
             display: "flex", alignItems: "flex-end", justifyContent: "center", flexShrink: 0,
+            position: "relative",
           }}>
+            {/* 좌측 패딩 (문서 목록/탐색 창 너비만큼) */}
             <div style={{ width: showNavPane ? 220 : 0, flexShrink: 0 }} />
-            {showRuler && (
-              <div style={{ width: 20, flexShrink: 0 }} />
-            )}
-            <div style={{ width: `${pageW * (zoom / 100)}px`, maxWidth: "calc(100% - 56px)", position: "relative", height: "100%" }}>
-              {/* Margin indicators */}
+            <div style={{ width: showRuler ? 20 : 0, flexShrink: 0 }} />
+
+            {/* 눈금자 본체 */}
+            <div style={{
+              width: `${pageW * (zoom / 100)}px`, maxWidth: "calc(100% - 56px)",
+              position: "relative", height: "100%",
+            }}>
+              {/* 왼쪽 여백 영역 (회색) */}
               <div style={{
                 position: "absolute", left: 0, top: 0, bottom: 0,
-                width: `${marginLeft * (zoom / 100)}px`, background: "#e0e0e0",
+                width: `${marginLeft * (zoom / 100)}px`,
+                background: darkMode ? "#3a3a3a" : "#c4c4c4",
               }} />
+              {/* 오른쪽 여백 영역 (회색) */}
               <div style={{
                 position: "absolute", right: 0, top: 0, bottom: 0,
-                width: `${marginRight * (zoom / 100)}px`, background: "#e0e0e0",
+                width: `${marginRight * (zoom / 100)}px`,
+                background: darkMode ? "#3a3a3a" : "#c4c4c4",
               }} />
-              {/* Tick marks */}
-              {Array.from({ length: 22 }, (_, i) => {
-                const pct = (i / 21) * 100;
-                return (
-                  <div key={i} style={{ position: "absolute", left: `${pct}%`, bottom: 0, display: "flex", flexDirection: "column", alignItems: "center" }}>
-                    <div style={{ width: 1, height: i % 5 === 0 ? 8 : 4, background: i % 5 === 0 ? "#888" : "#bbb" }} />
-                    {i % 5 === 0 && i > 0 && i < 21 && (
-                      <span style={{ fontSize: 7, color: "#999", position: "absolute", top: 1, left: 3 }}>{i}</span>
-                    )}
-                  </div>
-                );
-              })}
+              {/* 본문 영역 (흰색) */}
+              <div style={{
+                position: "absolute", left: `${marginLeft * (zoom / 100)}px`, right: `${marginRight * (zoom / 100)}px`,
+                top: 0, bottom: 0,
+                background: darkMode ? "#2d2d2d" : "#fff",
+              }} />
+
+              {/* cm 눈금 표시 */}
+              {(() => {
+                const contentWidthPx = pageW - marginLeft - marginRight;
+                const contentWidthCm = contentWidthPx / 37.8; // 96dpi → 37.8px/cm
+                const marks = [];
+                const totalCm = Math.ceil(contentWidthCm);
+                for (let cm = -Math.floor(marginLeft / 37.8); cm <= totalCm + Math.floor(marginRight / 37.8); cm++) {
+                  const xPx = (marginLeft + cm * 37.8) * (zoom / 100);
+                  if (xPx < -5 || xPx > pageW * (zoom / 100) + 5) continue;
+                  // 1cm 눈금
+                  marks.push(
+                    <div key={`cm-${cm}`} style={{
+                      position: "absolute", left: `${xPx}px`, bottom: 0,
+                      display: "flex", flexDirection: "column", alignItems: "center",
+                    }}>
+                      <div style={{ width: 1, height: 10, background: darkMode ? "#888" : "#666" }} />
+                      {cm > 0 && cm <= totalCm && (
+                        <span style={{
+                          fontSize: 7, color: darkMode ? "#888" : "#777",
+                          position: "absolute", top: 2, left: 3, fontFamily: "'Segoe UI', sans-serif",
+                        }}>{cm}</span>
+                      )}
+                    </div>
+                  );
+                  // 0.5cm 하위 눈금
+                  const halfX = (marginLeft + (cm + 0.5) * 37.8) * (zoom / 100);
+                  if (halfX > 0 && halfX < pageW * (zoom / 100)) {
+                    marks.push(
+                      <div key={`half-${cm}`} style={{
+                        position: "absolute", left: `${halfX}px`, bottom: 0,
+                      }}>
+                        <div style={{ width: 1, height: 5, background: darkMode ? "#666" : "#aaa" }} />
+                      </div>
+                    );
+                  }
+                }
+                return marks;
+              })()}
+
+              {/* 왼쪽 여백 조절 핸들 (들여쓰기 표시) */}
+              <div style={{
+                position: "absolute", left: `${marginLeft * (zoom / 100) - 4}px`, bottom: 0,
+                width: 8, height: 8, cursor: "ew-resize",
+                borderLeft: "4px solid transparent", borderRight: "4px solid transparent",
+                borderBottom: `8px solid ${darkMode ? "#999" : "#666"}`,
+              }} />
+              {/* 오른쪽 여백 조절 핸들 */}
+              <div style={{
+                position: "absolute", right: `${marginRight * (zoom / 100) - 4}px`, bottom: 0,
+                width: 8, height: 8, cursor: "ew-resize",
+                borderLeft: "4px solid transparent", borderRight: "4px solid transparent",
+                borderBottom: `8px solid ${darkMode ? "#999" : "#666"}`,
+              }} />
             </div>
             <div style={{ width: 28, flexShrink: 0 }} />
           </div>
@@ -872,28 +978,53 @@ export default function EditorPage() {
           {showNavPane && <NavigationPane editor={editor} onClose={() => setShowNavPane(false)} />}
 
           <div className="editor-canvas-scroll" style={{
-            flex: 1, overflowY: "auto", background: darkMode ? "#1a1a1a" : "#a0a0a0",
-            display: "flex", justifyContent: "center", padding: "24px 0 40px",
+            flex: 1, overflowY: "auto",
+            background: darkMode ? "#1e1e1e" : "#e8e8e8",
+            display: "flex", justifyContent: "center", padding: "20px 0 60px",
             position: "relative",
           }}>
-            {/* Vertical ruler */}
+            {/* 세로 눈금자 (cm 단위) */}
             {showRuler && (
               <div style={{
-                width: 20, flexShrink: 0, background: "#f5f5f5", borderRight: "1px solid #e0e0e0",
-                position: "sticky", top: 0, alignSelf: "flex-start", minHeight: "100%",
+                width: 18, flexShrink: 0,
+                background: darkMode ? "#2d2d2d" : "#f5f5f5",
+                borderRight: `1px solid ${darkMode ? "#444" : "#ddd"}`,
+                position: "sticky", top: 0, alignSelf: "flex-start",
+                minHeight: `${pageH * (zoom / 100)}px`,
               }}>
-                {Array.from({ length: 30 }, (_, i) => (
-                  <div key={i} style={{ position: "relative", height: `${(pageH * (zoom / 100)) / 29}px` }}>
-                    <div style={{
-                      position: "absolute", right: 0, top: 0,
-                      width: i % 5 === 0 ? 8 : 4, height: 1,
-                      background: i % 5 === 0 ? "#888" : "#bbb",
-                    }} />
-                    {i % 5 === 0 && i > 0 && (
-                      <span style={{ fontSize: 7, color: "#999", position: "absolute", right: 10, top: -4 }}>{i}</span>
-                    )}
-                  </div>
-                ))}
+                {(() => {
+                  const totalCm = Math.ceil(pageH / 37.8);
+                  const marks = [];
+                  for (let cm = 0; cm <= totalCm; cm++) {
+                    const yPx = cm * 37.8 * (zoom / 100);
+                    marks.push(
+                      <div key={`vc-${cm}`} style={{
+                        position: "absolute", right: 0, top: `${yPx}px`,
+                      }}>
+                        <div style={{ width: 8, height: 1, background: darkMode ? "#888" : "#666" }} />
+                        {cm > 0 && cm < totalCm && (
+                          <span style={{
+                            fontSize: 7, color: darkMode ? "#888" : "#777",
+                            position: "absolute", right: 10, top: -4,
+                            fontFamily: "'Segoe UI', sans-serif",
+                          }}>{cm}</span>
+                        )}
+                      </div>
+                    );
+                    // 0.5cm 하위 눈금
+                    const halfY = (cm + 0.5) * 37.8 * (zoom / 100);
+                    if (halfY < pageH * (zoom / 100)) {
+                      marks.push(
+                        <div key={`vh-${cm}`} style={{
+                          position: "absolute", right: 0, top: `${halfY}px`,
+                        }}>
+                          <div style={{ width: 4, height: 1, background: darkMode ? "#555" : "#aaa" }} />
+                        </div>
+                      );
+                    }
+                  }
+                  return marks;
+                })()}
               </div>
             )}
 
@@ -917,30 +1048,34 @@ export default function EditorPage() {
                     width: scaledPageW,
                     height: scaledPageH,
                     background: darkMode ? "#2d2d2d" : (pageColor || "#fff"),
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.25), 0 0 1px rgba(0,0,0,0.15)",
+                    boxShadow: darkMode
+                      ? "0 1px 4px rgba(0,0,0,0.5)"
+                      : "0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06)",
                     position: "relative",
                     overflow: "hidden",
+                    border: darkMode ? "1px solid #444" : "none",
                   }}>
-                    {/* Watermark */}
+                    {/* 페이지 테두리 (선택 시) */}
+                    {pageBorder && (
+                      <div style={{
+                        position: "absolute", top: 8, left: 8, right: 8, bottom: 8,
+                        border: `${pageBorder.width || 1}px ${pageBorder.style || "solid"} ${pageBorder.color || "#000"}`,
+                        pointerEvents: "none", zIndex: 1,
+                      }} />
+                    )}
+
+                    {/* 워터마크 */}
                     {watermarkText && (
                       <div style={{
                         position: "absolute", top: "50%", left: "50%",
                         transform: "translate(-50%, -50%) rotate(-45deg)",
-                        fontSize: `${60 * (zoom / 100)}px`, color: "rgba(0,0,0,0.06)",
-                        fontWeight: 700, whiteSpace: "nowrap", pointerEvents: "none",
+                        fontSize: `${54 * (zoom / 100)}px`, color: "rgba(192,192,192,0.25)",
+                        fontWeight: 300, whiteSpace: "nowrap", pointerEvents: "none",
                         zIndex: 0, userSelect: "none",
+                        fontFamily: "'Segoe UI', '맑은 고딕', sans-serif",
+                        letterSpacing: 8,
                       }}>{watermarkText}</div>
                     )}
-
-                    {/* Corner markers */}
-                    {[
-                      { top: 4, left: 4, borderTop: "1px solid #d0d0d0", borderLeft: "1px solid #d0d0d0" },
-                      { top: 4, right: 4, borderTop: "1px solid #d0d0d0", borderRight: "1px solid #d0d0d0" },
-                      { bottom: 4, left: 4, borderBottom: "1px solid #d0d0d0", borderLeft: "1px solid #d0d0d0" },
-                      { bottom: 4, right: 4, borderBottom: "1px solid #d0d0d0", borderRight: "1px solid #d0d0d0" },
-                    ].map((s, i) => (
-                      <div key={i} style={{ position: "absolute", width: 10, height: 10, ...s }} />
-                    ))}
 
                     {/* Header */}
                     {showHeaderFooter && viewMode === "edit" && (
@@ -1070,43 +1205,77 @@ export default function EditorPage() {
           </div>{/* end flex row */}
         </div>{/* end flex column */}
 
-        {/* ═══ Status Bar ═══ */}
+        {/* ═══ Status Bar (MS Word 365 스타일) ═══ */}
         <div style={{
-          height: 26, background: darkMode ? "#1a1a2e" : "#1e3a5f", display: "flex", alignItems: "center",
-          justifyContent: "space-between", padding: "0 12px", flexShrink: 0,
-          color: "rgba(255,255,255,0.9)", fontSize: 10,
-          fontFamily: "'Segoe UI', '맑은 고딕', sans-serif",
+          height: 24, background: darkMode ? "#1e1e1e" : "#185ABD", display: "flex", alignItems: "center",
+          justifyContent: "space-between", padding: "0 10px", flexShrink: 0,
+          color: "#fff", fontSize: 11,
+          fontFamily: "'Segoe UI', '맑은 고딕', sans-serif", userSelect: "none",
         }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <span>{dynamicPageCount}/{dynamicPageCount} 페이지</span>
-            <span>단어 수: {wordCount.toLocaleString()}</span>
-            <span>{charCount.toLocaleString()}자</span>
-            <span>한국어</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {/* 왼쪽: 페이지/단어/문자/언어 */}
+          <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
             {[
-              { mode: "preview", icon: <BookOpen size={12} />, title: "읽기 모드" },
-              { mode: "edit", icon: <FileText size={12} />, title: "인쇄 모드" },
-              { mode: "web", icon: <Globe size={12} />, title: "웹 모드" },
+              { label: `페이지: ${dynamicPageCount}/${dynamicPageCount}`, title: "페이지 수" },
+              { label: `단어 수: ${wordCount.toLocaleString()}`, title: "단어 수" },
+              { label: `${charCount.toLocaleString()}자`, title: "문자 수" },
+              { label: "한국어", title: "언어" },
+            ].map((item, i) => (
+              <span key={i} style={{
+                padding: "2px 10px", cursor: "default", fontSize: 11, lineHeight: 1,
+                borderRight: "1px solid rgba(255,255,255,0.15)",
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.1)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+                title={item.title}
+              >{item.label}</span>
+            ))}
+          </div>
+
+          {/* 오른쪽: 보기 모드 + 확대/축소 */}
+          <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+            {/* 보기 모드 아이콘 */}
+            {[
+              { mode: "edit", icon: <FileText size={13} />, title: "인쇄 모양" },
+              { mode: "preview", icon: <BookOpen size={13} />, title: "읽기 모드" },
+              { mode: "web", icon: <Globe size={13} />, title: "웹 레이아웃" },
             ].map(v => (
               <button key={v.mode} type="button" onClick={() => setViewMode(v.mode)} title={v.title}
-                style={{ background: "none", border: "none", color: viewMode === v.mode ? "#fff" : "rgba(255,255,255,0.4)", cursor: "pointer", padding: "0 3px", display: "flex", alignItems: "center" }}>
+                style={{
+                  background: viewMode === v.mode ? "rgba(255,255,255,0.2)" : "none",
+                  border: "none", color: "rgba(255,255,255,0.85)", cursor: "pointer",
+                  padding: "3px 5px", borderRadius: 2, display: "flex", alignItems: "center",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = viewMode === v.mode ? "rgba(255,255,255,0.2)" : "none"; }}>
                 {v.icon}
               </button>
             ))}
-            <span style={{ width: 1, height: 14, background: "rgba(255,255,255,0.25)", margin: "0 4px" }} />
-            <button type="button" onClick={() => setZoom(z => Math.max(25, z - 10))} title="축소"
-              style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", padding: "0 3px", display: "flex" }}>
-              <ZoomOut size={12} />
+
+            {/* 구분선 */}
+            <div style={{ width: 1, height: 14, background: "rgba(255,255,255,0.2)", margin: "0 6px" }} />
+
+            {/* 줌 컨트롤 */}
+            <button type="button" onClick={() => setZoom(z => Math.max(10, z - 10))} title="축소"
+              style={{ background: "none", border: "none", color: "rgba(255,255,255,0.85)", cursor: "pointer", padding: "2px 3px", display: "flex", borderRadius: 2 }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "none"; }}>
+              <ZoomOut size={13} />
             </button>
-            <input type="range" min="25" max="500" value={zoom}
+            <input type="range" min="10" max="500" value={zoom}
               onChange={e => setZoom(+e.target.value)}
-              style={{ width: 90, height: 3, accentColor: "#fff", cursor: "pointer" }} />
-            <span style={{ width: 32, textAlign: "center", fontSize: 10 }}>{zoom}%</span>
+              style={{
+                width: 100, height: 4, cursor: "pointer",
+                accentColor: "#fff",
+                WebkitAppearance: "none", appearance: "none",
+                background: "rgba(255,255,255,0.3)", borderRadius: 2,
+              }} />
             <button type="button" onClick={() => setZoom(z => Math.min(500, z + 10))} title="확대"
-              style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", padding: "0 3px", display: "flex" }}>
-              <ZoomIn size={12} />
+              style={{ background: "none", border: "none", color: "rgba(255,255,255,0.85)", cursor: "pointer", padding: "2px 3px", display: "flex", borderRadius: 2 }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = "none"; }}>
+              <ZoomIn size={13} />
             </button>
+            <span style={{ width: 36, textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.85)" }}>{zoom}%</span>
           </div>
         </div>
 
