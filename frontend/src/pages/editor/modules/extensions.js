@@ -919,3 +919,557 @@ export const Bookmark = Node.create({
     };
   },
 });
+
+/* ═══════════════════════════════════════════════
+ *  변경 내용 추적 (Track Changes) 마크 확장
+ * ═══════════════════════════════════════════════ */
+
+import { Mark } from "@tiptap/core";
+
+/**
+ * 삽입 추적 마크 - 추가된 텍스트를 표시한다
+ * Word의 "변경 내용 추적" 기능 중 삽입에 해당한다.
+ */
+export const TrackInsert = Mark.create({
+  name: "trackInsert",
+  inclusive: true,
+  excludes: "trackDelete",
+
+  addAttributes() {
+    return {
+      author: {
+        default: null,
+        parseHTML: (el) => el.getAttribute("data-author"),
+        renderHTML: (attrs) => ({ "data-author": attrs.author }),
+      },
+      date: {
+        default: null,
+        parseHTML: (el) => el.getAttribute("data-date"),
+        renderHTML: (attrs) => ({ "data-date": attrs.date }),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'span[data-track="insert"]' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["span", {
+      ...HTMLAttributes,
+      "data-track": "insert",
+      class: "track-insert",
+    }, 0];
+  },
+
+  addCommands() {
+    return {
+      setTrackInsert:
+        (attrs) =>
+        ({ commands }) =>
+          commands.setMark(this.name, {
+            author: attrs?.author || "사용자",
+            date: attrs?.date || new Date().toISOString(),
+          }),
+      unsetTrackInsert:
+        () =>
+        ({ commands }) =>
+          commands.unsetMark(this.name),
+    };
+  },
+});
+
+/**
+ * 삭제 추적 마크 - 삭제된 텍스트를 표시한다
+ * Word의 "변경 내용 추적" 기능 중 삭제에 해당한다.
+ */
+export const TrackDelete = Mark.create({
+  name: "trackDelete",
+  inclusive: false,
+  excludes: "trackInsert",
+
+  addAttributes() {
+    return {
+      author: {
+        default: null,
+        parseHTML: (el) => el.getAttribute("data-author"),
+        renderHTML: (attrs) => ({ "data-author": attrs.author }),
+      },
+      date: {
+        default: null,
+        parseHTML: (el) => el.getAttribute("data-date"),
+        renderHTML: (attrs) => ({ "data-date": attrs.date }),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'span[data-track="delete"]' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["span", {
+      ...HTMLAttributes,
+      "data-track": "delete",
+      class: "track-delete",
+    }, 0];
+  },
+
+  addCommands() {
+    return {
+      setTrackDelete:
+        (attrs) =>
+        ({ commands }) =>
+          commands.setMark(this.name, {
+            author: attrs?.author || "사용자",
+            date: attrs?.date || new Date().toISOString(),
+          }),
+      unsetTrackDelete:
+        () =>
+        ({ commands }) =>
+          commands.unsetMark(this.name),
+    };
+  },
+});
+
+/**
+ * 서식 변경 추적 마크 - 서식이 변경된 텍스트를 표시한다
+ */
+export const TrackFormat = Mark.create({
+  name: "trackFormat",
+  inclusive: false,
+
+  addAttributes() {
+    return {
+      author: {
+        default: null,
+        parseHTML: (el) => el.getAttribute("data-author"),
+        renderHTML: (attrs) => ({ "data-author": attrs.author }),
+      },
+      date: {
+        default: null,
+        parseHTML: (el) => el.getAttribute("data-date"),
+        renderHTML: (attrs) => ({ "data-date": attrs.date }),
+      },
+      description: {
+        default: null,
+        parseHTML: (el) => el.getAttribute("data-description"),
+        renderHTML: (attrs) => ({ "data-description": attrs.description }),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'span[data-track="format"]' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["span", {
+      ...HTMLAttributes,
+      "data-track": "format",
+      class: "track-format",
+    }, 0];
+  },
+
+  addCommands() {
+    return {
+      setTrackFormat:
+        (attrs) =>
+        ({ commands }) =>
+          commands.setMark(this.name, {
+            author: attrs?.author || "사용자",
+            date: attrs?.date || new Date().toISOString(),
+            description: attrs?.description || "",
+          }),
+      unsetTrackFormat:
+        () =>
+        ({ commands }) =>
+          commands.unsetMark(this.name),
+    };
+  },
+});
+
+/**
+ * 변경 내용 추적 관리 확장
+ * 추적 모드를 활성/비활성화하고, 변경 사항을 수락/거부하는 기능을 제공한다.
+ */
+export const TrackChangesManager = Extension.create({
+  name: "trackChangesManager",
+
+  addStorage() {
+    return {
+      enabled: false,
+      author: "사용자",
+    };
+  },
+
+  addCommands() {
+    return {
+      /** 변경 추적 모드를 켜거나 끈다 */
+      toggleTrackChanges:
+        () =>
+        ({ editor: ed }) => {
+          ed.storage.trackChangesManager.enabled = !ed.storage.trackChangesManager.enabled;
+          return true;
+        },
+
+      /** 변경 추적 활성 여부 확인 */
+      isTrackChangesEnabled:
+        () =>
+        ({ editor: ed }) =>
+          ed.storage.trackChangesManager.enabled,
+
+      /** 추적 작성자를 설정한다 */
+      setTrackAuthor:
+        (author) =>
+        ({ editor: ed }) => {
+          ed.storage.trackChangesManager.author = author;
+          return true;
+        },
+
+      /** 현재 선택 영역의 변경 사항을 수락한다 */
+      acceptChange:
+        () =>
+        ({ tr, state, dispatch }) => {
+          const { from, to } = state.selection;
+          let changed = false;
+
+          state.doc.nodesBetween(from, to, (node, pos) => {
+            if (!node.isText) return;
+            const marks = node.marks;
+
+            // 삽입 추적 마크가 있으면 마크만 제거 (텍스트는 유지)
+            const insertMark = marks.find(m => m.type.name === "trackInsert");
+            if (insertMark) {
+              tr.removeMark(pos, pos + node.nodeSize, insertMark.type);
+              changed = true;
+            }
+
+            // 삭제 추적 마크가 있으면 텍스트와 마크 모두 제거
+            const deleteMark = marks.find(m => m.type.name === "trackDelete");
+            if (deleteMark) {
+              tr.delete(pos, pos + node.nodeSize);
+              changed = true;
+            }
+
+            // 서식 추적 마크가 있으면 마크만 제거
+            const formatMark = marks.find(m => m.type.name === "trackFormat");
+            if (formatMark) {
+              tr.removeMark(pos, pos + node.nodeSize, formatMark.type);
+              changed = true;
+            }
+          });
+
+          if (changed && dispatch) dispatch(tr);
+          return changed;
+        },
+
+      /** 현재 선택 영역의 변경 사항을 거부한다 */
+      rejectChange:
+        () =>
+        ({ tr, state, dispatch }) => {
+          const { from, to } = state.selection;
+          let changed = false;
+
+          state.doc.nodesBetween(from, to, (node, pos) => {
+            if (!node.isText) return;
+            const marks = node.marks;
+
+            // 삽입 추적 마크가 있으면 텍스트와 마크 모두 제거 (삽입을 되돌림)
+            const insertMark = marks.find(m => m.type.name === "trackInsert");
+            if (insertMark) {
+              tr.delete(pos, pos + node.nodeSize);
+              changed = true;
+            }
+
+            // 삭제 추적 마크가 있으면 마크만 제거 (텍스트 복원)
+            const deleteMark = marks.find(m => m.type.name === "trackDelete");
+            if (deleteMark) {
+              tr.removeMark(pos, pos + node.nodeSize, deleteMark.type);
+              changed = true;
+            }
+
+            // 서식 추적 마크가 있으면 마크만 제거
+            const formatMark = marks.find(m => m.type.name === "trackFormat");
+            if (formatMark) {
+              tr.removeMark(pos, pos + node.nodeSize, formatMark.type);
+              changed = true;
+            }
+          });
+
+          if (changed && dispatch) dispatch(tr);
+          return changed;
+        },
+
+      /** 문서의 모든 변경 사항을 수락한다 */
+      acceptAllChanges:
+        () =>
+        ({ tr, state, dispatch }) => {
+          let changed = false;
+          const doc = state.doc;
+
+          // 역순으로 처리하여 위치 오프셋 문제 방지
+          const deletions = [];
+          const removals = [];
+
+          doc.descendants((node, pos) => {
+            if (!node.isText) return;
+            const marks = node.marks;
+            const insertMark = marks.find(m => m.type.name === "trackInsert");
+            if (insertMark) {
+              removals.push({ from: pos, to: pos + node.nodeSize, type: insertMark.type });
+            }
+            const deleteMark = marks.find(m => m.type.name === "trackDelete");
+            if (deleteMark) {
+              deletions.push({ from: pos, to: pos + node.nodeSize });
+            }
+            const formatMark = marks.find(m => m.type.name === "trackFormat");
+            if (formatMark) {
+              removals.push({ from: pos, to: pos + node.nodeSize, type: formatMark.type });
+            }
+          });
+
+          // 역순으로 삭제 (위치 안정성)
+          deletions.sort((a, b) => b.from - a.from);
+          for (const del of deletions) {
+            tr.delete(del.from, del.to);
+            changed = true;
+          }
+          for (const rem of removals) {
+            tr.removeMark(rem.from, rem.to, rem.type);
+            changed = true;
+          }
+
+          if (changed && dispatch) dispatch(tr);
+          return changed;
+        },
+
+      /** 문서의 모든 변경 사항을 거부한다 */
+      rejectAllChanges:
+        () =>
+        ({ tr, state, dispatch }) => {
+          let changed = false;
+          const doc = state.doc;
+          const insertions = [];
+          const removals = [];
+
+          doc.descendants((node, pos) => {
+            if (!node.isText) return;
+            const marks = node.marks;
+            const insertMark = marks.find(m => m.type.name === "trackInsert");
+            if (insertMark) {
+              insertions.push({ from: pos, to: pos + node.nodeSize });
+            }
+            const deleteMark = marks.find(m => m.type.name === "trackDelete");
+            if (deleteMark) {
+              removals.push({ from: pos, to: pos + node.nodeSize, type: deleteMark.type });
+            }
+            const formatMark = marks.find(m => m.type.name === "trackFormat");
+            if (formatMark) {
+              removals.push({ from: pos, to: pos + node.nodeSize, type: formatMark.type });
+            }
+          });
+
+          insertions.sort((a, b) => b.from - a.from);
+          for (const ins of insertions) {
+            tr.delete(ins.from, ins.to);
+            changed = true;
+          }
+          for (const rem of removals) {
+            tr.removeMark(rem.from, rem.to, rem.type);
+            changed = true;
+          }
+
+          if (changed && dispatch) dispatch(tr);
+          return changed;
+        },
+    };
+  },
+});
+
+/* ═══════════════════════════════════════════════
+ *  페이지 번호 노드 확장
+ * ═══════════════════════════════════════════════ */
+
+/**
+ * 페이지 번호 필드 노드
+ * 문서 내에 동적 페이지 번호를 표시하는 인라인 노드이다.
+ * Word의 {PAGE}, {NUMPAGES} 필드 코드에 해당한다.
+ */
+export const PageNumberField = Node.create({
+  name: "pageNumberField",
+  group: "inline",
+  inline: true,
+  atom: true,
+
+  addAttributes() {
+    return {
+      fieldType: {
+        default: "page",
+        parseHTML: (el) => el.getAttribute("data-field-type") || "page",
+        renderHTML: (attrs) => ({ "data-field-type": attrs.fieldType }),
+      },
+      format: {
+        default: "decimal",
+        parseHTML: (el) => el.getAttribute("data-format") || "decimal",
+        renderHTML: (attrs) => ({ "data-format": attrs.format }),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: "span.page-number-field" }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const fieldType = HTMLAttributes["data-field-type"] || "page";
+    const displayText = fieldType === "page" ? "#" : "##";
+    return ["span", {
+      ...HTMLAttributes,
+      class: "page-number-field",
+      contenteditable: "false",
+      style: "background:#e8f0fe;padding:1px 4px;border-radius:2px;font-size:inherit;color:#444;cursor:default;",
+    }, displayText];
+  },
+
+  addCommands() {
+    return {
+      /** 현재 페이지 번호 필드를 삽입한다 */
+      insertPageNumber:
+        (format = "decimal") =>
+        ({ commands }) =>
+          commands.insertContent({
+            type: this.name,
+            attrs: { fieldType: "page", format },
+          }),
+
+      /** 전체 페이지 수 필드를 삽입한다 */
+      insertTotalPages:
+        (format = "decimal") =>
+        ({ commands }) =>
+          commands.insertContent({
+            type: this.name,
+            attrs: { fieldType: "totalPages", format },
+          }),
+    };
+  },
+});
+
+/**
+ * 날짜/시간 필드 노드
+ * 현재 날짜를 자동으로 삽입하는 인라인 노드이다.
+ */
+export const DateField = Node.create({
+  name: "dateField",
+  group: "inline",
+  inline: true,
+  atom: true,
+
+  addAttributes() {
+    return {
+      format: {
+        default: "korean",
+        parseHTML: (el) => el.getAttribute("data-date-format") || "korean",
+        renderHTML: (attrs) => ({ "data-date-format": attrs.format }),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: "span.date-field" }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    const now = new Date();
+    const format = HTMLAttributes["data-date-format"] || "korean";
+    let display;
+    switch (format) {
+      case "iso": display = now.toISOString().split("T")[0]; break;
+      case "us": display = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`; break;
+      default: display = `${now.getFullYear()}년 ${now.getMonth() + 1}월 ${now.getDate()}일`;
+    }
+    return ["span", {
+      ...HTMLAttributes,
+      class: "date-field",
+      contenteditable: "false",
+      style: "background:#e8f0fe;padding:1px 4px;border-radius:2px;font-size:inherit;color:#444;cursor:default;",
+    }, display];
+  },
+
+  addCommands() {
+    return {
+      insertDateField:
+        (format = "korean") =>
+        ({ commands }) =>
+          commands.insertContent({
+            type: this.name,
+            attrs: { format },
+          }),
+    };
+  },
+});
+
+/* ═══════════════════════════════════════════════
+ *  비공백 문자(Non-Breaking Space) 확장
+ * ═══════════════════════════════════════════════ */
+
+/**
+ * 줄바꿈 없는 공백을 삽입하는 확장
+ * Ctrl+Shift+Space로 삽입할 수 있다.
+ */
+export const NonBreakingSpace = Extension.create({
+  name: "nonBreakingSpace",
+
+  addCommands() {
+    return {
+      insertNonBreakingSpace:
+        () =>
+        ({ commands }) =>
+          commands.insertContent("\u00A0"),
+    };
+  },
+
+  addKeyboardShortcuts() {
+    return {
+      "Mod-Shift-Space": () => this.editor.commands.insertNonBreakingSpace(),
+    };
+  },
+});
+
+/* ═══════════════════════════════════════════════
+ *  줄 번호(Line Numbers) 단락 속성 확장
+ * ═══════════════════════════════════════════════ */
+
+/**
+ * 줄 번호 표시 확장
+ * 문서 전체 또는 구역별로 줄 번호를 표시할 수 있다.
+ */
+export const LineNumbers = Extension.create({
+  name: "lineNumbers",
+
+  addStorage() {
+    return {
+      enabled: false,
+      startAt: 1,
+      countBy: 1,
+      restartEachPage: true,
+    };
+  },
+
+  addCommands() {
+    return {
+      toggleLineNumbers:
+        () =>
+        ({ editor: ed }) => {
+          ed.storage.lineNumbers.enabled = !ed.storage.lineNumbers.enabled;
+          return true;
+        },
+      setLineNumberOptions:
+        (opts) =>
+        ({ editor: ed }) => {
+          Object.assign(ed.storage.lineNumbers, opts);
+          return true;
+        },
+    };
+  },
+});

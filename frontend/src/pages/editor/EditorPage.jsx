@@ -29,6 +29,8 @@ import {
   PageBreak, SectionBreak, ColumnBreak, LetterSpacing, TextShadow,
   TextBorder, ParagraphBorder, DropCap, KeepWithNext, WidowOrphan,
   TextDirection, Bookmark,
+  TrackInsert, TrackDelete, TrackFormat, TrackChangesManager,
+  PageNumberField, DateField, NonBreakingSpace, LineNumbers,
 } from "./modules/extensions";
 import { CommentMark } from "./modules/comment-mark";
 import {
@@ -44,8 +46,10 @@ import { DOC_TYPES, EMPTY_DOC, MARGIN_PRESETS, PAGE_SIZES, COUNTRY_CODES, TYPE_N
 import { HomeTab } from "./modules/HomeTab";
 import { InsertTab } from "./modules/InsertTab";
 import { DesignTab, LayoutTab, ReferencesTab, ReviewTab, ViewTab } from "./modules/OtherTabs";
+import { DrawTab } from "./modules/DrawTab";
 import { FindReplaceBar, FontDialog, ParagraphDialog, PageSetupDialog, HyperlinkDialog, TablePropertiesDialog as OrigTablePropsDialog, ImageDialog } from "./modules/Dialogs";
 import { BorderShadingDialog, TablePropertiesDialog as NewTablePropsDialog, BookmarkDialog, CrossReferenceDialog, PageBorderDialog, WatermarkDialog } from "./modules/NewDialogs";
+import { PrintPreviewDialog, StylesManagerDialog, SymbolPickerDialog } from "./modules/PrintPreviewDialog";
 import { FloatingToolbar } from "./modules/FloatingToolbar";
 import { BackstageView } from "./modules/BackstageView";
 import { NavigationPane } from "./modules/NavigationPane";
@@ -114,8 +118,11 @@ export default function EditorPage() {
   const [commentAuthor, setCommentAuthor] = useState(() => loadAuthor());
   const [showAuthorDialog, setShowAuthorDialog] = useState(false);
 
+  /* ── Track Changes State ── */
+  const [trackChangesEnabled, setTrackChangesEnabled] = useState(false);
+
   /* ── Dialog State ── */
-  const [dialogOpen, setDialogOpen] = useState(null); // "font" | "paragraph" | "pagesetup" | "hyperlink" | "table" | "image" | "border" | "bookmark" | "crossref" | "pageborder" | "watermark"
+  const [dialogOpen, setDialogOpen] = useState(null); // "font" | "paragraph" | "pagesetup" | "hyperlink" | "table" | "image" | "border" | "bookmark" | "crossref" | "pageborder" | "watermark" | "printpreview" | "stylesmanager" | "symbol"
   const [pageBorder, setPageBorder] = useState(null);
 
   /* ──── TipTap editor ──── */
@@ -159,6 +166,14 @@ export default function EditorPage() {
       Bookmark,
       FootnoteReference,
       CommentMark,
+      TrackInsert,
+      TrackDelete,
+      TrackFormat,
+      TrackChangesManager,
+      PageNumberField,
+      DateField,
+      NonBreakingSpace,
+      LineNumbers,
     ],
     editable: true,
     onUpdate: ({ editor: editorInstance }) => {
@@ -316,7 +331,7 @@ export default function EditorPage() {
       if (ctrl && e.key === "h") { e.preventDefault(); setFindBarMode("replace"); }
       if (ctrl && e.key === "k") { e.preventDefault(); setDialogOpen("hyperlink"); }
       if (ctrl && e.key === "d") { e.preventDefault(); setDialogOpen("font"); }
-      if (ctrl && e.key === "p") { e.preventDefault(); window.print(); }
+      if (ctrl && e.key === "p") { e.preventDefault(); setDialogOpen("printpreview"); }
       if (ctrl && e.altKey && e.key === "m") { e.preventDefault(); handleInsertComment(); }
       if (e.key === "F11") { e.preventDefault(); handleToggleFullscreen(); }
       if (ctrl && e.shiftKey && e.key === ">") { e.preventDefault(); editor?.chain().focus().setFontSize((() => { const s = parseFloat(editor?.getAttributes("textStyle").fontSize || "11"); const sizes = [8,9,10,10.5,11,12,14,16,18,20,22,24,28,36,48,72]; return (sizes.find(x => x > s) || 72) + "pt"; })()).run(); }
@@ -656,6 +671,13 @@ export default function EditorPage() {
       {dialogOpen === "crossref" && <CrossReferenceDialog editor={editor} onClose={() => setDialogOpen(null)} />}
       {dialogOpen === "pageborder" && <PageBorderDialog pageBorder={pageBorder} setPageBorder={setPageBorder} onClose={() => setDialogOpen(null)} />}
       {dialogOpen === "watermark" && <WatermarkDialog watermarkText={watermarkText} setWatermarkText={setWatermarkText} onClose={() => setDialogOpen(null)} />}
+      {dialogOpen === "printpreview" && <PrintPreviewDialog editor={editor} onClose={() => setDialogOpen(null)} onPrint={() => { window.print(); setDialogOpen(null); }} pageW={pageW} pageH={pageH} marginTop={marginTop} marginBottom={marginBottom} marginLeft={marginLeft} marginRight={marginRight} />}
+      {dialogOpen === "stylesmanager" && <StylesManagerDialog editor={editor} onClose={() => setDialogOpen(null)} onApplyStyle={(style) => {
+        if (style.tag === "blockquote") editor?.chain().focus().toggleBlockquote().run();
+        else if (style.tag?.startsWith("h")) editor?.chain().focus().toggleHeading({ level: parseInt(style.tag[1]) }).run();
+        else editor?.chain().focus().setParagraph().run();
+      }} />}
+      {dialogOpen === "symbol" && <SymbolPickerDialog editor={editor} onClose={() => setDialogOpen(null)} />}
 
       {/* ──── Left Sidebar: Document List ──── */}
       <DocListSidebar
@@ -821,11 +843,7 @@ export default function EditorPage() {
           />
         )}
         {!ribbonCollapsed && viewMode === "edit" && activeTab === "draw" && (
-          <div style={{ display: "flex", alignItems: "stretch", background: "var(--ribbon-bg, #fff)", borderBottom: "1px solid var(--ribbon-sep, #d1d5db)", flexShrink: 0, minHeight: 94, padding: "0 8px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0", color: "var(--ribbon-fg, #888)" }}>
-              <span style={{ fontSize: 12 }}>그리기 도구는 준비 중입니다. 터치 기기에서 펜, 형광펜, 지우개 등을 사용할 수 있습니다.</span>
-            </div>
-          </div>
+          <DrawTab editor={editor} />
         )}
         {!ribbonCollapsed && viewMode === "edit" && activeTab === "design" && (
           <DesignTab pageColor={pageColor} setPageColor={setPageColor}
@@ -850,6 +868,11 @@ export default function EditorPage() {
             onNextComment={handleNextComment}
             commentStore={commentStore}
             commentDispatch={commentDispatch}
+            trackChangesEnabled={trackChangesEnabled}
+            onToggleTrackChanges={() => {
+              setTrackChangesEnabled(v => !v);
+              editor?.commands.toggleTrackChanges();
+            }}
           />
         )}
         {!ribbonCollapsed && viewMode === "edit" && activeTab === "view" && (

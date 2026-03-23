@@ -598,6 +598,219 @@ export const editorStyles = `
 }
 
 /* ══════════════════════════════════════════════════
+   변경 내용 추적 (Track Changes)
+   ══════════════════════════════════════════════════ */
+
+/* 삽입된 텍스트 */
+.ProseMirror span.track-insert {
+  color: #16a34a;
+  text-decoration: underline;
+  text-decoration-color: #16a34a;
+  text-decoration-style: solid;
+  background: rgba(22, 163, 74, 0.06);
+  border-bottom: none;
+  position: relative;
+  cursor: pointer;
+}
+.ProseMirror span.track-insert:hover {
+  background: rgba(22, 163, 74, 0.12);
+}
+.ProseMirror span.track-insert::after {
+  content: attr(data-author);
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 0;
+  background: #16a34a;
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 9px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 50;
+}
+.ProseMirror span.track-insert:hover::after {
+  opacity: 1;
+}
+
+/* 삭제된 텍스트 */
+.ProseMirror span.track-delete {
+  color: #dc2626;
+  text-decoration: line-through;
+  text-decoration-color: #dc2626;
+  background: rgba(220, 38, 38, 0.06);
+  opacity: 0.7;
+  cursor: pointer;
+}
+.ProseMirror span.track-delete:hover {
+  background: rgba(220, 38, 38, 0.12);
+  opacity: 1;
+}
+
+/* 서식 변경 */
+.ProseMirror span.track-format {
+  text-decoration: underline;
+  text-decoration-color: #2563eb;
+  text-decoration-style: double;
+  cursor: pointer;
+}
+.ProseMirror span.track-format:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+/* 다크 모드 Track Changes */
+.word-editor-root.dark-mode .ProseMirror span.track-insert {
+  color: #4ade80;
+  text-decoration-color: #4ade80;
+  background: rgba(74, 222, 128, 0.08);
+}
+.word-editor-root.dark-mode .ProseMirror span.track-delete {
+  color: #f87171;
+  text-decoration-color: #f87171;
+  background: rgba(248, 113, 113, 0.08);
+}
+.word-editor-root.dark-mode .ProseMirror span.track-format {
+  text-decoration-color: #60a5fa;
+}
+
+/* ══════════════════════════════════════════════════
+   페이지 번호 / 날짜 필드 노드
+   ══════════════════════════════════════════════════ */
+.ProseMirror .page-number-field,
+.ProseMirror .date-field {
+  background: #e8f0fe;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-size: inherit;
+  color: #444;
+  cursor: default;
+  user-select: none;
+  display: inline;
+}
+.ProseMirror .page-number-field:hover,
+.ProseMirror .date-field:hover {
+  background: #d0e1fd;
+}
+
+/* 책갈피 표시 */
+.ProseMirror span.bookmark-anchor {
+  display: inline;
+  width: 0;
+  height: 0;
+  position: relative;
+}
+.ProseMirror span.bookmark-anchor::before {
+  content: "⚑";
+  font-size: 10px;
+  color: #888;
+  position: relative;
+  top: -2px;
+}
+
+/* ══════════════════════════════════════════════════
+   그리기 캔버스 오버레이
+   ══════════════════════════════════════════════════ */
+.drawing-canvas-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  cursor: crosshair;
+}
+.drawing-canvas-overlay svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ══════════════════════════════════════════════════
+   커스텀 스크롤바 (Word 365 스타일)
+   ══════════════════════════════════════════════════ */
+.editor-canvas-scroll::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+.editor-canvas-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.editor-canvas-scroll::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 6px;
+  border: 3px solid #f1f1f1;
+}
+.editor-canvas-scroll::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+.word-editor-root.dark-mode .editor-canvas-scroll::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+.word-editor-root.dark-mode .editor-canvas-scroll::-webkit-scrollbar-thumb {
+  background: #555;
+  border-color: #2d2d2d;
+}
+
+/* ══════════════════════════════════════════════════
+   향상된 리본 그룹 라벨
+   ══════════════════════════════════════════════════ */
+.ribbon-group-label {
+  font-size: 9px;
+  color: var(--ribbon-label, #888);
+  text-align: center;
+  padding-top: 2px;
+  user-select: none;
+  white-space: nowrap;
+  font-family: 'Segoe UI', '맑은 고딕', sans-serif;
+}
+
+/* ══════════════════════════════════════════════════
+   향상된 테이블 스타일
+   ══════════════════════════════════════════════════ */
+.ProseMirror table.resize-cursor {
+  cursor: col-resize;
+}
+.ProseMirror .selectedCell::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(59, 130, 246, 0.08);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ══════════════════════════════════════════════════
+   인쇄 미리보기 오버레이
+   ══════════════════════════════════════════════════ */
+.print-preview-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #f3f3f3;
+  z-index: 5000;
+  display: flex;
+  flex-direction: column;
+}
+.print-preview-toolbar {
+  height: 48px;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.print-preview-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+  background: #e8e8e8;
+}
+
+/* ══════════════════════════════════════════════════
    Bookmark Anchor
    ══════════════════════════════════════════════════ */
 
