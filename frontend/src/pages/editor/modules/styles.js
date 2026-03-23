@@ -1,0 +1,520 @@
+/**
+ * MS Word Editor Styles
+ */
+export const editorStyles = `
+/* ──── ProseMirror Core ──── */
+.ProseMirror {
+  outline: none;
+  min-height: 900px;
+  font-family: '맑은 고딕', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  font-size: 11pt;
+  line-height: 1.75;
+  color: #1a1a1a;
+  caret-color: #000;
+}
+.ProseMirror h1 { font-size: 24pt; font-weight: 700; margin: 24px 0 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+.ProseMirror h2 { font-size: 18pt; font-weight: 600; margin: 20px 0 10px; }
+.ProseMirror h3 { font-size: 14pt; font-weight: 600; margin: 16px 0 8px; }
+.ProseMirror h4 { font-size: 12pt; font-weight: 600; margin: 14px 0 6px; }
+.ProseMirror p { margin: 6px 0; }
+.ProseMirror ul, .ProseMirror ol { padding-left: 24px; margin: 8px 0; }
+.ProseMirror li { margin: 3px 0; }
+.ProseMirror blockquote { border-left: 3px solid #3b82f6; margin: 12px 0; padding: 8px 16px; background: #fafaf6; color: #555; font-style: italic; }
+.ProseMirror table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+.ProseMirror th, .ProseMirror td { border: 1px solid #ccc; padding: 6px 10px; font-size: 10pt; min-width: 80px; }
+.ProseMirror th { background: #f1f5f9; font-weight: 600; }
+.ProseMirror .selectedCell { background: rgba(59,130,246,0.1); }
+.ProseMirror code { background: #f0f0ee; padding: 1px 4px; border-radius: 2px; font-size: 0.9em; font-family: 'Courier New', monospace; }
+.ProseMirror pre { background: #2d2d2d; color: #ccc; padding: 12px 16px; border-radius: 4px; font-size: 10pt; overflow-x: auto; margin: 12px 0; }
+.ProseMirror pre code { background: none; padding: 0; }
+.ProseMirror hr { border: none; border-top: 1px solid #ddd; margin: 24px 0; }
+.ProseMirror a { color: #3b82f6; text-decoration: underline; }
+.ProseMirror img { max-width: 100%; cursor: pointer; }
+.ProseMirror img.ProseMirror-selectednode { outline: 2px solid #3b82f6; }
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: #ccc;
+  float: left;
+  pointer-events: none;
+  height: 0;
+}
+.ProseMirror ul[data-type="taskList"] { list-style: none; padding-left: 0; }
+.ProseMirror ul[data-type="taskList"] li { display: flex; align-items: baseline; gap: 6px; }
+.ProseMirror ul[data-type="taskList"] li input[type="checkbox"] { margin: 0; cursor: pointer; }
+.ProseMirror .tableWrapper { overflow-x: auto; margin: 12px 0; }
+.ProseMirror .column-resize-handle { position: absolute; right: -2px; top: 0; bottom: 0; width: 4px; background: #3b82f6; cursor: col-resize; z-index: 20; }
+
+/* ──── Selection Highlighting ──── */
+.ProseMirror ::selection { background: #b4d7ff; }
+.ProseMirror .ProseMirror-gapcursor { display: none; pointer-events: none; position: relative; }
+
+/* ──── Word-style ribbon buttons ──── */
+.word-ribbon-btn { transition: background 0.08s, border-color 0.08s; }
+.word-ribbon-btn:hover { background: #c8daf0 !important; }
+.word-ribbon-btn:active { background: #a8c4e8 !important; }
+.word-ribbon-btn.active { background: #c8daf0 !important; border-color: #8ab4e8 !important; }
+.word-tab-btn { transition: background 0.08s; }
+.word-tab-btn:hover { background: #e8e8e8 !important; }
+.word-style-card { transition: border-color 0.1s, box-shadow 0.1s; }
+.word-style-card:hover { border-color: #3b82f6 !important; box-shadow: 0 1px 4px rgba(59,130,246,0.15); }
+
+/* ──── Tooltip ──── */
+.word-tooltip {
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  background: #333; color: #fff; padding: 4px 8px; border-radius: 3px;
+  font-size: 11px; white-space: nowrap; pointer-events: none; z-index: 1000;
+  opacity: 0; transition: opacity 0.15s;
+}
+.word-tooltip::after {
+  content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  border: 4px solid transparent; border-top-color: #333;
+}
+*:hover > .word-tooltip { opacity: 1; }
+
+/* ──── Dropdown menu ──── */
+.word-dropdown-menu {
+  position: absolute; top: 100%; left: 0; z-index: 200;
+  background: #fff; border: 1px solid #d1d5db; border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 150px;
+  padding: 4px 0; max-height: 320px; overflow-y: auto;
+}
+.word-dropdown-item {
+  display: block; width: 100%; padding: 5px 12px; border: none; background: transparent;
+  font-size: 12px; text-align: left; cursor: pointer; font-family: '맑은 고딕', sans-serif;
+  transition: background 0.08s; white-space: nowrap;
+}
+.word-dropdown-item:hover { background: #eff6ff; }
+.word-dropdown-item.active { background: #dbeafe; font-weight: 600; }
+
+/* ──── Dialog / Modal ──── */
+.word-dialog-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.35); z-index: 2000;
+  display: flex; align-items: center; justify-content: center;
+}
+.word-dialog {
+  background: #f3f3f3; border: 1px solid #b0b0b0; border-radius: 4px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25); min-width: 420px; max-width: 640px;
+  font-family: '맑은 고딕', 'Segoe UI', sans-serif; font-size: 12px;
+}
+.word-dialog-title {
+  padding: 10px 16px; font-size: 12px; font-weight: 400; color: #333;
+  border-bottom: 1px solid #d5d5d5; background: #f3f3f3;
+  display: flex; justify-content: space-between; align-items: center;
+  cursor: default; user-select: none;
+}
+.word-dialog-body {
+  padding: 16px; background: #fff;
+}
+.word-dialog-footer {
+  padding: 10px 16px; display: flex; justify-content: flex-end; gap: 6px;
+  border-top: 1px solid #d5d5d5;
+}
+.word-dialog-btn {
+  padding: 5px 20px; font-size: 12px; border: 1px solid #adadad;
+  border-radius: 2px; cursor: pointer; font-family: '맑은 고딕', sans-serif;
+  background: #e5e5e5; color: #333;
+}
+.word-dialog-btn:hover { background: #d5d5d5; }
+.word-dialog-btn.primary {
+  background: #0078d4; color: #fff; border-color: #0068b8;
+}
+.word-dialog-btn.primary:hover { background: #106ebe; }
+.word-dialog-label {
+  display: block; font-size: 12px; color: #444; margin-bottom: 4px; font-weight: 400;
+}
+.word-dialog-input {
+  width: 100%; padding: 4px 8px; border: 1px solid #adadad; border-radius: 2px;
+  font-size: 12px; outline: none; box-sizing: border-box; font-family: '맑은 고딕', sans-serif;
+}
+.word-dialog-input:focus { border-color: #0078d4; box-shadow: 0 0 0 1px #0078d4; }
+.word-dialog-tabs {
+  display: flex; border-bottom: 1px solid #d5d5d5; padding: 0 16px; background: #f3f3f3;
+}
+.word-dialog-tab {
+  padding: 8px 16px; font-size: 12px; border: none; background: transparent;
+  cursor: pointer; border-bottom: 2px solid transparent; color: #555;
+  font-family: '맑은 고딕', sans-serif;
+}
+.word-dialog-tab:hover { color: #333; }
+.word-dialog-tab.active { color: #0078d4; border-bottom-color: #0078d4; font-weight: 600; }
+
+/* ──── Floating Toolbar ──── */
+.floating-toolbar {
+  position: absolute; z-index: 100;
+  background: #fff; border: 1px solid #d1d5db; border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 4px 6px;
+  display: flex; align-items: center; gap: 1px;
+  animation: floatIn 0.15s ease-out;
+}
+@keyframes floatIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ──── Backstage View ──── */
+.backstage-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 3000;
+  display: flex;
+}
+.backstage-sidebar {
+  width: 300px; background: #1e3a5f; color: #fff; display: flex; flex-direction: column;
+  padding: 0; flex-shrink: 0;
+}
+.backstage-content {
+  flex: 1; background: #f3f3f3; padding: 40px 60px; overflow-y: auto;
+}
+.backstage-menu-item {
+  display: flex; align-items: center; gap: 12px; padding: 12px 24px;
+  border: none; background: transparent; color: rgba(255,255,255,0.85);
+  font-size: 14px; cursor: pointer; width: 100%; text-align: left;
+  font-family: '맑은 고딕', sans-serif; transition: background 0.1s;
+}
+.backstage-menu-item:hover { background: rgba(255,255,255,0.1); }
+.backstage-menu-item.active { background: rgba(255,255,255,0.15); color: #fff; font-weight: 600; }
+
+/* ──── Table grid selector ──── */
+.table-grid-cell {
+  width: 18px; height: 18px; border: 1px solid #d1d5db; cursor: pointer;
+  transition: background 0.05s, border-color 0.05s;
+}
+.table-grid-cell.active {
+  background: #dbeafe; border-color: #3b82f6;
+}
+
+/* ──── Comment / Annotation ──── */
+.word-comment {
+  position: absolute; right: -220px; width: 200px;
+  background: #fff; border: 1px solid #d1d5db; border-left: 3px solid #3b82f6;
+  border-radius: 4px; padding: 8px 10px; font-size: 11px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+/* ──── Context Menu ──── */
+@keyframes ctxIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.ctx-menu-item:hover { background: #eff6ff !important; }
+
+/* ──── Ribbon collapse toggle ──── */
+.ribbon-collapse-btn {
+  position: absolute; right: 8px; top: 8px; z-index: 10;
+  width: 20px; height: 20px; border: 1px solid #d5d5d5;
+  background: var(--ribbon-bg, #f8f8f8); border-radius: 3px;
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; font-size: 10px; color: #888;
+  transition: background 0.1s;
+}
+.ribbon-collapse-btn:hover { background: #dbeafe; }
+
+/* ──── Image resize handles ──── */
+.ProseMirror img { cursor: pointer; transition: outline 0.1s; border-radius: 2px; }
+.ProseMirror img:hover { outline: 2px solid rgba(59,130,246,0.3); }
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid #3b82f6;
+  box-shadow: 0 0 0 4px rgba(59,130,246,0.1);
+}
+
+/* ──── Dark Mode ──── */
+.word-editor-root.dark-mode {
+  --ribbon-bg: #2d2d2d;
+  --ribbon-fg: #e0e0e0;
+  --ribbon-label: #888;
+  --ribbon-sep: #444;
+  --ribbon-active-bg: #3a3a5c;
+  --ribbon-active-border: #5b7bb8;
+  --ribbon-disabled: #555;
+  --ribbon-input-bg: #383838;
+  --ribbon-input-border: #555;
+}
+.word-editor-root.dark-mode .ProseMirror {
+  color: #e0e0e0;
+  caret-color: #fff;
+}
+.word-editor-root.dark-mode .ProseMirror h1,
+.word-editor-root.dark-mode .ProseMirror h2,
+.word-editor-root.dark-mode .ProseMirror h3,
+.word-editor-root.dark-mode .ProseMirror h4 { color: #f0f0f0; }
+.word-editor-root.dark-mode .ProseMirror a { color: #6ba3f7; }
+.word-editor-root.dark-mode .ProseMirror blockquote { background: #333; border-left-color: #5b7bb8; color: #ccc; }
+.word-editor-root.dark-mode .ProseMirror th { background: #383838; }
+.word-editor-root.dark-mode .ProseMirror td, .word-editor-root.dark-mode .ProseMirror th { border-color: #555; }
+.word-editor-root.dark-mode .ProseMirror code { background: #383838; }
+.word-editor-root.dark-mode .ProseMirror hr { border-top-color: #555; }
+.word-editor-root.dark-mode .ProseMirror ::selection { background: #3a5280; }
+.word-editor-root.dark-mode .word-ribbon-btn:hover { background: #3a3a5c !important; }
+.word-editor-root.dark-mode .word-ribbon-btn.active { background: #3a3a5c !important; border-color: #5b7bb8 !important; }
+.word-editor-root.dark-mode .word-tab-btn:hover { background: #3a3a3a !important; }
+.word-editor-root.dark-mode .word-style-card:hover { border-color: #5b7bb8 !important; }
+.word-editor-root.dark-mode .word-dropdown-menu { background: #2d2d2d; border-color: #444; }
+.word-editor-root.dark-mode .word-dropdown-item { color: #e0e0e0; }
+.word-editor-root.dark-mode .word-dropdown-item:hover { background: #3a3a5c; }
+.word-editor-root.dark-mode .floating-toolbar { background: #2d2d2d; border-color: #444; }
+
+/* ──── Print styles ──── */
+@media print {
+  /* Hide all UI elements */
+  .word-editor-root > *:not(.editor-canvas-scroll):not([class*="editor-page"]) { display: none !important; }
+  .word-editor-root { display: block !important; height: auto !important; overflow: visible !important; }
+
+  /* Hide sidebar, ribbon, tabs, status bar, nav pane, meta drawer */
+  .word-tab-btn, .word-ribbon-btn, .ribbon-collapse-btn { display: none !important; }
+  .floating-toolbar { display: none !important; }
+  .page-header-area input, .page-footer-area input { border: none !important; }
+
+  /* Page area */
+  .editor-page-area {
+    box-shadow: none !important;
+    margin: 0 !important;
+    width: 100% !important;
+    min-height: auto !important;
+    page-break-after: always;
+  }
+  .editor-canvas-scroll {
+    background: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Handle page breaks */
+  .ProseMirror hr { page-break-after: always; border: none !important; }
+  .ProseMirror { min-height: auto !important; }
+
+  /* Avoid breaking inside certain elements */
+  .ProseMirror h1, .ProseMirror h2, .ProseMirror h3 { page-break-after: avoid; }
+  .ProseMirror table { page-break-inside: avoid; }
+  .ProseMirror img { page-break-inside: avoid; }
+  .ProseMirror blockquote { page-break-inside: avoid; }
+}
+
+/* ──── Splash / Loading screen ──── */
+.editor-splash {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 10000; color: #fff;
+  animation: splashFadeIn 0.3s ease-out;
+}
+.editor-splash .logo { font-size: 28px; font-weight: 300; letter-spacing: 4px; margin-bottom: 12px; }
+.editor-splash .subtitle { font-size: 12px; opacity: 0.7; letter-spacing: 2px; }
+.editor-splash .loading-bar {
+  width: 200px; height: 2px; background: rgba(255,255,255,0.2);
+  margin-top: 24px; border-radius: 1px; overflow: hidden;
+}
+.editor-splash .loading-bar::after {
+  content: ""; display: block; width: 40%; height: 100%;
+  background: rgba(255,255,255,0.8); border-radius: 1px;
+  animation: splashLoad 1.2s ease-in-out infinite;
+}
+@keyframes splashFadeIn {
+  from { opacity: 0; } to { opacity: 1; }
+}
+@keyframes splashLoad {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(150%); }
+  100% { transform: translateX(350%); }
+}
+
+/* ──── Pagination ──── */
+/* The first page's content area overflows visually into subsequent page shells */
+.editor-page-area { position: relative; }
+/* Ensure ProseMirror doesn't constrain its height — let it grow naturally */
+.editor-page-area .ProseMirror { min-height: auto !important; }
+
+/* ──── Drag & Drop ──── */
+.ProseMirror.drag-over { outline: 2px dashed #3b82f6 !important; outline-offset: -4px; }
+
+/* ══════════════════════════════════════════════════
+   Comment / Memo System
+   ══════════════════════════════════════════════════ */
+
+/* 본문 내 메모 하이라이트 */
+.ProseMirror span.comment-highlight {
+  background-color: #FFF3C4;
+  border-bottom: 2px solid #FFD54F;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+/* 활성(선택된) 메모의 하이라이트 */
+.ProseMirror span.comment-highlight.comment-active {
+  background-color: #FFE082;
+}
+
+/* 해결된 메모의 하이라이트 */
+.ProseMirror span.comment-highlight.comment-resolved {
+  background-color: transparent;
+  border-bottom: 1px dashed #CCC;
+}
+
+/* 마크업 없음 모드: 하이라이트 숨김 */
+.comment-markup-none .ProseMirror span.comment-highlight,
+.comment-markup-original .ProseMirror span.comment-highlight,
+.comment-markup-simple .ProseMirror span.comment-highlight {
+  background-color: transparent !important;
+  border-bottom: none !important;
+}
+
+/* 간단한 태그 모드에서 여백의 메모 아이콘 */
+.comment-margin-indicator {
+  position: absolute;
+  right: -30px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  opacity: 0.6;
+  z-index: 10;
+}
+.comment-margin-indicator:hover {
+  opacity: 1;
+}
+
+/* 메모 패널 */
+.comments-panel {
+  width: 260px;
+  min-width: 200px;
+  max-width: 350px;
+  background: #FAFAFA;
+  border-left: 1px solid #E0E0E0;
+  overflow-y: auto;
+  padding: 8px;
+  flex-shrink: 0;
+}
+
+/* 메모 말풍선 카드 */
+.comment-balloon {
+  background: #FFFFFF;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  position: relative;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+}
+
+.comment-balloon:hover {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.comment-balloon.active {
+  border-color: var(--author-color, #3b82f6);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+
+/* 작성자 이름 */
+.comment-author-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: #333;
+}
+
+/* 시간 표시 */
+.comment-timestamp {
+  font-size: 11px;
+  color: #888;
+}
+
+/* 메모 내용 */
+.comment-content {
+  font-size: 13px;
+  color: #333;
+  margin-top: 4px;
+  white-space: pre-wrap;
+}
+
+/* 답글 입력 필드 */
+.comment-reply-input {
+  width: 100%;
+  border: 1px solid #E0E0E0;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+  resize: none;
+  min-height: 32px;
+  outline: none;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.comment-reply-input:focus {
+  border-color: #4A86C8;
+}
+
+/* 해결된 메모 (접힌 상태) */
+.comment-balloon.resolved {
+  opacity: 0.7;
+  padding: 6px 12px;
+}
+.comment-balloon.resolved .comment-content {
+  display: inline;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+  color: #888;
+}
+
+/* 더보기 메뉴 버튼 */
+.comment-more-btn {
+  opacity: 0;
+  transition: opacity 0.15s;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 2px;
+}
+.comment-balloon:hover .comment-more-btn {
+  opacity: 0.6;
+}
+.comment-more-btn:hover {
+  opacity: 1 !important;
+  background: #F0F0F0;
+}
+
+/* 검토 창 (세로/가로) */
+.reviewing-pane-vertical {
+  width: 300px;
+  border-right: 1px solid #E0E0E0;
+  background: #FAFAFA;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.reviewing-pane-horizontal {
+  height: 200px;
+  border-top: 1px solid #E0E0E0;
+  background: #FAFAFA;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+/* Dark mode comment overrides */
+.word-editor-root.dark-mode .comment-balloon {
+  background: #333;
+  border-color: #555;
+}
+.word-editor-root.dark-mode .comment-balloon.active {
+  border-color: var(--author-color, #5b7bb8);
+}
+.word-editor-root.dark-mode .comment-author-name { color: #e0e0e0; }
+.word-editor-root.dark-mode .comment-content { color: #ccc; }
+.word-editor-root.dark-mode .comments-panel { background: #2a2a2a; border-left-color: #444; }
+.word-editor-root.dark-mode .reviewing-pane-vertical,
+.word-editor-root.dark-mode .reviewing-pane-horizontal { background: #2a2a2a; }
+.word-editor-root.dark-mode .ProseMirror span.comment-highlight {
+  background-color: rgba(255,243,196,0.25);
+  border-bottom-color: rgba(255,213,79,0.5);
+}
+.word-editor-root.dark-mode .ProseMirror span.comment-highlight.comment-active {
+  background-color: rgba(255,224,130,0.35);
+}
+
+/* Print: hide comments by default */
+@media print {
+  .comments-panel { display: none !important; }
+  .reviewing-pane-vertical, .reviewing-pane-horizontal { display: none !important; }
+  .comment-margin-indicator { display: none !important; }
+  .ProseMirror span.comment-highlight { background-color: transparent !important; border-bottom: none !important; }
+}
+`;

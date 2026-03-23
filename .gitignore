@@ -1,0 +1,36 @@
+node_modules/
+dist/
+dist_test/
+dist_final/
+dist2/
+
+# 데이터베이스
+backend/data/
+
+# 업로드 파일
+backend/uploads/*.mp4
+backend/uploads/*.pdf
+backend/uploads/*.docx
+
+# 환경변수
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 로그
+*.log
+npm-debug.log*
+
+# 임시 파일
+*.tmp.*
+
+# Claude Code 설정
+.claude/
