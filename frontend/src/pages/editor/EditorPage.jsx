@@ -24,7 +24,12 @@ import { marked } from "marked";
 import { api } from "../../utils/api";
 
 /* ── Custom Extensions ── */
-import { FontSize, LineSpacing, Indent, ParagraphSpacing } from "./modules/extensions";
+import {
+  FontSize, LineSpacing, Indent, ParagraphSpacing,
+  PageBreak, SectionBreak, ColumnBreak, LetterSpacing, TextShadow,
+  TextBorder, ParagraphBorder, DropCap, KeepWithNext, WidowOrphan,
+  TextDirection, Bookmark,
+} from "./modules/extensions";
 import { CommentMark } from "./modules/comment-mark";
 import {
   createCommentStore, commentReducer, createComment, generateCommentId,
@@ -39,7 +44,8 @@ import { DOC_TYPES, EMPTY_DOC, MARGIN_PRESETS, PAGE_SIZES, COUNTRY_CODES, TYPE_N
 import { HomeTab } from "./modules/HomeTab";
 import { InsertTab } from "./modules/InsertTab";
 import { DesignTab, LayoutTab, ReferencesTab, ReviewTab, ViewTab } from "./modules/OtherTabs";
-import { FindReplaceBar, FontDialog, ParagraphDialog, PageSetupDialog, HyperlinkDialog, TablePropertiesDialog, ImageDialog } from "./modules/Dialogs";
+import { FindReplaceBar, FontDialog, ParagraphDialog, PageSetupDialog, HyperlinkDialog, TablePropertiesDialog as OrigTablePropsDialog, ImageDialog } from "./modules/Dialogs";
+import { BorderShadingDialog, TablePropertiesDialog as NewTablePropsDialog, BookmarkDialog, CrossReferenceDialog, PageBorderDialog, WatermarkDialog } from "./modules/NewDialogs";
 import { FloatingToolbar } from "./modules/FloatingToolbar";
 import { BackstageView } from "./modules/BackstageView";
 import { NavigationPane } from "./modules/NavigationPane";
@@ -109,7 +115,8 @@ export default function EditorPage() {
   const [showAuthorDialog, setShowAuthorDialog] = useState(false);
 
   /* ── Dialog State ── */
-  const [dialogOpen, setDialogOpen] = useState(null); // "font" | "paragraph" | "pagesetup" | "hyperlink" | "table" | "image"
+  const [dialogOpen, setDialogOpen] = useState(null); // "font" | "paragraph" | "pagesetup" | "hyperlink" | "table" | "image" | "border" | "bookmark" | "crossref" | "pageborder" | "watermark"
+  const [pageBorder, setPageBorder] = useState(null);
 
   /* ──── TipTap editor ──── */
   const editor = useEditor({
@@ -138,6 +145,18 @@ export default function EditorPage() {
       LineSpacing,
       Indent,
       ParagraphSpacing,
+      PageBreak,
+      SectionBreak,
+      ColumnBreak,
+      LetterSpacing,
+      TextShadow,
+      TextBorder,
+      ParagraphBorder,
+      DropCap,
+      KeepWithNext,
+      WidowOrphan,
+      TextDirection,
+      Bookmark,
       FootnoteReference,
       CommentMark,
     ],
@@ -626,8 +645,13 @@ export default function EditorPage() {
       {dialogOpen === "paragraph" && <ParagraphDialog editor={editor} onClose={() => setDialogOpen(null)} />}
       {dialogOpen === "pagesetup" && <PageSetupDialog margins={margins} setMargins={setMargins} orientation={orientation} setOrientation={setOrientation} pageSize={pageSize} setPageSize={setPageSize} customMargins={customMargins} setCustomMargins={setCustomMargins} onClose={() => setDialogOpen(null)} />}
       {dialogOpen === "hyperlink" && <HyperlinkDialog editor={editor} onClose={() => setDialogOpen(null)} />}
-      {dialogOpen === "table" && <TablePropertiesDialog editor={editor} onClose={() => setDialogOpen(null)} />}
+      {dialogOpen === "table" && <OrigTablePropsDialog editor={editor} onClose={() => setDialogOpen(null)} />}
       {dialogOpen === "image" && <ImageDialog editor={editor} onClose={() => setDialogOpen(null)} />}
+      {dialogOpen === "border" && <BorderShadingDialog editor={editor} onClose={() => setDialogOpen(null)} />}
+      {dialogOpen === "bookmark" && <BookmarkDialog editor={editor} onClose={() => setDialogOpen(null)} />}
+      {dialogOpen === "crossref" && <CrossReferenceDialog editor={editor} onClose={() => setDialogOpen(null)} />}
+      {dialogOpen === "pageborder" && <PageBorderDialog pageBorder={pageBorder} setPageBorder={setPageBorder} onClose={() => setDialogOpen(null)} />}
+      {dialogOpen === "watermark" && <WatermarkDialog watermarkText={watermarkText} setWatermarkText={setWatermarkText} onClose={() => setDialogOpen(null)} />}
 
       {/* ──── Left Sidebar: Document List ──── */}
       <DocListSidebar
@@ -743,16 +767,23 @@ export default function EditorPage() {
             onShowReplace={() => setFindBarMode("replace")}
             onOpenFontDialog={() => setDialogOpen("font")}
             onOpenParagraphDialog={() => setDialogOpen("paragraph")}
+            onOpenBorderDialog={() => setDialogOpen("border")}
           />
         )}
         {!ribbonCollapsed && viewMode === "edit" && activeTab === "insert" && (
           <InsertTab editor={editor}
             onOpenHyperlinkDialog={() => setDialogOpen("hyperlink")}
             onOpenImageDialog={() => setDialogOpen("image")}
+            onOpenBookmarkDialog={() => setDialogOpen("bookmark")}
+            onOpenCrossRefDialog={() => setDialogOpen("crossref")}
           />
         )}
         {!ribbonCollapsed && viewMode === "edit" && activeTab === "design" && (
-          <DesignTab pageColor={pageColor} setPageColor={setPageColor} watermarkText={watermarkText} setWatermarkText={setWatermarkText} />
+          <DesignTab pageColor={pageColor} setPageColor={setPageColor}
+            watermarkText={watermarkText} setWatermarkText={setWatermarkText}
+            onOpenPageBorderDialog={() => setDialogOpen("pageborder")}
+            onOpenWatermarkDialog={() => setDialogOpen("watermark")}
+          />
         )}
         {!ribbonCollapsed && viewMode === "edit" && activeTab === "layout" && (
           <LayoutTab margins={margins} setMargins={setMargins} orientation={orientation} setOrientation={setOrientation}

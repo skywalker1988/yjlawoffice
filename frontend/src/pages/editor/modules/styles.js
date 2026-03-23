@@ -517,4 +517,413 @@ export const editorStyles = `
   .comment-margin-indicator { display: none !important; }
   .ProseMirror span.comment-highlight { background-color: transparent !important; border-bottom: none !important; }
 }
+
+/* ══════════════════════════════════════════════════
+   Page Break / Section Break / Column Break
+   ══════════════════════════════════════════════════ */
+
+/* 페이지 나누기 */
+.ProseMirror .page-break {
+  page-break-after: always;
+  break-after: page;
+  display: block;
+  height: 0;
+  border: none;
+  border-top: 2px dashed #c0c0c0;
+  margin: 24px 0;
+  position: relative;
+}
+.ProseMirror .page-break::after {
+  content: "페이지 나누기";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  padding: 0 12px;
+  font-size: 9px;
+  color: #999;
+  letter-spacing: 1px;
+}
+
+/* 구역 나누기 */
+.ProseMirror .section-break {
+  display: block;
+  border: none;
+  border-top: 2px dashed #a0a0a0;
+  margin: 24px 0;
+  position: relative;
+}
+.ProseMirror .section-break::after {
+  content: "구역 나누기";
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  padding: 0 12px;
+  font-size: 9px;
+  color: #888;
+  letter-spacing: 1px;
+}
+
+/* 단 나누기 */
+.ProseMirror .column-break {
+  break-after: column;
+  display: block;
+  border-top: 1px dashed #ccc;
+  margin: 12px 0;
+  position: relative;
+}
+.ProseMirror .column-break::after {
+  content: "단 나누기";
+  position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+  background: #fff; padding: 0 8px; font-size: 9px; color: #aaa;
+}
+
+/* ══════════════════════════════════════════════════
+   Bookmark Anchor
+   ══════════════════════════════════════════════════ */
+
+.ProseMirror .bookmark-anchor {
+  display: inline;
+  position: relative;
+  border-left: 2px solid #f59e0b;
+  margin: 0 1px;
+}
+.ProseMirror .bookmark-anchor::before {
+  content: "⚑";
+  font-size: 8px;
+  color: #f59e0b;
+  position: absolute;
+  top: -8px;
+  left: -4px;
+}
+
+/* ══════════════════════════════════════════════════
+   Drop Cap (첫 글자 장식)
+   ══════════════════════════════════════════════════ */
+
+.ProseMirror p[data-drop-cap="dropped"]::first-letter {
+  float: left;
+  font-size: 3.5em;
+  line-height: 0.8;
+  padding: 4px 8px 0 0;
+  font-weight: 700;
+  color: #1e3a5f;
+}
+.ProseMirror p[data-drop-cap="in-margin"]::first-letter {
+  float: left;
+  font-size: 3.5em;
+  line-height: 0.8;
+  padding: 4px 8px 0 0;
+  margin-left: -40px;
+  font-weight: 700;
+  color: #1e3a5f;
+}
+
+/* ══════════════════════════════════════════════════
+   Track Changes (변경 내용 추적)
+   ══════════════════════════════════════════════════ */
+
+.ProseMirror .track-insert {
+  background-color: rgba(34, 197, 94, 0.15);
+  border-bottom: 2px solid #22c55e;
+  text-decoration: none;
+}
+.ProseMirror .track-delete {
+  background-color: rgba(239, 68, 68, 0.15);
+  text-decoration: line-through;
+  color: #ef4444;
+}
+.ProseMirror .track-format {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-bottom: 2px dotted #3b82f6;
+}
+.track-change-balloon {
+  position: absolute;
+  right: -240px;
+  width: 220px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 8px 10px;
+  font-size: 11px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.track-change-balloon.insert { border-left: 3px solid #22c55e; }
+.track-change-balloon.delete { border-left: 3px solid #ef4444; }
+.track-change-balloon.format { border-left: 3px solid #3b82f6; }
+
+/* ══════════════════════════════════════════════════
+   Header / Footer Editing Area (머리글/바닥글)
+   ══════════════════════════════════════════════════ */
+
+.header-footer-edit-area {
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px dashed transparent;
+  font-size: 9pt;
+  color: #888;
+  cursor: text;
+  transition: border-color 0.2s;
+}
+.header-footer-edit-area:hover {
+  border-color: #c0c0c0;
+}
+.header-footer-edit-area:focus-within {
+  border-color: #3b82f6;
+  outline: none;
+}
+.header-footer-edit-area.header {
+  border-bottom: 1px solid #e5e5e5;
+  margin-bottom: 8px;
+}
+.header-footer-edit-area.footer {
+  border-top: 1px solid #e5e5e5;
+  margin-top: 8px;
+}
+.header-footer-label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: #bbb;
+  background: #fff;
+  padding: 0 8px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ══════════════════════════════════════════════════
+   Status Bar (상태 표시줄)
+   ══════════════════════════════════════════════════ */
+
+.editor-status-bar {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 12px;
+  background: var(--ribbon-bg, #f3f3f3);
+  border-top: 1px solid var(--ribbon-sep, #d1d5db);
+  font-size: 11px;
+  color: var(--ribbon-fg, #666);
+  gap: 16px;
+  flex-shrink: 0;
+  user-select: none;
+}
+.editor-status-bar .status-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: default;
+}
+.editor-status-bar .status-item.clickable {
+  cursor: pointer;
+}
+.editor-status-bar .status-item.clickable:hover {
+  color: #3b82f6;
+}
+.editor-status-bar .status-sep {
+  width: 1px;
+  height: 14px;
+  background: var(--ribbon-sep, #d1d5db);
+}
+.editor-status-bar .zoom-slider {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.editor-status-bar .zoom-slider input[type="range"] {
+  width: 100px;
+  height: 4px;
+  accent-color: #3b82f6;
+  cursor: pointer;
+}
+
+/* ══════════════════════════════════════════════════
+   Table Style Variants (표 스타일)
+   ══════════════════════════════════════════════════ */
+
+.ProseMirror table.table-style-elegant th { background: #1e3a5f; color: #fff; }
+.ProseMirror table.table-style-elegant tr:nth-child(even) td { background: #f8fafc; }
+.ProseMirror table.table-style-grid-blue th { background: #2563eb; color: #fff; }
+.ProseMirror table.table-style-grid-blue td { border-color: #93c5fd; }
+.ProseMirror table.table-style-grid-blue tr:nth-child(even) td { background: #eff6ff; }
+
+/* ══════════════════════════════════════════════════
+   Paragraph Borders / Shading (단락 테두리/음영)
+   ══════════════════════════════════════════════════ */
+
+.ProseMirror p[data-border], .ProseMirror p[data-shading] {
+  padding: 8px 12px;
+  margin: 6px 0;
+  border-radius: 2px;
+}
+
+/* ══════════════════════════════════════════════════
+   Reading Mode (읽기 모드)
+   ══════════════════════════════════════════════════ */
+
+.editor-reading-mode .ProseMirror {
+  max-width: 700px;
+  margin: 0 auto;
+  font-size: 12pt;
+  line-height: 2;
+}
+.editor-reading-mode .editor-page-area {
+  box-shadow: none;
+  border: none;
+}
+
+/* ══════════════════════════════════════════════════
+   Outline View (개요 보기)
+   ══════════════════════════════════════════════════ */
+
+.editor-outline-mode .ProseMirror p:not(h1):not(h2):not(h3):not(h4) {
+  display: none;
+}
+.editor-outline-mode .ProseMirror h1,
+.editor-outline-mode .ProseMirror h2,
+.editor-outline-mode .ProseMirror h3,
+.editor-outline-mode .ProseMirror h4 {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 3px;
+}
+.editor-outline-mode .ProseMirror h1:hover,
+.editor-outline-mode .ProseMirror h2:hover,
+.editor-outline-mode .ProseMirror h3:hover,
+.editor-outline-mode .ProseMirror h4:hover {
+  background: #eff6ff;
+}
+
+/* ══════════════════════════════════════════════════
+   Dark Mode — New Feature Overrides
+   ══════════════════════════════════════════════════ */
+
+/* 페이지/구역/단 나누기 다크모드 */
+.word-editor-root.dark-mode .ProseMirror .page-break {
+  border-top-color: #555;
+}
+.word-editor-root.dark-mode .ProseMirror .page-break::after {
+  background: #2d2d2d;
+  color: #777;
+}
+.word-editor-root.dark-mode .ProseMirror .section-break {
+  border-top-color: #555;
+}
+.word-editor-root.dark-mode .ProseMirror .section-break::after {
+  background: #2d2d2d;
+  color: #777;
+}
+.word-editor-root.dark-mode .ProseMirror .column-break {
+  border-top-color: #444;
+}
+.word-editor-root.dark-mode .ProseMirror .column-break::after {
+  background: #2d2d2d;
+  color: #666;
+}
+
+/* 북마크 다크모드 */
+.word-editor-root.dark-mode .ProseMirror .bookmark-anchor {
+  border-left-color: #d97706;
+}
+.word-editor-root.dark-mode .ProseMirror .bookmark-anchor::before {
+  color: #d97706;
+}
+
+/* 드롭캡 다크모드 */
+.word-editor-root.dark-mode .ProseMirror p[data-drop-cap="dropped"]::first-letter,
+.word-editor-root.dark-mode .ProseMirror p[data-drop-cap="in-margin"]::first-letter {
+  color: #6ba3f7;
+}
+
+/* 변경 내용 추적 다크모드 */
+.word-editor-root.dark-mode .ProseMirror .track-insert {
+  background-color: rgba(34, 197, 94, 0.2);
+  border-bottom-color: #4ade80;
+}
+.word-editor-root.dark-mode .ProseMirror .track-delete {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+.word-editor-root.dark-mode .ProseMirror .track-format {
+  background-color: rgba(59, 130, 246, 0.15);
+  border-bottom-color: #60a5fa;
+}
+.word-editor-root.dark-mode .track-change-balloon {
+  background: #333;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+/* 머리글/바닥글 다크모드 */
+.word-editor-root.dark-mode .header-footer-edit-area {
+  color: #999;
+}
+.word-editor-root.dark-mode .header-footer-edit-area:hover {
+  border-color: #555;
+}
+.word-editor-root.dark-mode .header-footer-edit-area:focus-within {
+  border-color: #5b7bb8;
+}
+.word-editor-root.dark-mode .header-footer-edit-area.header {
+  border-bottom-color: #444;
+}
+.word-editor-root.dark-mode .header-footer-edit-area.footer {
+  border-top-color: #444;
+}
+.word-editor-root.dark-mode .header-footer-label {
+  background: #2d2d2d;
+  color: #666;
+}
+
+/* 상태 표시줄 다크모드 (CSS 변수로 자동 적용됨, 추가 오버라이드) */
+.word-editor-root.dark-mode .editor-status-bar .status-item.clickable:hover {
+  color: #6ba3f7;
+}
+
+/* 표 스타일 다크모드 */
+.word-editor-root.dark-mode .ProseMirror table.table-style-elegant th { background: #1a2e4a; }
+.word-editor-root.dark-mode .ProseMirror table.table-style-elegant tr:nth-child(even) td { background: #2a2a2a; }
+.word-editor-root.dark-mode .ProseMirror table.table-style-grid-blue th { background: #1d4ed8; }
+.word-editor-root.dark-mode .ProseMirror table.table-style-grid-blue td { border-color: #3b5998; }
+.word-editor-root.dark-mode .ProseMirror table.table-style-grid-blue tr:nth-child(even) td { background: #1e2a3a; }
+
+/* 단락 테두리/음영 다크모드 */
+.word-editor-root.dark-mode .ProseMirror p[data-border],
+.word-editor-root.dark-mode .ProseMirror p[data-shading] {
+  border-color: #555;
+}
+
+/* 읽기 모드 다크모드 */
+.word-editor-root.dark-mode .editor-reading-mode .editor-page-area {
+  box-shadow: none;
+  border: none;
+}
+
+/* 개요 보기 다크모드 */
+.word-editor-root.dark-mode .editor-outline-mode .ProseMirror h1:hover,
+.word-editor-root.dark-mode .editor-outline-mode .ProseMirror h2:hover,
+.word-editor-root.dark-mode .editor-outline-mode .ProseMirror h3:hover,
+.word-editor-root.dark-mode .editor-outline-mode .ProseMirror h4:hover {
+  background: #2a2a3a;
+}
+
+/* Print: 새 요소 인쇄 처리 */
+@media print {
+  .ProseMirror .page-break { border-top: none !important; }
+  .ProseMirror .page-break::after { display: none; }
+  .ProseMirror .section-break { border-top: none !important; }
+  .ProseMirror .section-break::after { display: none; }
+  .ProseMirror .column-break { border-top: none !important; }
+  .ProseMirror .column-break::after { display: none; }
+  .ProseMirror .bookmark-anchor { border-left: none !important; }
+  .ProseMirror .bookmark-anchor::before { display: none; }
+  .track-change-balloon { display: none !important; }
+  .editor-status-bar { display: none !important; }
+  .header-footer-label { display: none !important; }
+}
 `;

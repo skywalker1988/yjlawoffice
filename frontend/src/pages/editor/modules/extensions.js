@@ -1,8 +1,17 @@
 /**
- * Custom Tiptap Extensions for MS Word-like editor
- * All commands properly return boolean for chain compatibility
+ * TipTap 커스텀 확장 모듈
+ * MS Word 스타일 에디터에 필요한 서식, 레이아웃, 구조 확장을 정의한다.
+ *
+ * 기존 확장: FontSize, LineSpacing, Indent, ParagraphSpacing
+ * 추가 확장: PageBreak, SectionBreak, LetterSpacing, TextShadow,
+ *           Bookmark, TextBorder, ParagraphBorder, DropCap,
+ *           ColumnBreak, KeepWithNext, WidowOrphan, TextDirection
  */
-import { Extension } from "@tiptap/core";
+import { Extension, Node } from "@tiptap/core";
+
+/* ═══════════════════════════════════════════════
+ *  기존 확장 (Existing Extensions)
+ * ═══════════════════════════════════════════════ */
 
 /* ── FontSize Extension ── */
 export const FontSize = Extension.create({
@@ -262,6 +271,650 @@ export const ParagraphSpacing = Extension.create({
           });
           if (applied && dispatch) dispatch(tr);
           return true;
+        },
+    };
+  },
+});
+
+/* ═══════════════════════════════════════════════
+ *  새 확장 - 페이지/섹션/열 구분 (Break Extensions)
+ * ═══════════════════════════════════════════════ */
+
+/**
+ * 페이지 나누기 노드 확장
+ * Ctrl+Enter로 페이지 구분선을 삽입한다.
+ */
+export const PageBreak = Node.create({
+  name: "pageBreak",
+  group: "block",
+  atom: true,
+
+  parseHTML() {
+    return [{ tag: 'div[data-type="page-break"]' }];
+  },
+
+  renderHTML() {
+    return ["div", { class: "page-break", "data-type": "page-break" }];
+  },
+
+  addCommands() {
+    return {
+      /** @returns {boolean} 체인 호환용 */
+      setPageBreak:
+        () =>
+        ({ commands }) =>
+          commands.insertContent({ type: this.name }),
+    };
+  },
+
+  addKeyboardShortcuts() {
+    return {
+      "Mod-Enter": () => this.editor.commands.setPageBreak(),
+    };
+  },
+});
+
+/** 섹션 나누기에 사용할 수 있는 유형 */
+const SECTION_BREAK_TYPES = ["next-page", "continuous", "even-page", "odd-page"];
+
+/**
+ * 섹션 나누기 노드 확장
+ * 문서를 논리적 섹션으로 분리하며, 섹션별 레이아웃 설정이 가능하다.
+ *
+ * @param {string} sectionType - "next-page" | "continuous" | "even-page" | "odd-page"
+ */
+export const SectionBreak = Node.create({
+  name: "sectionBreak",
+  group: "block",
+  atom: true,
+
+  addAttributes() {
+    return {
+      sectionType: {
+        default: "next-page",
+        parseHTML: (el) => el.getAttribute("data-section-type") || "next-page",
+        renderHTML: (attrs) => ({ "data-section-type": attrs.sectionType }),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: 'div[data-type="section-break"]' }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return [
+      "div",
+      {
+        class: "section-break",
+        "data-type": "section-break",
+        ...HTMLAttributes,
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      /**
+       * 섹션 나누기를 삽입한다.
+       * @param {string} type - 섹션 나누기 유형 (기본값: "next-page")
+       */
+      setSectionBreak:
+        (type = "next-page") =>
+        ({ commands }) => {
+          const sectionType = SECTION_BREAK_TYPES.includes(type) ? type : "next-page";
+          return commands.insertContent({
+            type: this.name,
+            attrs: { sectionType },
+          });
+        },
+    };
+  },
+});
+
+/**
+ * 열(컬럼) 나누기 노드 확장
+ * 다단 레이아웃에서 다음 열로 콘텐츠를 이동시킨다.
+ */
+export const ColumnBreak = Node.create({
+  name: "columnBreak",
+  group: "block",
+  atom: true,
+
+  parseHTML() {
+    return [{ tag: 'div[data-type="column-break"]' }];
+  },
+
+  renderHTML() {
+    return ["div", { class: "column-break", "data-type": "column-break" }];
+  },
+
+  addCommands() {
+    return {
+      setColumnBreak:
+        () =>
+        ({ commands }) =>
+          commands.insertContent({ type: this.name }),
+    };
+  },
+});
+
+/* ═══════════════════════════════════════════════
+ *  새 확장 - 텍스트 스타일 속성 (TextStyle Attributes)
+ * ═══════════════════════════════════════════════ */
+
+/**
+ * 자간(글자 간격) 확장
+ * textStyle 마크에 letterSpacing 속성을 추가한다.
+ *
+ * @example editor.commands.setLetterSpacing("1px")
+ */
+export const LetterSpacing = Extension.create({
+  name: "letterSpacing",
+
+  addOptions() {
+    return { types: ["textStyle"] };
+  },
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          letterSpacing: {
+            default: null,
+            parseHTML: (el) => el.style.letterSpacing || null,
+            renderHTML: (attrs) => {
+              if (!attrs.letterSpacing) return {};
+              return { style: `letter-spacing: ${attrs.letterSpacing}` };
+            },
+          },
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      /** @param {string} value - CSS 자간 값 (예: "0.5px", "1px", "-0.5px") */
+      setLetterSpacing:
+        (value) =>
+        ({ chain }) =>
+          chain().setMark("textStyle", { letterSpacing: value }).run(),
+      unsetLetterSpacing:
+        () =>
+        ({ chain }) =>
+          chain().setMark("textStyle", { letterSpacing: null }).removeEmptyTextStyle().run(),
+    };
+  },
+});
+
+/**
+ * 텍스트 그림자 확장
+ * textStyle 마크에 textShadow 속성을 추가한다.
+ *
+ * @example editor.commands.setTextShadow("2px 2px 4px rgba(0,0,0,0.3)")
+ */
+export const TextShadow = Extension.create({
+  name: "textShadow",
+
+  addOptions() {
+    return { types: ["textStyle"] };
+  },
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          textShadow: {
+            default: null,
+            parseHTML: (el) => el.style.textShadow || null,
+            renderHTML: (attrs) => {
+              if (!attrs.textShadow) return {};
+              return { style: `text-shadow: ${attrs.textShadow}` };
+            },
+          },
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      /** @param {string} value - CSS text-shadow 값 */
+      setTextShadow:
+        (value) =>
+        ({ chain }) =>
+          chain().setMark("textStyle", { textShadow: value }).run(),
+      unsetTextShadow:
+        () =>
+        ({ chain }) =>
+          chain().setMark("textStyle", { textShadow: null }).removeEmptyTextStyle().run(),
+    };
+  },
+});
+
+/**
+ * 텍스트 테두리 확장
+ * textStyle 마크에 테두리(border) 속성을 추가한다.
+ * 글자 주위에 외곽선을 표시할 때 사용한다.
+ *
+ * @example editor.commands.setTextBorder("1px solid #000")
+ */
+export const TextBorder = Extension.create({
+  name: "textBorder",
+
+  addOptions() {
+    return { types: ["textStyle"] };
+  },
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          textBorder: {
+            default: null,
+            parseHTML: (el) => el.style.border || null,
+            renderHTML: (attrs) => {
+              if (!attrs.textBorder) return {};
+              return { style: `border: ${attrs.textBorder}; padding: 1px 2px` };
+            },
+          },
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      /** @param {string} value - CSS border 값 (예: "1px solid #000") */
+      setTextBorder:
+        (value) =>
+        ({ chain }) =>
+          chain().setMark("textStyle", { textBorder: value }).run(),
+      unsetTextBorder:
+        () =>
+        ({ chain }) =>
+          chain().setMark("textStyle", { textBorder: null }).removeEmptyTextStyle().run(),
+    };
+  },
+});
+
+/* ═══════════════════════════════════════════════
+ *  새 확장 - 단락 속성 (Paragraph Attributes)
+ * ═══════════════════════════════════════════════ */
+
+/**
+ * 선택된 단락 노드에 속성을 일괄 적용하는 헬퍼 함수
+ * 여러 단락 확장에서 공통으로 사용한다.
+ *
+ * @param {string[]} types - 대상 노드 타입 목록
+ * @param {Object} attrsToSet - 설정할 속성 객체
+ * @returns {function} TipTap 커맨드 함수
+ */
+function applyToSelectedParagraphs(types, attrsToSet) {
+  return ({ tr, state, dispatch }) => {
+    const { from, to } = state.selection;
+    let applied = false;
+    state.doc.nodesBetween(from, to, (node, pos) => {
+      if (types.includes(node.type.name)) {
+        tr.setNodeMarkup(pos, undefined, { ...node.attrs, ...attrsToSet });
+        applied = true;
+      }
+    });
+    if (applied && dispatch) dispatch(tr);
+    return true;
+  };
+}
+
+/**
+ * 단락 테두리 및 배경 음영 확장
+ * 단락별로 상하좌우 테두리와 배경색을 설정할 수 있다.
+ *
+ * @example editor.commands.setParagraphBorder({ borderBottom: "1px solid #000" })
+ * @example editor.commands.setParagraphShading("#f0f0f0")
+ */
+export const ParagraphBorder = Extension.create({
+  name: "paragraphBorder",
+
+  addOptions() {
+    return { types: ["paragraph", "heading"] };
+  },
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          borderTop: {
+            default: null,
+            parseHTML: (el) => el.style.borderTop || null,
+            renderHTML: (attrs) => {
+              if (!attrs.borderTop) return {};
+              return { style: `border-top: ${attrs.borderTop}` };
+            },
+          },
+          borderBottom: {
+            default: null,
+            parseHTML: (el) => el.style.borderBottom || null,
+            renderHTML: (attrs) => {
+              if (!attrs.borderBottom) return {};
+              return { style: `border-bottom: ${attrs.borderBottom}` };
+            },
+          },
+          borderLeft: {
+            default: null,
+            parseHTML: (el) => el.style.borderLeft || null,
+            renderHTML: (attrs) => {
+              if (!attrs.borderLeft) return {};
+              return { style: `border-left: ${attrs.borderLeft}` };
+            },
+          },
+          borderRight: {
+            default: null,
+            parseHTML: (el) => el.style.borderRight || null,
+            renderHTML: (attrs) => {
+              if (!attrs.borderRight) return {};
+              return { style: `border-right: ${attrs.borderRight}` };
+            },
+          },
+          borderColor: {
+            default: null,
+            parseHTML: (el) => el.style.borderColor || null,
+            renderHTML: (attrs) => {
+              if (!attrs.borderColor) return {};
+              return { style: `border-color: ${attrs.borderColor}` };
+            },
+          },
+          backgroundColor: {
+            default: null,
+            parseHTML: (el) => el.style.backgroundColor || null,
+            renderHTML: (attrs) => {
+              if (!attrs.backgroundColor) return {};
+              return { style: `background-color: ${attrs.backgroundColor}` };
+            },
+          },
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      /**
+       * 단락 테두리를 설정한다.
+       * @param {Object} sides - 테두리 속성 (borderTop, borderBottom, borderLeft, borderRight, borderColor)
+       */
+      setParagraphBorder:
+        (sides) =>
+        applyToSelectedParagraphs(this.options.types, sides),
+
+      /**
+       * 단락 배경 음영을 설정한다.
+       * @param {string} color - CSS 색상 값
+       */
+      setParagraphShading:
+        (color) =>
+        applyToSelectedParagraphs(this.options.types, { backgroundColor: color }),
+
+      /** 단락 테두리와 배경을 모두 제거한다 */
+      unsetParagraphBorder:
+        () =>
+        applyToSelectedParagraphs(this.options.types, {
+          borderTop: null,
+          borderBottom: null,
+          borderLeft: null,
+          borderRight: null,
+          borderColor: null,
+          backgroundColor: null,
+        }),
+    };
+  },
+});
+
+/**
+ * 드롭 캡(첫글자 장식) 확장
+ * 단락의 첫 글자를 크게 표시하는 Word의 드롭 캡 기능을 구현한다.
+ *
+ * @example editor.commands.setDropCap("dropped")
+ */
+export const DropCap = Extension.create({
+  name: "dropCap",
+
+  addOptions() {
+    return { types: ["paragraph"] };
+  },
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          dropCap: {
+            default: "none",
+            parseHTML: (el) => el.getAttribute("data-drop-cap") || "none",
+            renderHTML: (attrs) => {
+              if (!attrs.dropCap || attrs.dropCap === "none") return {};
+              return { "data-drop-cap": attrs.dropCap };
+            },
+          },
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      /**
+       * 드롭 캡 유형을 설정한다.
+       * @param {string} type - "none" | "dropped" | "in-margin"
+       */
+      setDropCap:
+        (type) =>
+        applyToSelectedParagraphs(this.options.types, { dropCap: type }),
+      unsetDropCap:
+        () =>
+        applyToSelectedParagraphs(this.options.types, { dropCap: "none" }),
+    };
+  },
+});
+
+/**
+ * 다음 단락과 함께 유지 확장
+ * 페이지 나눔 시 현재 단락과 다음 단락이 분리되지 않도록 한다.
+ * Word의 "다음 단락과 함께" 옵션에 해당한다.
+ */
+export const KeepWithNext = Extension.create({
+  name: "keepWithNext",
+
+  addOptions() {
+    return { types: ["paragraph", "heading"] };
+  },
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          keepWithNext: {
+            default: false,
+            parseHTML: (el) => el.getAttribute("data-keep-with-next") === "true",
+            renderHTML: (attrs) => {
+              if (!attrs.keepWithNext) return {};
+              return { "data-keep-with-next": "true" };
+            },
+          },
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      /** @param {boolean} value - 다음 단락과 함께 유지 여부 */
+      setKeepWithNext:
+        (value) =>
+        applyToSelectedParagraphs(this.options.types, { keepWithNext: !!value }),
+    };
+  },
+});
+
+/**
+ * 과부/고아 줄 방지 확장
+ * 페이지 상단에 단락의 마지막 줄만 남거나(과부),
+ * 페이지 하단에 단락의 첫 줄만 남는(고아) 것을 방지한다.
+ * Word에서는 기본적으로 활성화되어 있다.
+ */
+export const WidowOrphan = Extension.create({
+  name: "widowOrphan",
+
+  addOptions() {
+    return { types: ["paragraph", "heading"] };
+  },
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          widowOrphan: {
+            default: true,
+            parseHTML: (el) => el.getAttribute("data-widow-orphan") !== "false",
+            renderHTML: (attrs) => {
+              // 기본값(true)이면 속성을 렌더링하지 않는다
+              if (attrs.widowOrphan !== false) return {};
+              return { "data-widow-orphan": "false" };
+            },
+          },
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      /** @param {boolean} value - 과부/고아 줄 방지 활성화 여부 */
+      setWidowOrphan:
+        (value) =>
+        applyToSelectedParagraphs(this.options.types, { widowOrphan: !!value }),
+    };
+  },
+});
+
+/**
+ * 텍스트 방향(RTL/LTR) 확장
+ * 단락의 텍스트 방향을 왼쪽→오른쪽 또는 오른쪽→왼쪽으로 설정한다.
+ * 아랍어, 히브리어 등 RTL 언어 지원에 사용한다.
+ */
+export const TextDirection = Extension.create({
+  name: "textDirection",
+
+  addOptions() {
+    return { types: ["paragraph", "heading"] };
+  },
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          direction: {
+            default: null,
+            parseHTML: (el) => el.getAttribute("dir") || null,
+            renderHTML: (attrs) => {
+              if (!attrs.direction) return {};
+              return { dir: attrs.direction };
+            },
+          },
+        },
+      },
+    ];
+  },
+
+  addCommands() {
+    return {
+      /** @param {string} value - "ltr" 또는 "rtl" */
+      setTextDirection:
+        (value) =>
+        applyToSelectedParagraphs(this.options.types, { direction: value }),
+    };
+  },
+});
+
+/* ═══════════════════════════════════════════════
+ *  새 확장 - 인라인 노드 (Inline Node)
+ * ═══════════════════════════════════════════════ */
+
+/**
+ * 책갈피(Bookmark) 인라인 노드 확장
+ * 문서 내 특정 위치에 이름 있는 앵커를 삽입하여, 하이퍼링크 대상으로 사용한다.
+ * 너비가 0인 인라인 요소로 렌더링된다.
+ */
+export const Bookmark = Node.create({
+  name: "bookmark",
+  group: "inline",
+  inline: true,
+  atom: true,
+
+  addAttributes() {
+    return {
+      id: {
+        default: null,
+        parseHTML: (el) => el.getAttribute("data-bookmark-id"),
+        renderHTML: (attrs) => ({ "data-bookmark-id": attrs.id }),
+      },
+      name: {
+        default: null,
+        parseHTML: (el) => el.getAttribute("data-bookmark-name"),
+        renderHTML: (attrs) => ({ "data-bookmark-name": attrs.name }),
+      },
+    };
+  },
+
+  parseHTML() {
+    return [{ tag: "span.bookmark-anchor" }];
+  },
+
+  renderHTML({ HTMLAttributes }) {
+    return ["span", { class: "bookmark-anchor", ...HTMLAttributes }];
+  },
+
+  addCommands() {
+    return {
+      /**
+       * 현재 커서 위치에 책갈피를 삽입한다.
+       * @param {string} name - 책갈피 이름 (고유해야 함)
+       */
+      setBookmark:
+        (name) =>
+        ({ commands }) => {
+          const bookmarkId = `bm-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+          return commands.insertContent({
+            type: this.name,
+            attrs: { id: bookmarkId, name },
+          });
+        },
+
+      /**
+       * 지정된 이름의 책갈피를 문서에서 제거한다.
+       * @param {string} name - 제거할 책갈피 이름
+       */
+      removeBookmark:
+        (name) =>
+        ({ tr, state, dispatch }) => {
+          let removed = false;
+          state.doc.descendants((node, pos) => {
+            if (node.type.name === this.name && node.attrs.name === name) {
+              tr.delete(pos, pos + node.nodeSize);
+              removed = true;
+              // 첫 번째 매칭만 삭제하고 종료
+              return false;
+            }
+          });
+          if (removed && dispatch) dispatch(tr);
+          return removed;
         },
     };
   },
