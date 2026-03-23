@@ -9,7 +9,7 @@ import {
   ChevronDown, MessageSquare,
 } from "lucide-react";
 import { RibbonBtn, DropdownButton, ColorGrid } from "./RibbonParts";
-import { HIGHLIGHT_COLORS, TEXT_COLORS } from "./constants";
+import { HIGHLIGHT_COLORS, TEXT_COLORS, FONT_LIST, FONT_SIZES } from "./constants";
 
 const I = 13;
 
@@ -88,6 +88,28 @@ export function FloatingToolbar({ editor, onInsertComment }) {
     <div ref={toolbarRef} className="floating-toolbar"
       style={{ top: position.top, left: position.left }}
       onMouseDown={(e) => e.preventDefault()}>
+      {/* 글꼴 및 크기 선택 */}
+      <select value={(() => {
+        const ff = safeGetAttr("textStyle").fontFamily;
+        if (!ff) return "malgun";
+        const found = FONT_LIST.find(f => ff.includes(f.label) || ff.includes(f.family.split(",")[0].replace(/'/g, "")));
+        return found?.value || "malgun";
+      })()} onChange={(e) => {
+        const font = FONT_LIST.find(f => f.value === e.target.value);
+        if (font) editor.chain().focus().setFontFamily(font.family).run();
+      }} style={{ height: 22, fontSize: 10, border: "1px solid #d5d5d5", borderRadius: 3, padding: "0 2px", cursor: "pointer", background: "#fff", maxWidth: 80 }}>
+        {FONT_LIST.slice(0, 12).map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+      </select>
+      <select value={(() => {
+        const fs = safeGetAttr("textStyle").fontSize;
+        return fs ? fs.replace("pt", "").replace("px", "") : "11";
+      })()} onChange={(e) => editor.chain().focus().setFontSize(e.target.value + "pt").run()}
+        style={{ height: 22, fontSize: 10, border: "1px solid #d5d5d5", borderRadius: 3, padding: "0 2px", cursor: "pointer", background: "#fff", width: 36 }}>
+        {FONT_SIZES.map(s => <option key={s} value={String(s)}>{s}</option>)}
+      </select>
+
+      <span style={{ width: 1, height: 16, background: "#ddd", margin: "0 3px" }} />
+
       <RibbonBtn active={safeIsActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()} title="굵게" small>
         <Bold size={I} strokeWidth={3} />
       </RibbonBtn>

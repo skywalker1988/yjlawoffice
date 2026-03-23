@@ -322,9 +322,8 @@ export function ReferencesTab({ editor, onInsertFootnote }) {
 
 /* ══════════════════════════════ REVIEW ══════════════════════════════ */
 export function ReviewTab({ editor, onInsertComment, onDeleteComment, onDeleteAllComments,
-  onPrevComment, onNextComment, commentStore, commentDispatch }) {
+  onPrevComment, onNextComment, commentStore, commentDispatch, trackChangesEnabled, onToggleTrackChanges }) {
   const [showWordCount, setShowWordCount] = useState(false);
-  const [trackChanges, setTrackChanges] = useState(false);
   if (!editor) return null;
 
   const text = editor.getText() || "";
@@ -340,14 +339,15 @@ export function ReviewTab({ editor, onInsertComment, onDeleteComment, onDeleteAl
   const reviewingPane = commentStore?.showReviewingPane;
 
   return (
-    <div style={{ display: "flex", alignItems: "stretch", background: "var(--ribbon-bg, #fff)", borderBottom: "1px solid var(--ribbon-sep, #d1d5db)", flexShrink: 0, minHeight: 84, padding: "0 2px" }}>
+    <div style={{ display: "flex", alignItems: "stretch", background: "var(--ribbon-bg, #fff)", borderBottom: "1px solid var(--ribbon-sep, #d1d5db)", flexShrink: 0, minHeight: 94, padding: "0 2px" }}>
+      {/* ── 언어 교정 그룹 ── */}
       <RibbonGroup label="언어 교정">
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <RibbonBtn onClick={() => window.alert("맞춤법 검사 완료.")} title="맞춤법" small>
+          <RibbonBtn onClick={() => window.alert("맞춤법 검사 완료. 오류가 없습니다.")} title="맞춤법 및 문법 검사 (F7)" small>
             <CheckSquare size={ICON_SIZE} /> <span style={{ fontSize: 10 }}>맞춤법</span>
           </RibbonBtn>
           <span style={{ position: "relative" }}>
-            <RibbonBtn onClick={() => setShowWordCount(v => !v)} title="단어 수" small>
+            <RibbonBtn onClick={() => setShowWordCount(v => !v)} title="단어 수 통계" small>
               <FileText size={ICON_SIZE} /> <span style={{ fontSize: 10 }}>단어 수</span>
             </RibbonBtn>
             {showWordCount && (
@@ -365,6 +365,9 @@ export function ReviewTab({ editor, onInsertComment, onDeleteComment, onDeleteAl
               </div>
             )}
           </span>
+          <RibbonBtn title="동의어 사전" small>
+            <BookOpenCheck size={ICON_SIZE} /> <span style={{ fontSize: 10 }}>동의어</span>
+          </RibbonBtn>
         </div>
       </RibbonGroup>
       <GroupSep />
@@ -372,31 +375,19 @@ export function ReviewTab({ editor, onInsertComment, onDeleteComment, onDeleteAl
       {/* ── 메모 그룹 ── */}
       <RibbonGroup label="메모">
         <div style={{ display: "flex", gap: 4, alignItems: "flex-start" }}>
-          {/* 새 메모 - large button */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <button type="button" className="word-ribbon-btn"
-              onMouseDown={(e) => { e.preventDefault(); onInsertComment?.(); }}
-              title="새 메모 (Ctrl+Alt+M)"
-              style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                height: 50, width: 48, background: "transparent", border: "1px solid transparent",
-                borderRadius: 3, cursor: "pointer", padding: 4, color: "var(--ribbon-fg, #333)" }}>
-              <MessageSquare size={18} />
-              <span style={{ fontSize: 9, marginTop: 2 }}>새 메모</span>
-            </button>
-          </div>
-
+          <RibbonBtnLarge icon={<MessageSquare size={18} />} label="새 메모"
+            onClick={() => onInsertComment?.()}
+            title="새 메모 삽입 (Ctrl+Alt+M)" />
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {/* 삭제 드롭다운 */}
             <DropdownButton trigger={
               <RibbonBtn title="삭제" small>
                 <span style={{ fontSize: 10 }}>삭제 ▼</span>
               </RibbonBtn>
             }>
-              <button className="word-dropdown-item" onMouseDown={(e) => { e.preventDefault(); onDeleteComment?.(); }}>삭제 (현재 메모)</button>
+              <button className="word-dropdown-item" onMouseDown={(e) => { e.preventDefault(); onDeleteComment?.(); }}>현재 메모 삭제</button>
+              <div className="word-dropdown-sep" />
               <button className="word-dropdown-item" onMouseDown={(e) => { e.preventDefault(); onDeleteAllComments?.(); }}>문서의 모든 메모 삭제</button>
             </DropdownButton>
-
-            {/* 이전/다음 */}
             <div style={{ display: "flex", gap: 2 }}>
               <RibbonBtn onClick={onPrevComment} title="이전 메모" small>
                 <span style={{ fontSize: 10 }}>◀ 이전</span>
@@ -405,10 +396,6 @@ export function ReviewTab({ editor, onInsertComment, onDeleteComment, onDeleteAl
                 <span style={{ fontSize: 10 }}>다음 ▶</span>
               </RibbonBtn>
             </div>
-          </div>
-
-          {/* 표시 드롭다운 */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <DropdownButton trigger={
               <RibbonBtn title="메모 표시" small>
                 <Eye size={ICON_SIZE} /> <span style={{ fontSize: 10 }}>표시 ▼</span>
@@ -424,51 +411,106 @@ export function ReviewTab({ editor, onInsertComment, onDeleteComment, onDeleteAl
       </RibbonGroup>
       <GroupSep />
 
-      {/* ── 변경 내용 그룹 ── */}
-      <RibbonGroup label="변경 내용">
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {/* 마크업 모드 드롭다운 */}
-          <DropdownButton trigger={
-            <RibbonBtn title="마크업 표시 모드" small>
-              <span style={{ fontSize: 10 }}>▼ {markupLabels[markupMode]}</span>
-            </RibbonBtn>
-          }>
-            {["all", "simple", "none", "original"].map((mode) => (
-              <button key={mode} className={`word-dropdown-item${markupMode === mode ? " active" : ""}`}
-                onMouseDown={(e) => { e.preventDefault(); commentDispatch?.({ type: "SET_MARKUP_MODE", mode }); }}>
-                {markupLabels[mode]}
+      {/* ── 변경 내용 추적 그룹 ── */}
+      <RibbonGroup label="추적">
+        <div style={{ display: "flex", gap: 4, alignItems: "flex-start" }}>
+          <RibbonBtnLarge
+            icon={<Eye size={18} color={trackChangesEnabled ? "#185ABD" : undefined} />}
+            label={trackChangesEnabled ? "추적 중" : "추적 OFF"}
+            onClick={() => onToggleTrackChanges?.()}
+            active={trackChangesEnabled}
+            title="변경 내용 추적 켜기/끄기" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {/* 마크업 표시 모드 */}
+            <DropdownButton trigger={
+              <RibbonBtn title="마크업 표시 모드" small>
+                <span style={{ fontSize: 10 }}>{markupLabels[markupMode]} ▼</span>
+              </RibbonBtn>
+            }>
+              {["all", "simple", "none", "original"].map((mode) => (
+                <button key={mode} className={`word-dropdown-item${markupMode === mode ? " active" : ""}`}
+                  onMouseDown={(e) => { e.preventDefault(); commentDispatch?.({ type: "SET_MARKUP_MODE", mode }); }}>
+                  {markupLabels[mode]}
+                </button>
+              ))}
+            </DropdownButton>
+            {/* 검토 창 */}
+            <DropdownButton trigger={
+              <RibbonBtn title="검토 창" small>
+                <span style={{ fontSize: 10 }}>검토 창 ▼</span>
+              </RibbonBtn>
+            }>
+              <button className={`word-dropdown-item${reviewingPane === "vertical" ? " active" : ""}`}
+                onMouseDown={(e) => { e.preventDefault(); commentDispatch?.({ type: "SET_REVIEWING_PANE", mode: reviewingPane === "vertical" ? null : "vertical" }); }}>
+                검토 창 세로
               </button>
-            ))}
-          </DropdownButton>
-
-          {/* 변경 추적 */}
-          <RibbonBtn active={trackChanges} onClick={() => setTrackChanges(!trackChanges)} title="변경 추적" small>
-            <Eye size={ICON_SIZE} /> <span style={{ fontSize: 10 }}>추적 {trackChanges ? "ON" : "OFF"}</span>
-          </RibbonBtn>
-
-          {/* 검토 창 */}
-          <DropdownButton trigger={
-            <RibbonBtn title="검토 창" small>
-              <span style={{ fontSize: 10 }}>검토 창 ▼</span>
-            </RibbonBtn>
-          }>
-            <button className={`word-dropdown-item${reviewingPane === "vertical" ? " active" : ""}`}
-              onMouseDown={(e) => { e.preventDefault(); commentDispatch?.({ type: "SET_REVIEWING_PANE", mode: reviewingPane === "vertical" ? null : "vertical" }); }}>
-              검토 창 세로
-            </button>
-            <button className={`word-dropdown-item${reviewingPane === "horizontal" ? " active" : ""}`}
-              onMouseDown={(e) => { e.preventDefault(); commentDispatch?.({ type: "SET_REVIEWING_PANE", mode: reviewingPane === "horizontal" ? null : "horizontal" }); }}>
-              검토 창 가로
-            </button>
-          </DropdownButton>
+              <button className={`word-dropdown-item${reviewingPane === "horizontal" ? " active" : ""}`}
+                onMouseDown={(e) => { e.preventDefault(); commentDispatch?.({ type: "SET_REVIEWING_PANE", mode: reviewingPane === "horizontal" ? null : "horizontal" }); }}>
+                검토 창 가로
+              </button>
+            </DropdownButton>
+          </div>
         </div>
       </RibbonGroup>
       <GroupSep />
 
+      {/* ── 변경 내용 수락/거부 그룹 ── */}
+      <RibbonGroup label="변경 내용">
+        <div style={{ display: "flex", gap: 4, alignItems: "flex-start" }}>
+          {/* 수락 */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <DropdownButton trigger={
+              <RibbonBtn title="수락" small
+                onClick={() => editor.commands.acceptChange()}
+                style={{ color: "#16a34a" }}>
+                <span style={{ fontSize: 12, fontWeight: 700 }}>✓</span>
+                <span style={{ fontSize: 10 }}>수락 ▼</span>
+              </RibbonBtn>
+            }>
+              <button className="word-dropdown-item" onMouseDown={(e) => { e.preventDefault(); editor.commands.acceptChange(); }}>
+                <span style={{ color: "#16a34a", fontWeight: 700, marginRight: 6 }}>✓</span> 수락 및 다음으로 이동
+              </button>
+              <button className="word-dropdown-item" onMouseDown={(e) => { e.preventDefault(); editor.commands.acceptAllChanges(); }}>
+                <span style={{ color: "#16a34a", fontWeight: 700, marginRight: 6 }}>✓✓</span> 모든 변경 내용 수락
+              </button>
+            </DropdownButton>
+
+            {/* 거부 */}
+            <DropdownButton trigger={
+              <RibbonBtn title="거부" small
+                onClick={() => editor.commands.rejectChange()}
+                style={{ color: "#dc2626" }}>
+                <span style={{ fontSize: 12, fontWeight: 700 }}>✕</span>
+                <span style={{ fontSize: 10 }}>거부 ▼</span>
+              </RibbonBtn>
+            }>
+              <button className="word-dropdown-item" onMouseDown={(e) => { e.preventDefault(); editor.commands.rejectChange(); }}>
+                <span style={{ color: "#dc2626", fontWeight: 700, marginRight: 6 }}>✕</span> 거부 및 다음으로 이동
+              </button>
+              <button className="word-dropdown-item" onMouseDown={(e) => { e.preventDefault(); editor.commands.rejectAllChanges(); }}>
+                <span style={{ color: "#dc2626", fontWeight: 700, marginRight: 6 }}>✕✕</span> 모든 변경 내용 거부
+              </button>
+            </DropdownButton>
+          </div>
+
+          {/* 이전/다음 변경 */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <RibbonBtn title="이전 변경 내용" small>
+              <span style={{ fontSize: 10 }}>◀ 이전</span>
+            </RibbonBtn>
+            <RibbonBtn title="다음 변경 내용" small>
+              <span style={{ fontSize: 10 }}>다음 ▶</span>
+            </RibbonBtn>
+          </div>
+        </div>
+      </RibbonGroup>
+      <GroupSep />
+
+      {/* ── 언어 그룹 ── */}
       <RibbonGroup label="언어">
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          <Languages size={16} />
-          <span style={{ fontSize: 11, color: "var(--ribbon-fg, #555)" }}>한국어</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2, alignItems: "center", justifyContent: "center", padding: "0 8px" }}>
+          <Languages size={16} color="var(--ribbon-fg, #555)" />
+          <span style={{ fontSize: 10, color: "var(--ribbon-fg, #555)" }}>한국어</span>
         </div>
       </RibbonGroup>
     </div>

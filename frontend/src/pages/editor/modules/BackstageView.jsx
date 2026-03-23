@@ -171,12 +171,88 @@ export function BackstageView({ doc, setDoc, onClose, onNew, onSave, onExportDoc
         )}
 
         {activeMenu === "print" && (
-          <div>
-            <h2 style={{ fontSize: 24, fontWeight: 300, color: "#333", marginBottom: 28 }}>인쇄</h2>
-            <button onClick={() => window.print()}
-              style={{ padding: "12px 28px", fontSize: 14, border: "none", borderRadius: 6, background: "#0078d4", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-              <Printer size={16} /> 인쇄
-            </button>
+          <div style={{ display: "flex", gap: 40, alignItems: "flex-start" }}>
+            {/* 왼쪽: 인쇄 설정 */}
+            <div style={{ minWidth: 280 }}>
+              <h2 style={{ fontSize: 24, fontWeight: 300, color: "#333", marginBottom: 28 }}>인쇄</h2>
+              <button onClick={() => window.print()}
+                style={{ padding: "12px 28px", fontSize: 14, border: "none", borderRadius: 6, background: "#0078d4", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, marginBottom: 24, width: "100%" }}>
+                <Printer size={16} /> 인쇄
+              </button>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 12, color: "#666", display: "block", marginBottom: 4 }}>복사본 수</label>
+                <input type="number" defaultValue={1} min={1} max={99}
+                  style={{ width: 80, padding: "6px 10px", border: "1px solid #ccc", borderRadius: 3, fontSize: 13 }} />
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 12, color: "#666", display: "block", marginBottom: 4 }}>프린터</label>
+                <select style={{ width: "100%", padding: "6px 10px", border: "1px solid #ccc", borderRadius: 3, fontSize: 13, background: "#fff" }}>
+                  <option>기본 프린터</option>
+                  <option>Microsoft Print to PDF</option>
+                  <option>OneNote로 보내기</option>
+                </select>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ fontSize: 12, color: "#666", display: "block", marginBottom: 4 }}>설정</label>
+                <select style={{ width: "100%", padding: "6px 10px", border: "1px solid #ccc", borderRadius: 3, fontSize: 13, background: "#fff", marginBottom: 6 }}>
+                  <option>모든 페이지 인쇄</option>
+                  <option>현재 페이지 인쇄</option>
+                  <option>사용자 지정 범위</option>
+                </select>
+                <select style={{ width: "100%", padding: "6px 10px", border: "1px solid #ccc", borderRadius: 3, fontSize: 13, background: "#fff", marginBottom: 6 }}>
+                  <option>단면 인쇄</option>
+                  <option>양면 인쇄 (긴 쪽 넘김)</option>
+                  <option>양면 인쇄 (짧은 쪽 넘김)</option>
+                </select>
+                <select style={{ width: "100%", padding: "6px 10px", border: "1px solid #ccc", borderRadius: 3, fontSize: 13, background: "#fff", marginBottom: 6 }}>
+                  <option>한 부씩 인쇄</option>
+                  <option>한 부씩 인쇄 안 함</option>
+                </select>
+                <select style={{ width: "100%", padding: "6px 10px", border: "1px solid #ccc", borderRadius: 3, fontSize: 13, background: "#fff", marginBottom: 6 }}>
+                  <option>세로 방향</option>
+                  <option>가로 방향</option>
+                </select>
+                <select style={{ width: "100%", padding: "6px 10px", border: "1px solid #ccc", borderRadius: 3, fontSize: 13, background: "#fff" }}>
+                  <option>A4 (210 × 297mm)</option>
+                  <option>Letter (215.9 × 279.4mm)</option>
+                  <option>Legal (215.9 × 355.6mm)</option>
+                  <option>B5 (176 × 250mm)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* 오른쪽: 인쇄 미리보기 */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <div style={{
+                width: 400, height: 566, background: "#fff",
+                boxShadow: "0 2px 12px rgba(0,0,0,0.15)",
+                border: "1px solid #e0e0e0",
+                padding: 40,
+                overflow: "hidden",
+                position: "relative",
+              }}>
+                <div style={{ fontSize: 8, lineHeight: 1.6, color: "#333", fontFamily: "'맑은 고딕', sans-serif" }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8, color: "#1a1a1a" }}>
+                    {doc.title || "문서 제목"}
+                  </div>
+                  {doc.subtitle && (
+                    <div style={{ fontSize: 9, color: "#777", marginBottom: 12 }}>{doc.subtitle}</div>
+                  )}
+                  <div style={{ fontSize: 7, color: "#555", lineHeight: 1.8 }}>
+                    인쇄 미리보기 - 실제 문서 내용이 여기에 표시됩니다.
+                    인쇄 버튼을 클릭하면 브라우저의 인쇄 대화상자가 열립니다.
+                  </div>
+                </div>
+                <div style={{
+                  position: "absolute", bottom: 20, left: 0, right: 0,
+                  textAlign: "center", fontSize: 7, color: "#aaa",
+                }}>- 1 -</div>
+              </div>
+              <div style={{ marginTop: 12, fontSize: 11, color: "#888" }}>1 / 1 페이지</div>
+            </div>
           </div>
         )}
       </div>
