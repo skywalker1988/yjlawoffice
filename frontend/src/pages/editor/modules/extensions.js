@@ -7,7 +7,8 @@
  *           Bookmark, TextBorder, ParagraphBorder, DropCap,
  *           ColumnBreak, KeepWithNext, WidowOrphan, TextDirection
  */
-import { Extension, Node } from "@tiptap/core";
+import { Extension, Node, Mark } from "@tiptap/core";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 
 /* ═══════════════════════════════════════════════
  *  기존 확장 (Existing Extensions)
@@ -924,8 +925,6 @@ export const Bookmark = Node.create({
  *  변경 내용 추적 (Track Changes) 마크 확장
  * ═══════════════════════════════════════════════ */
 
-import { Mark } from "@tiptap/core";
-
 /**
  * 삽입 추적 마크 - 추가된 텍스트를 표시한다
  * Word의 "변경 내용 추적" 기능 중 삽입에 해당한다.
@@ -1093,6 +1092,8 @@ export const TrackFormat = Mark.create({
  * 변경 내용 추적 관리 확장
  * 추적 모드를 활성/비활성화하고, 변경 사항을 수락/거부하는 기능을 제공한다.
  */
+const trackChangesPluginKey = new PluginKey("trackChanges");
+
 export const TrackChangesManager = Extension.create({
   name: "trackChangesManager",
 
@@ -1101,6 +1102,61 @@ export const TrackChangesManager = Extension.create({
       enabled: false,
       author: "사용자",
     };
+  },
+
+  /* 입력 시 자동으로 삽입 추적 마크를 적용하는 ProseMirror 플러그인 */
+  addProseMirrorPlugins() {
+    const extension = this;
+    return [
+      new Plugin({
+        key: trackChangesPluginKey,
+        appendTransaction(transactions, oldState, newState) {
+          if (!extension.storage.enabled) return null;
+          const author = extension.storage.author;
+          const date = new Date().toISOString();
+
+          // 사용자 입력에 의한 변경인지 확인
+          const isUserAction = transactions.some(tr => tr.docChanged && !tr.getMeta("trackChangesApplied"));
+          if (!isUserAction) return null;
+
+          // 새로 삽입된 텍스트에 trackInsert 마크를 적용
+          const tr = newState.tr;
+          let changed = false;
+          const insertMarkType = newState.schema.marks.trackInsert;
+          if (!insertMarkType) return null;
+
+          transactions.forEach(transaction => {
+            if (!transaction.docChanged) return;
+            transaction.steps.forEach((step, stepIdx) => {
+              const stepMap = step.getMap();
+              stepMap.forEach((oldStart, oldEnd, newStart, newEnd) => {
+                // 새로 삽입된 범위에만 마크 적용
+                if (newEnd > newStart) {
+                  const mark = insertMarkType.create({ author, date });
+                  // 이미 trackInsert 마크가 있는지 확인
+                  let needsMark = false;
+                  newState.doc.nodesBetween(newStart, newEnd, (node) => {
+                    if (node.isText && !node.marks.some(m => m.type.name === "trackInsert")) {
+                      needsMark = true;
+                    }
+                  });
+                  if (needsMark) {
+                    tr.addMark(newStart, newEnd, mark);
+                    changed = true;
+                  }
+                }
+              });
+            });
+          });
+
+          if (changed) {
+            tr.setMeta("trackChangesApplied", true);
+            return tr;
+          }
+          return null;
+        },
+      }),
+    ];
   },
 
   addCommands() {

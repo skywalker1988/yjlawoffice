@@ -299,6 +299,30 @@ export function getPrevComment(editor, currentPos) {
   return prev || reversed[0]; // wrap around
 }
 
+// ─── Comments persistence (localStorage) ───
+export function saveCommentsToLocal(docId, comments) {
+  try {
+    const key = docId ? `${LS_COMMENTS}_${docId}` : LS_COMMENTS;
+    localStorage.setItem(key, JSON.stringify(comments));
+  } catch { /* quota 초과 등 무시 */ }
+}
+
+export function loadCommentsFromLocal(docId) {
+  try {
+    const key = docId ? `${LS_COMMENTS}_${docId}` : LS_COMMENTS;
+    const raw = localStorage.getItem(key);
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore */ }
+  return null;
+}
+
+export function clearCommentsFromLocal(docId) {
+  try {
+    const key = docId ? `${LS_COMMENTS}_${docId}` : LS_COMMENTS;
+    localStorage.removeItem(key);
+  } catch { /* ignore */ }
+}
+
 // ─── Format date for display ───
 export function formatCommentDate(isoStr) {
   if (!isoStr) return "";
