@@ -140,6 +140,65 @@ export function FontDialog({ editor, onClose }) {
   );
 }
 
+/* ── 줄 및 페이지 나누기 탭 (ParagraphDialog 하위) ── */
+function LineBreakTab({ editor }) {
+  const [widowOrphan, setWidowOrphan] = useState(false);
+  const [keepWithNext, setKeepWithNext] = useState(false);
+  const [pageBreakBefore, setPageBreakBefore] = useState(false);
+  const [keepLinesTogether, setKeepLinesTogether] = useState(false);
+
+  /* 에디터에서 현재 단락의 속성을 읽어 초기값 설정 */
+  useEffect(() => {
+    if (!editor) return;
+    const node = editor.state.selection.$from.parent;
+    setWidowOrphan(!!node.attrs.widowOrphan);
+    setKeepWithNext(!!node.attrs.keepWithNext);
+    setPageBreakBefore(!!node.attrs.pageBreakBefore);
+    setKeepLinesTogether(!!node.attrs.keepLinesTogether);
+  }, [editor]);
+
+  /* 변경 시 즉시 에디터에 적용 */
+  const applyAttr = (attr, value) => {
+    if (!editor) return;
+    const { from, to } = editor.state.selection;
+    const tr = editor.state.tr;
+    editor.state.doc.nodesBetween(from, to, (node, pos) => {
+      if (node.type.name === "paragraph" || node.type.name === "heading") {
+        tr.setNodeMarkup(pos, undefined, { ...node.attrs, [attr]: value });
+      }
+    });
+    editor.view.dispatch(tr);
+  };
+
+  const handleWidowOrphan = (v) => { setWidowOrphan(v); applyAttr("widowOrphan", v); };
+  const handleKeepWithNext = (v) => { setKeepWithNext(v); applyAttr("keepWithNext", v); };
+  const handlePageBreakBefore = (v) => { setPageBreakBefore(v); applyAttr("pageBreakBefore", v); };
+  const handleKeepLinesTogether = (v) => { setKeepLinesTogether(v); applyAttr("keepLinesTogether", v); };
+
+  return (
+    <div style={{ fontSize: 12, color: "#555" }}>
+      <div style={{ fontWeight: 600, marginBottom: 10, color: "#333" }}>페이지 매김</div>
+      <label style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, cursor: "pointer" }}>
+        <input type="checkbox" checked={widowOrphan} onChange={e => handleWidowOrphan(e.target.checked)} /> 과부/고아 보호(W)
+      </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, cursor: "pointer" }}>
+        <input type="checkbox" checked={keepWithNext} onChange={e => handleKeepWithNext(e.target.checked)} /> 다음 단락과 함께(K)
+      </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, cursor: "pointer" }}>
+        <input type="checkbox" checked={pageBreakBefore} onChange={e => handlePageBreakBefore(e.target.checked)} /> 단락 앞에서 나누기(B)
+      </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+        <input type="checkbox" checked={keepLinesTogether} onChange={e => handleKeepLinesTogether(e.target.checked)} /> 단락에서 줄 나누지 않기(D)
+      </label>
+      <div style={{ marginTop: 16, padding: 10, background: "#f5f5f5", borderRadius: 4, fontSize: 11, color: "#777" }}>
+        <strong>과부/고아 보호</strong>: 페이지 상단/하단에 한 줄만 남지 않도록 합니다.<br/>
+        <strong>다음 단락과 함께</strong>: 현재 단락과 다음 단락이 같은 페이지에 있도록 합니다.<br/>
+        <strong>단락 앞에서 나누기</strong>: 현재 단락 앞에 페이지 나누기를 삽입합니다.
+      </div>
+    </div>
+  );
+}
+
 /* ══════════════════════════════ PARAGRAPH DIALOG ══════════════════════════════ */
 export function ParagraphDialog({ editor, onClose }) {
   const [align, setAlign] = useState("left");
@@ -236,20 +295,7 @@ export function ParagraphDialog({ editor, onClose }) {
           </>
         )}
         {dialogTab === "linebreak" && (
-          <div style={{ fontSize: 12, color: "#555" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, cursor: "pointer" }}>
-              <input type="checkbox" /> 과부 보호(W)
-            </label>
-            <label style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, cursor: "pointer" }}>
-              <input type="checkbox" /> 이전 단락과 함께(K)
-            </label>
-            <label style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, cursor: "pointer" }}>
-              <input type="checkbox" /> 단락 앞에서 나누기(B)
-            </label>
-            <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-              <input type="checkbox" /> 단락에서 줄 나누지 않기(D)
-            </label>
-          </div>
+          <LineBreakTab editor={editor} />
         )}
       </div>
       <div className="word-dialog-footer">
@@ -260,8 +306,55 @@ export function ParagraphDialog({ editor, onClose }) {
   );
 }
 
+/* ── 레이아웃 탭 (PageSetupDialog 하위) ── */
+function PageSetupLayoutTab({ settings, setSettings }) {
+  const s = settings || { headerPos: 12.5, footerPos: 12.5, differentFirstPage: false, differentOddEven: false };
+  const update = (key, value) => {
+    setSettings?.({ ...s, [key]: value });
+  };
+  return (
+    <div style={{ fontSize: 12, color: "#555" }}>
+      <div style={{ fontWeight: 600, marginBottom: 12, color: "#333" }}>머리글 및 바닥글</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+        <div>
+          <label className="word-dialog-label">머리글 위치(H):</label>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <input type="number" step="0.5" min="0" max="50"
+              className="word-dialog-input" style={{ width: 80 }}
+              value={s.headerPos}
+              onChange={e => update("headerPos", parseFloat(e.target.value) || 0)} />
+            <span style={{ fontSize: 11, color: "#888" }}>mm</span>
+          </div>
+        </div>
+        <div>
+          <label className="word-dialog-label">바닥글 위치(F):</label>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <input type="number" step="0.5" min="0" max="50"
+              className="word-dialog-input" style={{ width: 80 }}
+              value={s.footerPos}
+              onChange={e => update("footerPos", parseFloat(e.target.value) || 0)} />
+            <span style={{ fontSize: 11, color: "#888" }}>mm</span>
+          </div>
+        </div>
+      </div>
+      <div style={{ borderTop: "1px solid #eee", paddingTop: 12 }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8, cursor: "pointer" }}>
+          <input type="checkbox" checked={s.differentFirstPage}
+            onChange={e => update("differentFirstPage", e.target.checked)} />
+          첫 페이지 다르게(A)
+        </label>
+        <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+          <input type="checkbox" checked={s.differentOddEven}
+            onChange={e => update("differentOddEven", e.target.checked)} />
+          짝수/홀수 페이지 다르게(E)
+        </label>
+      </div>
+    </div>
+  );
+}
+
 /* ══════════════════════════════ PAGE SETUP DIALOG ══════════════════════════════ */
-export function PageSetupDialog({ margins, setMargins, orientation, setOrientation, pageSize, setPageSize, customMargins, setCustomMargins, onClose }) {
+export function PageSetupDialog({ margins, setMargins, orientation, setOrientation, pageSize, setPageSize, customMargins, setCustomMargins, onClose, headerFooterSettings, setHeaderFooterSettings }) {
   const [dialogTab, setDialogTab] = useState("margins");
   // Local state for custom margin inputs (in mm, converted to px at 96dpi: 1mm ≈ 3.78px)
   const mmToPx = (mm) => Math.round(mm * 3.78);
@@ -387,19 +480,7 @@ export function PageSetupDialog({ margins, setMargins, orientation, setOrientati
           </div>
         )}
         {dialogTab === "layout" && (
-          <div style={{ fontSize: 12, color: "#555" }}>
-            <div style={{ marginBottom: 12 }}>
-              <label className="word-dialog-label">머리글 위치:</label>
-              <input type="text" className="word-dialog-input" defaultValue="12.5 mm" style={{ width: 100 }} />
-            </div>
-            <div style={{ marginBottom: 12 }}>
-              <label className="word-dialog-label">바닥글 위치:</label>
-              <input type="text" className="word-dialog-input" defaultValue="12.5 mm" style={{ width: 100 }} />
-            </div>
-            <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-              <input type="checkbox" /> 첫 페이지 다르게
-            </label>
-          </div>
+          <PageSetupLayoutTab settings={headerFooterSettings} setSettings={setHeaderFooterSettings} />
         )}
       </div>
       <div className="word-dialog-footer">
@@ -523,61 +604,163 @@ export function TablePropertiesDialog({ editor, onClose }) {
 }
 
 /* ══════════════════════════════ FIND & REPLACE BAR ══════════════════════════════ */
+
+/**
+ * ProseMirror 문서 모델 기반 찾기/바꾸기 바
+ * window.find 대신 에디터 내부 텍스트를 직접 탐색하여 정확한 매칭을 수행한다.
+ */
 export function FindReplaceBar({ editor, showReplace, onClose }) {
   const [findText, setFindText] = useState("");
   const [replaceText, setReplaceText] = useState("");
-  const [matchCount, setMatchCount] = useState(0);
+  const [matches, setMatches] = useState([]); // [{ from, to }]
+  const [currentMatchIdx, setCurrentMatchIdx] = useState(-1);
   const [caseSensitive, setCaseSensitive] = useState(false);
+  const [wholeWord, setWholeWord] = useState(false);
   const inputRef = useRef(null);
+  const decorationsRef = useRef(null);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
-  const doFind = useCallback((text, forward = true) => {
-    if (!text) { setMatchCount(0); return; }
-    const editorEl = editor?.view?.dom;
-    if (!editorEl) return;
-    const html = editorEl.innerText || "";
+  /* 에디터 문서에서 모든 매칭 위치를 검색 */
+  const findAllMatches = useCallback((text) => {
+    if (!text || !editor) { setMatches([]); setCurrentMatchIdx(-1); return []; }
+    const results = [];
+    const doc = editor.state.doc;
+    const searchStr = caseSensitive ? text : text.toLowerCase();
+    const escapedSearch = searchStr.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const pattern = wholeWord ? `\\b${escapedSearch}\\b` : escapedSearch;
     const flags = caseSensitive ? "g" : "gi";
-    const regex = new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), flags);
-    const matches = html.match(regex);
-    setMatchCount(matches ? matches.length : 0);
-    window.find(text, caseSensitive, !forward, true, false, true, false);
-  }, [editor, caseSensitive]);
+    const regex = new RegExp(pattern, flags);
 
-  const handleFindNext = () => doFind(findText, true);
-  const handleFindPrev = () => doFind(findText, false);
+    doc.descendants((node, pos) => {
+      if (!node.isText) return;
+      const nodeText = node.text;
+      let match;
+      regex.lastIndex = 0;
+      while ((match = regex.exec(nodeText)) !== null) {
+        results.push({ from: pos + match.index, to: pos + match.index + match[0].length });
+      }
+    });
+    setMatches(results);
+    return results;
+  }, [editor, caseSensitive, wholeWord]);
 
-  const handleReplace = () => {
-    if (!findText || !editor) return;
-    const sel = window.getSelection();
-    const selText = sel?.toString() || "";
-    const match = caseSensitive ? selText === findText : selText.toLowerCase() === findText.toLowerCase();
-    if (match && !editor.state.selection.empty) {
-      // Use Tiptap to replace selected text
-      editor.chain().focus()
-        .insertContentAt(
-          { from: editor.state.selection.from, to: editor.state.selection.to },
-          replaceText
-        )
-        .run();
-      setTimeout(() => doFind(findText, true), 50);
+  /* 하이라이트 데코레이션 적용 */
+  const applyHighlights = useCallback((matchList, activeIdx) => {
+    if (!editor) return;
+    const dom = editor.view.dom;
+    // 기존 하이라이트 제거
+    dom.querySelectorAll(".find-highlight, .find-highlight-active").forEach(el => {
+      const parent = el.parentNode;
+      while (el.firstChild) parent.insertBefore(el.firstChild, el);
+      parent.removeChild(el);
+    });
+  }, [editor]);
+
+  /* 텍스트 변경 시 자동 검색 */
+  const handleSearchChange = useCallback((text) => {
+    setFindText(text);
+    const results = findAllMatches(text);
+    if (results.length > 0) {
+      setCurrentMatchIdx(0);
+      scrollToMatch(results[0]);
     } else {
-      doFind(findText, true);
+      setCurrentMatchIdx(-1);
     }
-  };
+  }, [findAllMatches]);
 
-  const handleReplaceAll = () => {
+  /* 특정 매치 위치로 스크롤 및 선택 */
+  const scrollToMatch = useCallback((match) => {
+    if (!editor || !match) return;
+    editor.chain().focus().setTextSelection({ from: match.from, to: match.to }).run();
+    editor.commands.scrollIntoView();
+  }, [editor]);
+
+  /* 다음 매치로 이동 */
+  const handleFindNext = useCallback(() => {
+    if (!findText) return;
+    const results = findAllMatches(findText);
+    if (results.length === 0) return;
+    const nextIdx = currentMatchIdx < results.length - 1 ? currentMatchIdx + 1 : 0;
+    setCurrentMatchIdx(nextIdx);
+    scrollToMatch(results[nextIdx]);
+  }, [findText, currentMatchIdx, findAllMatches, scrollToMatch]);
+
+  /* 이전 매치로 이동 */
+  const handleFindPrev = useCallback(() => {
+    if (!findText) return;
+    const results = findAllMatches(findText);
+    if (results.length === 0) return;
+    const prevIdx = currentMatchIdx > 0 ? currentMatchIdx - 1 : results.length - 1;
+    setCurrentMatchIdx(prevIdx);
+    scrollToMatch(results[prevIdx]);
+  }, [findText, currentMatchIdx, findAllMatches, scrollToMatch]);
+
+  /* 현재 선택된 매치를 교체 */
+  const handleReplace = useCallback(() => {
     if (!findText || !editor) return;
-    const html = editor.getHTML();
-    const flags = caseSensitive ? "g" : "gi";
-    const regex = new RegExp(findText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), flags);
-    const newHtml = html.replace(regex, replaceText);
-    editor.commands.setContent(newHtml);
-    setMatchCount(0);
-  };
+    const currentMatches = findAllMatches(findText);
+    if (currentMatches.length === 0 || currentMatchIdx < 0) {
+      handleFindNext();
+      return;
+    }
+    const match = currentMatches[currentMatchIdx];
+    if (!match) return;
+    editor.chain().focus()
+      .insertContentAt({ from: match.from, to: match.to }, replaceText)
+      .run();
+    // 교체 후 재검색
+    setTimeout(() => {
+      const newResults = findAllMatches(findText);
+      if (newResults.length > 0) {
+        const newIdx = Math.min(currentMatchIdx, newResults.length - 1);
+        setCurrentMatchIdx(newIdx);
+        scrollToMatch(newResults[newIdx]);
+      }
+    }, 50);
+  }, [findText, replaceText, editor, currentMatchIdx, findAllMatches, handleFindNext, scrollToMatch]);
 
+  /* 모든 매치를 한번에 교체 (역순으로 처리하여 위치 변동 방지) */
+  const handleReplaceAll = useCallback(() => {
+    if (!findText || !editor) return;
+    const allMatches = findAllMatches(findText);
+    if (allMatches.length === 0) return;
+    const replacedCount = allMatches.length;
+    // 역순으로 교체하여 위치 오프셋 문제 방지
+    const reversedMatches = [...allMatches].reverse();
+    let chain = editor.chain().focus();
+    for (const match of reversedMatches) {
+      chain = chain.insertContentAt({ from: match.from, to: match.to }, replaceText);
+    }
+    chain.run();
+    setMatches([]);
+    setCurrentMatchIdx(-1);
+    // 결과 알림
+    setTimeout(() => {
+      alert(`${replacedCount}개 항목이 교체되었습니다.`);
+    }, 100);
+  }, [findText, replaceText, editor, findAllMatches]);
+
+  /* 옵션 변경 시 재검색 */
+  useEffect(() => {
+    if (findText) {
+      const results = findAllMatches(findText);
+      if (results.length > 0) {
+        const idx = Math.min(currentMatchIdx, results.length - 1);
+        setCurrentMatchIdx(Math.max(0, idx));
+        scrollToMatch(results[Math.max(0, idx)]);
+      }
+    }
+  }, [caseSensitive, wholeWord]);
+
+  /* 닫을 때 하이라이트 정리 */
+  useEffect(() => {
+    return () => applyHighlights([], -1);
+  }, [applyHighlights]);
+
+  const matchCount = matches.length;
   const barStyle = {
     display: "flex", alignItems: "center", gap: 6, padding: "6px 12px",
     background: "#f8f9fa", borderBottom: "1px solid #d1d5db", flexShrink: 0,
@@ -599,8 +782,12 @@ export function FindReplaceBar({ editor, showReplace, onClose }) {
         <input
           ref={inputRef}
           type="text" value={findText}
-          onChange={e => { setFindText(e.target.value); doFind(e.target.value, true); }}
-          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleFindNext(); } if (e.key === "Escape") onClose(); }}
+          onChange={e => handleSearchChange(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === "Enter" && e.shiftKey) { e.preventDefault(); handleFindPrev(); }
+            else if (e.key === "Enter") { e.preventDefault(); handleFindNext(); }
+            if (e.key === "Escape") onClose();
+          }}
           placeholder="검색어 입력..."
           style={inputStyle}
         />
@@ -610,8 +797,12 @@ export function FindReplaceBar({ editor, showReplace, onClose }) {
           <input type="checkbox" checked={caseSensitive} onChange={e => setCaseSensitive(e.target.checked)} style={{ width: 12, height: 12 }} />
           대소문자
         </label>
-        <span style={{ fontSize: 10, color: "#888" }}>
-          {matchCount > 0 ? `${matchCount}개 일치` : findText ? "일치 없음" : ""}
+        <label style={{ fontSize: 10, display: "flex", alignItems: "center", gap: 3, cursor: "pointer", color: "#666" }}>
+          <input type="checkbox" checked={wholeWord} onChange={e => setWholeWord(e.target.checked)} style={{ width: 12, height: 12 }} />
+          단어 단위
+        </label>
+        <span style={{ fontSize: 10, color: matchCount > 0 ? "#185ABD" : "#888", fontWeight: matchCount > 0 ? 600 : 400 }}>
+          {matchCount > 0 ? `${currentMatchIdx + 1}/${matchCount}개 일치` : findText ? "일치 없음" : ""}
         </span>
         <div style={{ flex: 1 }} />
         <button type="button" onClick={onClose} style={{ ...btnStyle, border: "none", fontSize: 14, color: "#999" }}>✕</button>

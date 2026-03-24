@@ -36,7 +36,7 @@ import { CommentMark } from "./modules/comment-mark";
 import {
   createCommentStore, commentReducer, createComment, generateCommentId,
   loadAuthor, saveAuthor, createAuthor, findCommentMarks, getNextComment, getPrevComment,
-  getAllThreads,
+  getAllThreads, saveCommentsToLocal, loadCommentsFromLocal,
 } from "./modules/comment-store";
 import { CommentPanel, CommentIndicators, ReviewingPane, AuthorSetupDialog } from "./modules/CommentPanel";
 
@@ -112,6 +112,9 @@ export default function EditorPage() {
   const [footnotes, setFootnotes] = useState([]); // { id, number, content }
   const [footnoteAreaHeight, setFootnoteAreaHeight] = useState(0);
   const [dynamicPageCount, setDynamicPageCount] = useState(1);
+  const [headerFooterSettings, setHeaderFooterSettings] = useState({
+    headerPos: 12.5, footerPos: 12.5, differentFirstPage: false, differentOddEven: false,
+  });
 
   /* ── Comment State ── */
   const [commentStore, commentDispatch] = useReducer(commentReducer, null, createCommentStore);
@@ -178,13 +181,16 @@ export default function EditorPage() {
     editable: true,
     onUpdate: ({ editor: editorInstance }) => {
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+      setSaveStatus("수정됨");
+      // 로컬 저장은 즉시 (1초 후)
       autoSaveTimer.current = setTimeout(() => {
-        handleSave(true);
-        // Auto-save locally using the actual editor instance
         if (editorInstance && !editorInstance.isDestroyed) {
           autoSaveToLocal(editorInstance.getHTML(), doc);
+          setSaveStatus("로컬 저장됨");
         }
-      }, 3000);
+        // 서버 저장은 3초 후
+        setTimeout(() => handleSave(true), 2000);
+      }, 1000);
     },
   });
 
@@ -240,6 +246,20 @@ export default function EditorPage() {
       setTimeout(() => setLoading(false), 800);
     });
   }, []);
+
+  /* ──── 자동 저장 복원: 에디터 준비 후 로컬 백업이 있으면 복원 여부 확인 ──── */
+  useEffect(() => {
+    if (!editor || docId) return; // 이미 문서를 로드한 경우 건너뜀
+    const saved = loadAutoSave();
+    if (saved && saved.html) {
+      const shouldRestore = window.confirm("이전에 자동 저장된 문서가 있습니다. 복원하시겠습니까?");
+      if (shouldRestore) {
+        editor.commands.setContent(saved.html);
+        if (saved.title) setDoc(d => ({ ...d, title: saved.title }));
+        setSaveStatus("복원됨");
+      }
+    }
+  }, [editor]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ──── load a document into editor ──── */
   const loadDocument = useCallback(
@@ -521,6 +541,21 @@ export default function EditorPage() {
     return () => window.removeEventListener("comment:insert", handler);
   }, [handleInsertComment]);
 
+  /* 댓글 자동 저장: commentStore 변경 시 localStorage에 저장 */
+  useEffect(() => {
+    if (Object.keys(commentStore.comments).length > 0) {
+      saveCommentsToLocal(docId, commentStore.comments);
+    }
+  }, [commentStore.comments, docId]);
+
+  /* 문서 로드 시 저장된 댓글 복원 */
+  useEffect(() => {
+    const saved = loadCommentsFromLocal(docId);
+    if (saved && Object.keys(saved).length > 0) {
+      commentDispatch({ type: "LOAD_COMMENTS", comments: saved });
+    }
+  }, [docId]);
+
   // Apply active/resolved classes to comment highlights
   useEffect(() => {
     if (!editor) return;
@@ -662,7 +697,7 @@ export default function EditorPage() {
       {/* ──── Dialogs ──── */}
       {dialogOpen === "font" && <FontDialog editor={editor} onClose={() => setDialogOpen(null)} />}
       {dialogOpen === "paragraph" && <ParagraphDialog editor={editor} onClose={() => setDialogOpen(null)} />}
-      {dialogOpen === "pagesetup" && <PageSetupDialog margins={margins} setMargins={setMargins} orientation={orientation} setOrientation={setOrientation} pageSize={pageSize} setPageSize={setPageSize} customMargins={customMargins} setCustomMargins={setCustomMargins} onClose={() => setDialogOpen(null)} />}
+      {dialogOpen === "pagesetup" && <PageSetupDialog margins={margins} setMargins={setMargins} orientation={orientation} setOrientation={setOrientation} pageSize={pageSize} setPageSize={setPageSize} customMargins={customMargins} setCustomMargins={setCustomMargins} headerFooterSettings={headerFooterSettings} setHeaderFooterSettings={setHeaderFooterSettings} onClose={() => setDialogOpen(null)} />}
       {dialogOpen === "hyperlink" && <HyperlinkDialog editor={editor} onClose={() => setDialogOpen(null)} />}
       {dialogOpen === "table" && <OrigTablePropsDialog editor={editor} onClose={() => setDialogOpen(null)} />}
       {dialogOpen === "image" && <ImageDialog editor={editor} onClose={() => setDialogOpen(null)} />}
@@ -747,8 +782,19 @@ export default function EditorPage() {
 
           {/* 오른쪽: 저장 상태 + 최소화/최대화/닫기 */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-            <span style={{ fontSize: 10, color: saveStatus === "오류" ? "#ff8888" : "rgba(255,255,255,0.7)", marginRight: 4 }}>
-              {saveStatus}
+            <span style={{
+              fontSize: 10, marginRight: 4,
+              color: saveStatus === "오류" ? "#ff8888"
+                : saveStatus === "저장됨" ? "#90EE90"
+                : saveStatus === "수정됨" ? "#ffdd57"
+                : "rgba(255,255,255,0.7)",
+            }}>
+              {saveStatus === "저장 중..." ? "⟳ 저장 중..." :
+               saveStatus === "저장됨" ? "✓ 저장됨" :
+               saveStatus === "로컬 저장됨" ? "↓ 로컬 저장" :
+               saveStatus === "수정됨" ? "● 수정됨" :
+               saveStatus === "오류" ? "✕ 오류" :
+               saveStatus}
             </span>
             {/* 창 제어 버튼 (Word 365 스타일) */}
             <button type="button" onClick={() => setMetaOpen(true)} title="문서 속성"
@@ -875,7 +921,7 @@ export default function EditorPage() {
             }}
           />
         )}
-        {!ribbonCollapsed && viewMode === "edit" && activeTab === "view" && (
+        {!ribbonCollapsed && activeTab === "view" && (
           <ViewTab showRuler={showRuler} setShowRuler={setShowRuler} viewMode={viewMode} setViewMode={setViewMode}
             zoom={zoom} setZoom={setZoom} showNavPane={showNavPane} setShowNavPane={setShowNavPane}
             onNew={handleNew} darkMode={darkMode} setDarkMode={setDarkMode}
@@ -1002,8 +1048,10 @@ export default function EditorPage() {
 
           <div className="editor-canvas-scroll" style={{
             flex: 1, overflowY: "auto",
-            background: darkMode ? "#1e1e1e" : "#e8e8e8",
-            display: "flex", justifyContent: "center", padding: "20px 0 60px",
+            background: viewMode === "web"
+              ? (darkMode ? "#1e1e1e" : "#fff")
+              : (darkMode ? "#1e1e1e" : "#e8e8e8"),
+            display: "flex", justifyContent: "center", padding: viewMode === "web" ? "0" : "20px 0 60px",
             position: "relative",
           }}>
             {/* 세로 눈금자 (cm 단위) */}
@@ -1051,8 +1099,65 @@ export default function EditorPage() {
               </div>
             )}
 
-            {/* ═══ Multi-page A4 Area ═══ */}
-            <div ref={editorCanvasRef} style={{
+            {/* ═══ Web Layout View ═══ */}
+            {viewMode === "web" && (
+              <div ref={editorCanvasRef} style={{
+                width: "100%", maxWidth: 900, padding: "20px 40px",
+                background: darkMode ? "#2d2d2d" : "#fff",
+                minHeight: "100%",
+              }}>
+                {doc.title && (
+                  <div style={{
+                    fontSize: 24, fontWeight: 700, color: darkMode ? "#eee" : "#1a1a1a",
+                    marginBottom: 8, fontFamily: "'Noto Serif KR', Georgia, serif",
+                  }}>{doc.title}</div>
+                )}
+                {doc.subtitle && (
+                  <div style={{ fontSize: 14, color: "#777", marginBottom: 20 }}>{doc.subtitle}</div>
+                )}
+                <EditorContent editor={editor} />
+                <FloatingToolbar editor={editor} onInsertComment={handleInsertComment} />
+              </div>
+            )}
+
+            {/* ═══ Read Mode View ═══ */}
+            {viewMode === "preview" && (
+              <div ref={editorCanvasRef} style={{
+                width: "100%", maxWidth: 800, padding: "40px 60px",
+                background: darkMode ? "#2d2d2d" : "#fff",
+                minHeight: "100%",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+                margin: "0 auto",
+              }}>
+                {doc.title && (
+                  <div style={{
+                    fontSize: 28, fontWeight: 700, color: darkMode ? "#eee" : "#1a1a1a",
+                    marginBottom: 12, fontFamily: "'Noto Serif KR', Georgia, serif",
+                    borderBottom: "2px solid #185ABD", paddingBottom: 12,
+                  }}>{doc.title}</div>
+                )}
+                {doc.subtitle && (
+                  <div style={{ fontSize: 15, color: "#666", marginBottom: 8 }}>{doc.subtitle}</div>
+                )}
+                {(doc.author || doc.publishedDate) && (
+                  <div style={{ fontSize: 12, color: "#999", marginBottom: 24 }}>
+                    {doc.author && <span>{doc.author}</span>}
+                    {doc.author && doc.publishedDate && <span> · </span>}
+                    {doc.publishedDate && <span>{doc.publishedDate}</span>}
+                  </div>
+                )}
+                <div className="ProseMirror"
+                  style={{
+                    fontFamily: "'맑은 고딕', sans-serif", fontSize: "11pt",
+                    lineHeight: 1.85, color: darkMode ? "#ddd" : "#1a1a1a",
+                  }}
+                  dangerouslySetInnerHTML={{ __html: editor?.getHTML() || "" }}
+                />
+              </div>
+            )}
+
+            {/* ═══ Multi-page A4 Area (인쇄 모양) ═══ */}
+            {viewMode === "edit" && <div ref={editorCanvasRef} style={{
               display: "flex", flexDirection: "column", alignItems: "center",
               gap: `${PAGE_GAP * (zoom / 100)}px`, flexShrink: 0,
             }}>
@@ -1212,7 +1317,7 @@ export default function EditorPage() {
                   </div>
                 );
               })}
-            </div>
+            </div>}
           </div>
 
           {/* Comment Panel (right side) */}
