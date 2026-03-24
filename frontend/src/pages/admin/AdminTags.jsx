@@ -1,31 +1,39 @@
-/** AdminTags — 관리자 태그 관리 페이지 */
+/**
+ * AdminTags — 미국 정부 스타일 태그 관리 페이지
+ * 구조화된 카드 그리드 + 공식 문서풍 폼
+ */
 import { useState, useEffect } from "react";
-import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import { Card, CardContent } from "../../components/ui/Card";
 import { api } from "../../utils/api";
 
+const GOV = {
+  navy: "#0b1a2e",
+  navyLight: "#1a2f4e",
+  gold: "#c9a961",
+  goldBg: "rgba(201,169,97,0.08)",
+  text: "#1b2a4a",
+  textSec: "#5a6a85",
+  textMuted: "#8e99ab",
+  border: "#dce1e8",
+  headerBg: "#0f2341",
+  rowAlt: "#fafbfc",
+};
+
 const PRESET_COLORS = [
-  "#3498db", "#e74c3c", "#2ecc71", "#9b59b6",
-  "#e67e22", "#1abc9c", "#f39c12", "#34495e",
-  "#95a5a6", "#d35400", "#c0392b", "#27ae60",
+  "#1a365d", "#742a2a", "#22543d", "#553c9a",
+  "#c05621", "#086f83", "#975a16", "#2d3748",
+  "#718096", "#9c4221", "#9b2c2c", "#276749",
 ];
 
 export default function AdminTags() {
   const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // Create form
   const [newName, setNewName] = useState("");
   const [newColor, setNewColor] = useState(PRESET_COLORS[0]);
   const [creating, setCreating] = useState(false);
-
-  // Edit state
   const [editId, setEditId] = useState(null);
   const [editName, setEditName] = useState("");
   const [editColor, setEditColor] = useState("");
-
-  // Delete confirmation
   const [deleteId, setDeleteId] = useState(null);
 
   const fetchTags = () => {
@@ -36,9 +44,7 @@ export default function AdminTags() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => {
-    fetchTags();
-  }, []);
+  useEffect(() => { fetchTags(); }, []);
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
@@ -82,160 +88,210 @@ export default function AdminTags() {
     }
   };
 
+  /** 색상 선택기 */
+  const ColorPicker = ({ value, onChange, size = 22 }) => (
+    <div className="flex gap-1.5 flex-wrap">
+      {PRESET_COLORS.map((c) => (
+        <button key={c} onClick={() => onChange(c)} style={{
+          width: size, height: size, borderRadius: 2,
+          background: c, cursor: "pointer",
+          border: value === c ? "2px solid #fff" : "2px solid transparent",
+          boxShadow: value === c ? `0 0 0 2px ${c}` : "none",
+          transition: "all 0.1s",
+        }} />
+      ))}
+    </div>
+  );
+
   return (
     <div>
-      <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 24 }}>태그 관리</h2>
+      {/* 페이지 헤더 */}
+      <div style={{ marginBottom: 28, paddingBottom: 16, borderBottom: `2px solid ${GOV.navy}` }}>
+        <h1 style={{
+          fontSize: 22, fontWeight: 700, color: GOV.navy,
+          fontFamily: "'Georgia', serif", letterSpacing: "0.03em",
+        }}>
+          태그 관리
+        </h1>
+        <p style={{ fontSize: 12, color: GOV.textMuted, marginTop: 4 }}>
+          문서 분류를 위한 태그 생성 및 관리 | 총 {tags.length}개
+        </p>
+      </div>
 
-      {/* Create Form */}
-      <Card style={{ marginBottom: 32 }}>
-        <CardContent>
-          <p style={{ fontSize: 14, fontWeight: 500, marginBottom: 12 }}>새 태그</p>
-          <div className="flex flex-wrap items-end gap-3">
+      {/* 생성 폼 — 정부 스타일 패널 */}
+      <div style={{
+        marginBottom: 32, border: `1px solid ${GOV.border}`,
+        borderRadius: 2, overflow: "hidden", background: "#fff",
+      }}>
+        <div style={{
+          background: GOV.headerBg, padding: "10px 20px",
+          borderBottom: `2px solid ${GOV.gold}`,
+        }}>
+          <h3 style={{
+            fontSize: 11, fontWeight: 700, color: GOV.gold,
+            letterSpacing: "0.12em", textTransform: "uppercase",
+          }}>
+            신규 태그 등록
+          </h3>
+        </div>
+        <div style={{ padding: "20px 24px" }}>
+          <div className="flex flex-wrap items-end gap-4">
             <div style={{ flex: 1, minWidth: 200 }}>
+              <label style={{
+                display: "block", marginBottom: 4, fontSize: 10,
+                fontWeight: 700, color: GOV.textSec, letterSpacing: "0.1em",
+                textTransform: "uppercase",
+              }}>태그명</label>
               <Input
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                placeholder="태그 이름"
+                placeholder="새 태그 이름 입력"
                 onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                style={{ borderRadius: 2 }}
               />
             </div>
             <div>
-              <p style={{ fontSize: 11, color: "#999", marginBottom: 6 }}>색상</p>
-              <div className="flex gap-1">
-                {PRESET_COLORS.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setNewColor(c)}
-                    style={{
-                      width: 24,
-                      height: 24,
-                      borderRadius: "50%",
-                      background: c,
-                      border: newColor === c ? "2px solid #333" : "2px solid transparent",
-                      cursor: "pointer",
-                    }}
-                  />
-                ))}
-              </div>
+              <label style={{
+                display: "block", marginBottom: 6, fontSize: 10,
+                fontWeight: 700, color: GOV.textSec, letterSpacing: "0.1em",
+                textTransform: "uppercase",
+              }}>색상 코드</label>
+              <ColorPicker value={newColor} onChange={setNewColor} />
             </div>
-            <Button onClick={handleCreate} disabled={creating || !newName.trim()}>
-              {creating ? "생성 중..." : "생성"}
-            </Button>
+            <button onClick={handleCreate} disabled={creating || !newName.trim()} style={{
+              padding: "8px 24px", fontSize: 12, fontWeight: 600,
+              background: GOV.navy, color: GOV.gold, border: "none",
+              borderRadius: 2, cursor: "pointer",
+              opacity: creating || !newName.trim() ? 0.5 : 1,
+              letterSpacing: "0.06em",
+            }}>
+              {creating ? "처리 중..." : "태그 등록"}
+            </button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Tags Grid */}
+      {/* 태그 목록 */}
       {loading ? (
-        <p style={{ textAlign: "center", color: "#999", padding: 40 }}>불러오는 중...</p>
+        <div style={{ padding: 60, textAlign: "center", color: GOV.textMuted }}>
+          <div className="spinner" style={{ margin: "0 auto 12px" }} />
+          태그 목록 조회 중...
+        </div>
       ) : tags.length === 0 ? (
-        <p style={{ textAlign: "center", color: "#999", padding: 40 }}>태그가 없습니다.</p>
+        <div style={{
+          padding: 60, textAlign: "center", color: GOV.textMuted,
+          border: `1px dashed ${GOV.border}`, borderRadius: 2,
+        }}>
+          등록된 태그가 없습니다
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {tags.map((tag) => (
-            <Card key={tag.id}>
-              <CardContent>
-                {editId === tag.id ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    <Input
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleUpdate()}
-                    />
-                    <div className="flex gap-1">
-                      {PRESET_COLORS.map((c) => (
-                        <button
-                          key={c}
-                          onClick={() => setEditColor(c)}
-                          style={{
-                            width: 20,
-                            height: 20,
-                            borderRadius: "50%",
-                            background: c,
-                            border: editColor === c ? "2px solid #333" : "2px solid transparent",
-                            cursor: "pointer",
-                          }}
-                        />
-                      ))}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={handleUpdate}>저장</Button>
-                      <Button size="sm" variant="outline" onClick={() => setEditId(null)}>취소</Button>
-                    </div>
+            <div key={tag.id} style={{
+              background: "#fff", border: `1px solid ${GOV.border}`,
+              borderLeft: `4px solid ${tag.color || GOV.navy}`,
+              borderRadius: 2, padding: "16px 20px",
+              transition: "box-shadow 0.15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.08)"}
+            onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}
+            >
+              {editId === tag.id ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <Input value={editName} onChange={(e) => setEditName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleUpdate()}
+                    style={{ borderRadius: 2 }}
+                  />
+                  <ColorPicker value={editColor} onChange={setEditColor} size={18} />
+                  <div className="flex gap-2">
+                    <button onClick={handleUpdate} style={{
+                      padding: "5px 14px", fontSize: 11, fontWeight: 600,
+                      background: GOV.navy, color: GOV.gold, border: "none",
+                      borderRadius: 2, cursor: "pointer",
+                    }}>저장</button>
+                    <button onClick={() => setEditId(null)} style={{
+                      padding: "5px 14px", fontSize: 11, fontWeight: 600,
+                      background: "transparent", color: GOV.textSec,
+                      border: `1px solid ${GOV.border}`, borderRadius: 2, cursor: "pointer",
+                    }}>취소</button>
                   </div>
-                ) : (
-                  <div>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div
-                        style={{
-                          width: 14,
-                          height: 14,
-                          borderRadius: "50%",
-                          background: tag.color || "#95a5a6",
-                          flexShrink: 0,
-                        }}
-                      />
-                      <span style={{ fontSize: 15, fontWeight: 500, flex: 1 }}>
-                        {tag.name}
-                      </span>
-                    </div>
-                    <p style={{ fontSize: 12, color: "#999", marginBottom: 12 }}>
-                      문서 {tag._count?.documents ?? 0}개
-                    </p>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="ghost" onClick={() => startEdit(tag)}>
-                        수정
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setDeleteId(tag.id)}
-                        style={{ color: "#c44" }}
-                      >
-                        삭제
-                      </Button>
-                    </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div style={{
+                      width: 10, height: 10, borderRadius: 1,
+                      background: tag.color || GOV.navy, flexShrink: 0,
+                    }} />
+                    <span style={{
+                      fontSize: 14, fontWeight: 600, color: GOV.text, flex: 1,
+                    }}>
+                      {tag.name}
+                    </span>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  <p style={{
+                    fontSize: 11, color: GOV.textMuted, marginBottom: 12,
+                    fontFamily: "'Georgia', serif",
+                  }}>
+                    연결 문서: {tag._count?.documents ?? 0}건
+                  </p>
+                  <div className="flex gap-2">
+                    <button onClick={() => startEdit(tag)} style={{
+                      padding: "4px 12px", fontSize: 11, fontWeight: 500,
+                      background: "transparent", color: GOV.textSec,
+                      border: `1px solid ${GOV.border}`, borderRadius: 2, cursor: "pointer",
+                    }}>수정</button>
+                    <button onClick={() => setDeleteId(tag.id)} style={{
+                      padding: "4px 12px", fontSize: 11, fontWeight: 500,
+                      background: "transparent", color: "#b91c1c",
+                      border: "1px solid #fecaca", borderRadius: 2, cursor: "pointer",
+                    }}>삭제</button>
+                  </div>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}
 
-      {/* Delete Confirmation */}
+      {/* 삭제 확인 모달 */}
       {deleteId && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 1000,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div
-            style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }}
-            onClick={() => setDeleteId(null)}
-          />
-          <div
-            style={{
-              position: "relative",
-              background: "#fff",
-              borderRadius: 8,
-              padding: 32,
-              maxWidth: 400,
-              width: "90%",
-            }}
-          >
-            <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>태그 삭제</h3>
-            <p style={{ fontSize: 14, color: "#666", marginBottom: 24 }}>
-              이 태그를 삭제하시겠습니까?
-            </p>
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" size="sm" onClick={() => setDeleteId(null)}>취소</Button>
-              <Button variant="destructive" size="sm" onClick={() => handleDelete(deleteId)}>삭제</Button>
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 1000,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(11,26,46,0.6)" }} onClick={() => setDeleteId(null)} />
+          <div style={{
+            position: "relative", background: "#fff", borderRadius: 2,
+            maxWidth: 400, width: "90%",
+            border: `1px solid ${GOV.border}`, overflow: "hidden",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+          }}>
+            <div style={{
+              background: "#7f1d1d", padding: "12px 24px",
+              borderBottom: "2px solid #ef4444",
+            }}>
+              <h3 style={{
+                fontSize: 12, fontWeight: 700, color: "#fecaca",
+                letterSpacing: "0.1em", textTransform: "uppercase",
+              }}>태그 삭제 확인</h3>
+            </div>
+            <div style={{ padding: "20px 24px" }}>
+              <p style={{ fontSize: 13, color: GOV.text, marginBottom: 20 }}>
+                이 태그를 삭제하시겠습니까?
+              </p>
+              <div className="flex justify-end gap-3">
+                <button onClick={() => setDeleteId(null)} style={{
+                  padding: "7px 18px", fontSize: 12, fontWeight: 600,
+                  background: "transparent", color: GOV.textSec,
+                  border: `1px solid ${GOV.border}`, borderRadius: 2, cursor: "pointer",
+                }}>취소</button>
+                <button onClick={() => handleDelete(deleteId)} style={{
+                  padding: "7px 18px", fontSize: 12, fontWeight: 600,
+                  background: "#b91c1c", color: "#fff",
+                  border: "none", borderRadius: 2, cursor: "pointer",
+                }}>삭제 확인</button>
+              </div>
             </div>
           </div>
         </div>
