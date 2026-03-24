@@ -6,11 +6,47 @@
  *
  * 번호는 문서 순서 기반 자동 계산
  * 삭제 시 나머지 각주 번호 자동 재계산
+ * 번호 형식: 1,2,3 / i,ii,iii / a,b,c / *, †, ‡ 지원
  */
 import { Node, mergeAttributes } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 
 const footnotePluginKey = new PluginKey("footnote");
+
+/* ── 번호 형식 변환 헬퍼 ── */
+const NUMBER_FORMATS = {
+  decimal: (n) => String(n),
+  lowerRoman: (n) => toRoman(n).toLowerCase(),
+  upperRoman: (n) => toRoman(n),
+  lowerAlpha: (n) => String.fromCharCode(96 + ((n - 1) % 26) + 1),
+  upperAlpha: (n) => String.fromCharCode(64 + ((n - 1) % 26) + 1),
+  symbol: (n) => {
+    const symbols = ["*", "†", "‡", "§", "‖", "¶"];
+    const idx = (n - 1) % symbols.length;
+    const repeat = Math.floor((n - 1) / symbols.length) + 1;
+    return symbols[idx].repeat(repeat);
+  },
+};
+
+function toRoman(num) {
+  const vals = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+  const syms = ["M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"];
+  let result = "";
+  for (let i = 0; i < vals.length; i++) {
+    while (num >= vals[i]) { result += syms[i]; num -= vals[i]; }
+  }
+  return result;
+}
+
+/**
+ * 번호 형식에 따라 각주 번호 문자열 반환
+ * @param {number} n - 순번 (1부터 시작)
+ * @param {string} format - 번호 형식 키
+ */
+export function formatFootnoteNumber(n, format = "decimal") {
+  const fn = NUMBER_FORMATS[format] || NUMBER_FORMATS.decimal;
+  return fn(n);
+}
 
 export const FootnoteReference = Node.create({
   name: "footnoteReference",
@@ -32,15 +68,17 @@ export const FootnoteReference = Node.create({
         parseHTML: (el) => parseInt(el.getAttribute("data-footnote-number")) || 1,
         renderHTML: (attrs) => ({ "data-footnote-number": attrs.number }),
       },
+      /* 각주 유형: footnote(페이지 하단) / endnote(문서 끝) */
+      noteType: {
+        default: "footnote",
+        parseHTML: (el) => el.getAttribute("data-note-type") || "footnote",
+        renderHTML: (attrs) => ({ "data-note-type": attrs.noteType }),
+      },
     };
   },
 
   parseHTML() {
-    return [
-      {
-        tag: 'sup[data-footnote-id]',
-      },
-    ];
+    return [{ tag: 'sup[data-footnote-id]' }];
   },
 
   renderHTML({ HTMLAttributes }) {
@@ -48,20 +86,19 @@ export const FootnoteReference = Node.create({
       "sup",
       mergeAttributes(HTMLAttributes, {
         class: "footnote-ref",
-        style: "color: #0563C1; cursor: pointer; font-size: 0.75em; vertical-align: super; font-weight: 600;",
       }),
       String(HTMLAttributes["data-footnote-number"] || "?"),
     ];
   },
 
   addNodeView() {
-    return ({ node, getPos, editor }) => {
+    return ({ node }) => {
       const dom = document.createElement("sup");
       dom.className = "footnote-ref";
       dom.textContent = String(node.attrs.number);
       dom.setAttribute("data-footnote-id", node.attrs.footnoteId || "");
       dom.setAttribute("data-footnote-number", node.attrs.number);
-      dom.style.cssText = "color: #0563C1; cursor: pointer; font-size: 0.75em; vertical-align: super; font-weight: 600; padding: 0 1px; transition: background 0.1s;";
+      dom.setAttribute("data-note-type", node.attrs.noteType || "footnote");
 
       // Click → scroll to footnote area
       dom.addEventListener("click", (e) => {
@@ -70,42 +107,33 @@ export const FootnoteReference = Node.create({
         const fnEl = document.querySelector(`[data-footnote-item-id="${fnId}"]`);
         if (fnEl) {
           fnEl.scrollIntoView({ behavior: "smooth", block: "center" });
-          fnEl.style.background = "#fff3cd";
-          setTimeout(() => { fnEl.style.background = ""; }, 2000);
+          fnEl.classList.add("footnote-item-flash");
+          setTimeout(() => fnEl.classList.remove("footnote-item-flash"), 2000);
         }
       });
 
       // Hover → show tooltip
       dom.addEventListener("mouseenter", () => {
-        dom.style.background = "#dbeafe";
-        dom.style.borderRadius = "2px";
-        // Show tooltip with footnote content
+        dom.classList.add("footnote-ref-hover");
         const fnId = node.attrs.footnoteId;
         const existing = document.querySelector(".footnote-tooltip");
         if (existing) existing.remove();
 
-        // Get footnote content from the footnote area
         const fnEl = document.querySelector(`[data-footnote-item-id="${fnId}"]`);
         if (fnEl) {
           const tooltip = document.createElement("div");
           tooltip.className = "footnote-tooltip";
           const content = fnEl.querySelector(".footnote-item-content");
           tooltip.textContent = content?.textContent || "(각주 내용 없음)";
-          tooltip.style.cssText = `
-            position: fixed; z-index: 9999;
-            background: #333; color: #fff; padding: 6px 10px;
-            border-radius: 4px; font-size: 11px; max-width: 300px;
-            pointer-events: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-          `;
           const rect = dom.getBoundingClientRect();
           tooltip.style.left = rect.left + "px";
-          tooltip.style.top = (rect.bottom + 4) + "px";
+          tooltip.style.top = (rect.bottom + 6) + "px";
           document.body.appendChild(tooltip);
         }
       });
 
       dom.addEventListener("mouseleave", () => {
-        dom.style.background = "";
+        dom.classList.remove("footnote-ref-hover");
         const tooltip = document.querySelector(".footnote-tooltip");
         if (tooltip) tooltip.remove();
       });
@@ -117,6 +145,7 @@ export const FootnoteReference = Node.create({
           dom.textContent = String(updatedNode.attrs.number);
           dom.setAttribute("data-footnote-id", updatedNode.attrs.footnoteId || "");
           dom.setAttribute("data-footnote-number", updatedNode.attrs.number);
+          dom.setAttribute("data-note-type", updatedNode.attrs.noteType || "footnote");
           return true;
         },
         destroy() {
@@ -130,12 +159,12 @@ export const FootnoteReference = Node.create({
   addCommands() {
     return {
       insertFootnote:
-        (footnoteId) =>
+        (footnoteId, noteType = "footnote") =>
         ({ chain }) => {
           return chain()
             .insertContent({
               type: "footnoteReference",
-              attrs: { footnoteId, number: 0 }, // number will be recalculated
+              attrs: { footnoteId, number: 0, noteType },
             })
             .run();
         },
@@ -147,7 +176,7 @@ export const FootnoteReference = Node.create({
             if (node.type.name === "footnoteReference" && node.attrs.footnoteId === footnoteId) {
               tr.delete(pos, pos + node.nodeSize);
               found = true;
-              return false; // stop
+              return false;
             }
           });
           if (found && dispatch) dispatch(tr);
@@ -189,22 +218,16 @@ export const FootnoteReference = Node.create({
 
   // Plugin to auto-renumber on every transaction
   addProseMirrorPlugins() {
-    const extension = this;
     return [
       new Plugin({
         key: footnotePluginKey,
         appendTransaction(transactions, oldState, newState) {
-          // Check if any footnote references changed
-          let hasFootnoteChange = false;
+          let hasChange = false;
           for (const tr of transactions) {
-            if (tr.docChanged) {
-              hasFootnoteChange = true;
-              break;
-            }
+            if (tr.docChanged) { hasChange = true; break; }
           }
-          if (!hasFootnoteChange) return null;
+          if (!hasChange) return null;
 
-          // Renumber all footnote references
           const tr = newState.tr;
           let counter = 1;
           let changed = false;
@@ -227,21 +250,21 @@ export const FootnoteReference = Node.create({
   },
 });
 
-/**
- * Helper: Generate unique footnote ID
- */
+/** 고유한 각주 ID 생성 */
 export function generateFootnoteId() {
   return "fn-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7);
 }
 
-/**
- * Helper: Get all footnote reference IDs from editor state
- */
+/** 에디터 문서에서 모든 각주 참조 ID 추출 (문서 순서대로) */
 export function getFootnoteIdsFromDoc(doc) {
   const ids = [];
   doc.descendants((node) => {
     if (node.type.name === "footnoteReference") {
-      ids.push({ id: node.attrs.footnoteId, number: node.attrs.number });
+      ids.push({
+        id: node.attrs.footnoteId,
+        number: node.attrs.number,
+        noteType: node.attrs.noteType || "footnote",
+      });
     }
   });
   return ids;

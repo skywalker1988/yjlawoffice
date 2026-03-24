@@ -55,7 +55,7 @@ import { BackstageView } from "./modules/BackstageView";
 import { NavigationPane } from "./modules/NavigationPane";
 import { ContextMenu } from "./modules/ContextMenu";
 import { FootnoteReference, generateFootnoteId } from "./modules/footnote-extension";
-import { FootnoteArea } from "./modules/FootnoteArea";
+import { FootnoteArea, EndnoteArea, FootnoteEndnoteDialog } from "./modules/FootnoteArea";
 import { isMarkdown, htmlToMarkdown, exportHtml, exportDocx, exportPdf, exportMarkdown, exportHwpx, importDocx, autoSaveToLocal, loadAutoSave } from "./modules/fileUtils";
 import { MetaDrawer } from "./modules/MetaDrawer";
 import { DocListSidebar } from "./modules/DocListSidebar";
@@ -110,7 +110,10 @@ export default function EditorPage() {
   const [headerText, setHeaderText] = useState("");
   const [footerText, setFooterText] = useState("");
   const [footnotes, setFootnotes] = useState([]); // { id, number, content }
+  const [endnotes, setEndnotes] = useState([]); // { id, number, content }
   const [footnoteAreaHeight, setFootnoteAreaHeight] = useState(0);
+  const [footnoteNumberFormat, setFootnoteNumberFormat] = useState("decimal");
+  const [endnoteNumberFormat, setEndnoteNumberFormat] = useState("lowerRoman");
   const [dynamicPageCount, setDynamicPageCount] = useState(1);
   const [headerFooterSettings, setHeaderFooterSettings] = useState({
     headerPos: 12.5, footerPos: 12.5, differentFirstPage: false, differentOddEven: false,
@@ -125,7 +128,7 @@ export default function EditorPage() {
   const [trackChangesEnabled, setTrackChangesEnabled] = useState(false);
 
   /* ── Dialog State ── */
-  const [dialogOpen, setDialogOpen] = useState(null); // "font" | "paragraph" | "pagesetup" | "hyperlink" | "table" | "image" | "border" | "bookmark" | "crossref" | "pageborder" | "watermark" | "printpreview" | "stylesmanager" | "symbol"
+  const [dialogOpen, setDialogOpen] = useState(null); // "font" | "paragraph" | "pagesetup" | "hyperlink" | "table" | "image" | "border" | "bookmark" | "crossref" | "pageborder" | "watermark" | "printpreview" | "stylesmanager" | "symbol" | "footnoteendnote"
   const [pageBorder, setPageBorder] = useState(null);
 
   /* ──── TipTap editor ──── */
@@ -412,26 +415,65 @@ export default function EditorPage() {
     setDoc({ ...EMPTY_DOC });
     if (editor) editor.commands.setContent("");
     setFootnotes([]);
+    setEndnotes([]);
     commentDispatch({ type: "DELETE_ALL" });
     setSaveStatus("");
     titleRef.current?.focus();
   };
 
-  /* ──── Insert Footnote ──── */
+  /* ──── Insert Footnote (본문에 참조 삽입 + 하단 각주 영역에 항목 추가) ──── */
   const handleInsertFootnote = useCallback(() => {
     if (!editor) return;
     const id = generateFootnoteId();
-    const content = window.prompt("각주 내용을 입력하세요:");
-    if (content === null) return;
-    // Insert reference in document
-    editor.commands.insertFootnote(id);
-    // Add footnote to state
+    // 본문에 각주 참조(위첨자) 삽입
+    editor.commands.insertFootnote(id, "footnote");
+    // 각주 상태에 빈 항목 추가 (하단 영역에서 바로 편집 가능)
     setFootnotes(prev => [...prev, {
       id,
       number: prev.length + 1,
-      content: content || "",
+      content: "",
     }]);
+    // 각주 영역으로 스크롤하여 바로 편집 시작
+    setTimeout(() => {
+      const fnEl = document.querySelector(`[data-footnote-item-id="${id}"]`);
+      if (fnEl) {
+        fnEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        const textEl = fnEl.querySelector(".footnote-item-text");
+        if (textEl) textEl.click(); // 자동으로 편집 모드 진입
+      }
+    }, 100);
   }, [editor]);
+
+  /* ──── Insert Endnote (미주 삽입) ──── */
+  const handleInsertEndnote = useCallback(() => {
+    if (!editor) return;
+    const id = generateFootnoteId();
+    editor.commands.insertFootnote(id, "endnote");
+    setEndnotes(prev => [...prev, {
+      id,
+      number: prev.length + 1,
+      content: "",
+    }]);
+    setTimeout(() => {
+      const fnEl = document.querySelector(`[data-footnote-item-id="${id}"]`);
+      if (fnEl) {
+        fnEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        const textEl = fnEl.querySelector(".footnote-item-text");
+        if (textEl) textEl.click();
+      }
+    }, 100);
+  }, [editor]);
+
+  /* ──── Footnote dialog에서 삽입 ──── */
+  const handleFootnoteDialogInsert = useCallback((opts) => {
+    if (opts.type === "footnote") {
+      setFootnoteNumberFormat(opts.numberFormat);
+      handleInsertFootnote();
+    } else {
+      setEndnoteNumberFormat(opts.numberFormat);
+      handleInsertEndnote();
+    }
+  }, [handleInsertFootnote, handleInsertEndnote]);
 
   /* ──── Page dimensions (pagination 등에서 참조하므로 먼저 선언) ──── */
   const pageDim = PAGE_SIZES.find(p => p.value === pageSize) || PAGE_SIZES[0];
@@ -892,6 +934,12 @@ export default function EditorPage() {
         else editor?.chain().focus().setParagraph().run();
       }} />}
       {dialogOpen === "symbol" && <SymbolPickerDialog editor={editor} onClose={() => setDialogOpen(null)} />}
+      {dialogOpen === "footnoteendnote" && <FootnoteEndnoteDialog
+        onInsert={handleFootnoteDialogInsert}
+        onClose={() => setDialogOpen(null)}
+        numberFormat={footnoteNumberFormat} setNumberFormat={setFootnoteNumberFormat}
+        endnoteNumberFormat={endnoteNumberFormat} setEndnoteNumberFormat={setEndnoteNumberFormat}
+      />}
 
       {/* ──── Left Sidebar: Document List ──── */}
       <DocListSidebar
@@ -1083,7 +1131,12 @@ export default function EditorPage() {
             onOpenPageSetupDialog={() => setDialogOpen("pagesetup")} editor={editor}
           />
         )}
-        {!ribbonCollapsed && viewMode === "edit" && activeTab === "references" && <ReferencesTab editor={editor} onInsertFootnote={handleInsertFootnote} />}
+        {!ribbonCollapsed && viewMode === "edit" && activeTab === "references" && (
+          <ReferencesTab editor={editor}
+            onInsertFootnote={handleInsertFootnote}
+            onInsertEndnote={handleInsertEndnote}
+            onOpenFootnoteDialog={() => setDialogOpen("footnoteendnote")} />
+        )}
         {!ribbonCollapsed && viewMode === "edit" && activeTab === "review" && (
           <ReviewTab editor={editor}
             onInsertComment={handleInsertComment}
@@ -1477,7 +1530,10 @@ export default function EditorPage() {
 
                     {/* ── 에디터 본문 ── */}
                     <EditorContent editor={editor} />
-                    <FootnoteArea editor={editor} footnotes={footnotes} setFootnotes={setFootnotes} onHeightChange={setFootnoteAreaHeight} />
+                    <FootnoteArea editor={editor} footnotes={footnotes} setFootnotes={setFootnotes}
+                      onHeightChange={setFootnoteAreaHeight} numberFormat={footnoteNumberFormat} />
+                    <EndnoteArea editor={editor} endnotes={endnotes} setEndnotes={setEndnotes}
+                      numberFormat={endnoteNumberFormat} />
                     <FloatingToolbar editor={editor} onInsertComment={handleInsertComment} />
                     <ContextMenu editor={editor}
                       onOpenFontDialog={() => setDialogOpen("font")}
