@@ -333,11 +333,17 @@ export const editorStyles = `
   100% { transform: translateX(350%); }
 }
 
-/* ──── Pagination ──── */
-/* The first page's content area overflows visually into subsequent page shells */
+/* ──── Pagination (워드 스타일 페이지 전환) ──── */
 .editor-page-area { position: relative; }
-/* Ensure ProseMirror doesn't constrain its height — let it grow naturally */
 .editor-page-area .ProseMirror { min-height: auto !important; }
+/* 페이지 전환 시 부드러운 margin 애니메이션 */
+.editor-page-area .ProseMirror > [data-pb] {
+  transition: margin-top 0.15s ease-out;
+}
+/* 스크롤 컨테이너 부드러운 스크롤 */
+.editor-canvas-scroll {
+  scroll-behavior: auto;
+}
 
 /* ──── Drag & Drop ──── */
 .ProseMirror.drag-over { outline: 2px dashed #3b82f6 !important; outline-offset: -4px; }

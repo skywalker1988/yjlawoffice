@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { DOC_TYPES } from "./constants";
 
-export function BackstageView({ doc, setDoc, onClose, onNew, onSave, onExportDocx, onExportPdf, onExportHtml, onImportDocx, onPrint }) {
+export function BackstageView({ doc, setDoc, onClose, onNew, onSave, onExportDocx, onExportPdf, onExportHtml, onExportMarkdown, onExportHwpx, onImportDocx, onPrint }) {
   const [activeMenu, setActiveMenu] = useState("info");
 
   const menuItems = [
@@ -147,8 +147,10 @@ export function BackstageView({ doc, setDoc, onClose, onNew, onSave, onExportDoc
             <h2 style={{ fontSize: 24, fontWeight: 300, color: "#333", marginBottom: 28 }}>내보내기</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 420 }}>
               {[
-                { label: "Word 문서 (.docx)", desc: "Microsoft Word 형식", icon: <FileText size={28} color="#2b5797" />, handler: onExportDocx },
-                { label: "PDF 문서 (.pdf)", desc: "인쇄용 PDF 형식", icon: <FileText size={28} color="#c00" />, handler: onExportPdf },
+                { label: "Word 문서 (.docx)", desc: "서식이 보존된 Microsoft Word 형식", icon: <FileText size={28} color="#2b5797" />, handler: onExportDocx },
+                { label: "PDF 문서 (.pdf)", desc: "인쇄용 PDF 형식 (에디터 그대로)", icon: <FileText size={28} color="#c00" />, handler: onExportPdf },
+                { label: "한글 문서 (.hwpx)", desc: "한컴오피스 한글 호환 형식", icon: <FileText size={28} color="#00a5e5" />, handler: onExportHwpx },
+                { label: "마크다운 (.md)", desc: "텍스트 기반 경량 마크업 형식", icon: <FileText size={28} color="#333" />, handler: onExportMarkdown },
                 { label: "HTML 파일 (.html)", desc: "웹 페이지 형식", icon: <FileText size={28} color="#e67e22" />, handler: onExportHtml },
               ].map(item => (
                 <button key={item.label} onClick={() => item.handler?.()}

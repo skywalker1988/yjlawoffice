@@ -56,7 +56,7 @@ import { NavigationPane } from "./modules/NavigationPane";
 import { ContextMenu } from "./modules/ContextMenu";
 import { FootnoteReference, generateFootnoteId } from "./modules/footnote-extension";
 import { FootnoteArea } from "./modules/FootnoteArea";
-import { isMarkdown, htmlToMarkdown, exportHtml, exportDocx, exportPdf, importDocx, autoSaveToLocal, loadAutoSave } from "./modules/fileUtils";
+import { isMarkdown, htmlToMarkdown, exportHtml, exportDocx, exportPdf, exportMarkdown, exportHwpx, importDocx, autoSaveToLocal, loadAutoSave } from "./modules/fileUtils";
 import { MetaDrawer } from "./modules/MetaDrawer";
 import { DocListSidebar } from "./modules/DocListSidebar";
 import {
@@ -437,7 +437,7 @@ export default function EditorPage() {
   const marginLeft = margins === "custom" ? customMargins.left : marginPreset.left;
   const marginRight = margins === "custom" ? customMargins.right : marginPreset.right;
 
-  /* ──── Pagination ──── */
+  /* ──── Pagination (워드 스타일 페이지 전환) ──── */
   const contentAreaHeight = pageH - marginTop - marginBottom;
   const PAGE_GAP = 40;
   const gapH = marginBottom + PAGE_GAP + marginTop;
@@ -445,67 +445,168 @@ export default function EditorPage() {
   const [pageBreaks, setPageBreaks] = useState([]);
 
   /* 최신값을 ref로 유지 — effect 재등록 없이 참조 */
-  const pgRef = useRef({ contentAreaHeight, marginTop, gapH });
-  pgRef.current = { contentAreaHeight, marginTop, gapH };
+  const pgRef = useRef({ contentAreaHeight, marginTop, marginBottom, gapH, pageH });
+  pgRef.current = { contentAreaHeight, marginTop, marginBottom, gapH, pageH };
+
+  /* 디바운스 타이머 ref */
+  const pageBreakTimer = useRef(null);
+  /* 이전 페이지 브레이크 수 — 변경 시 스크롤 보정용 */
+  const prevBreakCount = useRef(0);
 
   useEffect(() => {
     if (!editor) return;
 
+    /**
+     * 워드 스타일 페이지네이션 핵심 알고리즘:
+     * - 요소가 페이지 경계에 걸치면, 요소 높이가 작으면 다음 페이지로 이동
+     * - 요소가 페이지 높이보다 크면 그 자리에 두고 오버레이로 처리
+     * - 엔터 시 생기는 빈 줄이 경계를 넘으면 즉시 다음 페이지로 이동
+     * - 페이지 전환 후 커서가 보이도록 자동 스크롤
+     */
     const applyPageBreaks = () => {
-      requestAnimationFrame(() => {
-        const dom = editor.view.dom;
-        if (!dom) return;
-        const { contentAreaHeight: caH, marginTop: mT, gapH: gap } = pgRef.current;
-        if (caH <= 0) return;
+      const dom = editor.view.dom;
+      if (!dom) return;
+      const { contentAreaHeight: caH, marginTop: mT, gapH: gap } = pgRef.current;
+      if (caH <= 0) return;
 
-        /* 1단계: 이전에 주입한 margin 전부 제거 */
-        dom.querySelectorAll("[data-pb]").forEach(el => {
-          el.style.marginTop = "";
-          el.removeAttribute("data-pb");
-        });
-        /* 강제 reflow — margin 제거 후 정확한 레이아웃 확보 */
-        void dom.offsetHeight;
+      /* 1단계: 이전에 주입한 margin 전부 제거 */
+      dom.querySelectorAll("[data-pb]").forEach(el => {
+        el.style.marginTop = "";
+        el.removeAttribute("data-pb");
+      });
+      /* 강제 reflow — margin 제거 후 정확한 레이아웃 확보 */
+      void dom.offsetHeight;
 
-        /* 2단계: 모든 자식의 위치를 한 번에 측정 (margin 없는 상태) */
-        const children = Array.from(dom.children);
-        const measurements = children.map(child => ({
-          el: child,
-          top: child.offsetTop,
-          bottom: child.offsetTop + child.offsetHeight,
-        }));
+      /* 2단계: 모든 자식의 위치를 한 번에 측정 (margin 없는 상태) */
+      const children = Array.from(dom.children);
+      const measurements = children.map(child => ({
+        el: child,
+        top: child.offsetTop,
+        height: child.offsetHeight,
+        bottom: child.offsetTop + child.offsetHeight,
+      }));
 
-        /* 3단계: 페이지 경계를 넘는 요소 찾아 margin 주입 */
-        let pageNum = 1;
-        const breaks = [];
-        let nextBreak = caH; /* contentAreaHeight 단위로 경계 설정 (editor 좌표) */
+      /* 3단계: 페이지 경계를 넘는 요소 찾아 margin 주입 */
+      let pageNum = 1;
+      const breaks = [];
+      let nextBreak = caH;
+      let accumulatedGap = 0;
 
-        for (const m of measurements) {
-          if (m.bottom > nextBreak) {
-            /* 이 요소의 하단이 페이지 경계를 넘음 → 이 요소부터 다음 페이지 시작 */
-            const breakY = mT + nextBreak + breaks.length * gap;
-            breaks.push(breakY);
-            m.el.style.marginTop = `${gap}px`;
-            m.el.setAttribute("data-pb", String(pageNum + 1));
+      for (let i = 0; i < measurements.length; i++) {
+        const m = measurements[i];
+        /* 누적 gap을 빼서 실제 콘텐츠 위치 계산 */
+        const realTop = m.top - accumulatedGap;
+        const realBottom = m.bottom - accumulatedGap;
+
+        if (realBottom <= nextBreak) continue;
+
+        /**
+         * 이 요소가 페이지 경계를 넘음. 판단 기준:
+         * 1) 요소 높이가 콘텐츠 영역보다 크면 → 분할 불가, 현 위치 유지
+         * 2) 요소 상단이 경계보다 아래면 → 이전 요소가 경계까지 차지, 이 요소는 다음 페이지
+         * 3) 요소 상단이 경계 근처(하위 20%)면 → 다음 페이지로 밀기 (과부(widow) 방지)
+         * 4) 요소가 경계를 가로지르지만 상단이 아직 여유 있으면 → 분할 허용
+         */
+        const elementFitsInPage = m.height <= caH;
+        const topNearBoundary = (nextBreak - realTop) < caH * 0.15;
+
+        if (elementFitsInPage || topNearBoundary) {
+          /* 다음 페이지로 이동 */
+          const breakY = mT + nextBreak + breaks.length * gap;
+          breaks.push(breakY);
+          const gapAmount = gap;
+          m.el.style.marginTop = `${gapAmount}px`;
+          m.el.setAttribute("data-pb", String(pageNum + 1));
+          accumulatedGap += gapAmount;
+          pageNum++;
+
+          /* 이 요소가 밀린 후의 새 nextBreak 계산 */
+          const newRealBottom = realTop + m.height;
+          /* 다음 페이지 경계 = 현재 경계 + contentAreaHeight */
+          nextBreak += caH;
+
+          /* 밀린 요소가 여전히 다음 경계를 넘는 경우 (매우 긴 요소) */
+          while (newRealBottom > nextBreak) {
+            const extraBreakY = mT + nextBreak + breaks.length * gap;
+            breaks.push(extraBreakY);
+            pageNum++;
+            nextBreak += caH;
+          }
+        } else {
+          /* 요소가 경계를 걸치지만 상단에 충분한 콘텐츠가 있음 → 분할 허용 */
+          /* 오버레이가 시각적으로 처리하므로 margin 주입 없이 넘어감 */
+          const breakY = mT + nextBreak + breaks.length * gap;
+          breaks.push(breakY);
+          pageNum++;
+          nextBreak += caH;
+
+          /* 분할된 요소가 여러 페이지에 걸칠 수 있음 */
+          while (realBottom > nextBreak) {
+            const extraBreakY = mT + nextBreak + breaks.length * gap;
+            breaks.push(extraBreakY);
             pageNum++;
             nextBreak += caH;
           }
         }
+      }
 
-        setPageBreaks(breaks);
-        setDynamicPageCount(pageNum);
+      setPageBreaks(breaks);
+      setDynamicPageCount(pageNum);
+
+      /* 4단계: 페이지가 새로 생겼으면 커서 위치로 부드럽게 스크롤 */
+      if (breaks.length !== prevBreakCount.current) {
+        prevBreakCount.current = breaks.length;
+        scrollToCursor();
+      }
+    };
+
+    /** 커서가 보이는 영역으로 부드럽게 스크롤 */
+    const scrollToCursor = () => {
+      requestAnimationFrame(() => {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return;
+        const range = sel.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        if (!rect || (rect.width === 0 && rect.height === 0)) return;
+
+        const scrollEl = document.querySelector(".editor-canvas-scroll");
+        if (!scrollEl) return;
+
+        const containerRect = scrollEl.getBoundingClientRect();
+        const cursorRelativeTop = rect.top - containerRect.top;
+        const cursorRelativeBottom = rect.bottom - containerRect.top;
+        const visibleHeight = containerRect.height;
+
+        /* 커서가 뷰포트 밖에 있으면 스크롤 */
+        if (cursorRelativeBottom > visibleHeight - 40) {
+          /* 커서가 아래로 벗어남 → 커서를 화면 중간으로 */
+          const targetScroll = scrollEl.scrollTop + cursorRelativeBottom - visibleHeight + visibleHeight * 0.4;
+          scrollEl.scrollTo({ top: targetScroll, behavior: "smooth" });
+        } else if (cursorRelativeTop < 40) {
+          /* 커서가 위로 벗어남 */
+          const targetScroll = scrollEl.scrollTop + cursorRelativeTop - visibleHeight * 0.4;
+          scrollEl.scrollTo({ top: Math.max(0, targetScroll), behavior: "smooth" });
+        }
       });
     };
 
-    editor.on("update", applyPageBreaks);
-    editor.on("selectionUpdate", applyPageBreaks);
+    /* 디바운스된 applyPageBreaks — 빠른 타이핑 시 과도한 재계산 방지 */
+    const debouncedApply = () => {
+      if (pageBreakTimer.current) cancelAnimationFrame(pageBreakTimer.current);
+      pageBreakTimer.current = requestAnimationFrame(applyPageBreaks);
+    };
+
+    editor.on("update", debouncedApply);
+    editor.on("selectionUpdate", debouncedApply);
     const timer = setTimeout(applyPageBreaks, 100);
-    const ro = new ResizeObserver(() => requestAnimationFrame(applyPageBreaks));
+    const ro = new ResizeObserver(debouncedApply);
     if (editor.view.dom) ro.observe(editor.view.dom);
 
     return () => {
-      editor.off("update", applyPageBreaks);
-      editor.off("selectionUpdate", applyPageBreaks);
+      editor.off("update", debouncedApply);
+      editor.off("selectionUpdate", debouncedApply);
       clearTimeout(timer);
+      if (pageBreakTimer.current) cancelAnimationFrame(pageBreakTimer.current);
       ro.disconnect();
     };
   }, [editor]);
@@ -515,7 +616,6 @@ export default function EditorPage() {
     if (!editor) return;
     const dom = editor.view.dom;
     if (!dom) return;
-    /* 기존 margin 제거 후 다음 프레임에 재계산 트리거 */
     dom.querySelectorAll("[data-pb]").forEach(el => {
       el.style.marginTop = "";
       el.removeAttribute("data-pb");
@@ -681,13 +781,18 @@ export default function EditorPage() {
     if (editor) exportDocx(editor.getHTML(), doc.title || "문서");
   };
   const handleExportPdf = () => {
-    // Use the actual editor DOM element for accurate rendering
     const el = editor?.view?.dom || editorCanvasRef.current?.querySelector(".ProseMirror");
-    if (el) exportPdf(el, doc.title || "문서");
+    if (el) exportPdf(el, doc.title || "문서", { orientation, pageSize });
     else alert("에디터 요소를 찾을 수 없습니다.");
   };
   const handleExportHtml = () => {
     if (editor) exportHtml(editor.getHTML(), doc.title || "문서");
+  };
+  const handleExportMarkdown = () => {
+    if (editor) exportMarkdown(editor.getHTML(), doc.title || "문서");
+  };
+  const handleExportHwpx = () => {
+    if (editor) exportHwpx(editor.getHTML(), doc.title || "문서");
   };
 
   /* ──── Counts ──── */
@@ -753,6 +858,8 @@ export default function EditorPage() {
           onExportDocx={handleExportDocx}
           onExportPdf={handleExportPdf}
           onExportHtml={handleExportHtml}
+          onExportMarkdown={handleExportMarkdown}
+          onExportHwpx={handleExportHwpx}
           onImportDocx={handleImportDocx}
           onPrint={() => window.print()}
         />
