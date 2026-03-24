@@ -278,7 +278,7 @@ export function LayoutTab({ margins, setMargins, orientation, setOrientation, pa
 }
 
 /* ══════════════════════════════ REFERENCES ══════════════════════════════ */
-export function ReferencesTab({ editor, onInsertFootnote }) {
+export function ReferencesTab({ editor, onInsertFootnote, onInsertEndnote, onOpenFootnoteDialog }) {
   if (!editor) return null;
 
   const insertTOC = () => {
@@ -300,19 +300,91 @@ export function ReferencesTab({ editor, onInsertFootnote }) {
         <RibbonBtnLarge icon={<ListTree size={18} />} label="목차 생성" onClick={insertTOC} title="목차 생성" />
       </RibbonGroup>
       <GroupSep />
-      <RibbonGroup label="각주">
-        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <RibbonBtn onClick={() => onInsertFootnote?.()} title="각주 삽입" small>
-            <Footprints size={ICON_SIZE} /> <span style={{ fontSize: 10 }}>각주</span>
-          </RibbonBtn>
-          <RibbonBtn onClick={() => { const t = window.prompt("미주:"); if (t) editor.commands.setContent(editor.getHTML() + `<p style="font-size:9pt;color:#666;border-top:1px solid #ccc;padding-top:4px;margin-top:20px;">${t}</p>`); }} title="미주" small>
-            <Footprints size={ICON_SIZE} /> <span style={{ fontSize: 10 }}>미주</span>
-          </RibbonBtn>
+      <RibbonGroup label="각주" dialogLauncher={onOpenFootnoteDialog}>
+        <div style={{ display: "flex", gap: 4 }}>
+          <RibbonBtnLarge
+            icon={<span style={{ fontSize: 18, fontWeight: 700, lineHeight: 1 }}>A<sup style={{ fontSize: 10, color: "#0563C1" }}>1</sup></span>}
+            label="각주 삽입"
+            onClick={() => onInsertFootnote?.()}
+            title="각주 삽입 (Alt+Ctrl+F)" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <RibbonBtn onClick={() => onInsertEndnote?.()} title="미주 삽입 (Alt+Ctrl+D)" small>
+              <Footprints size={ICON_SIZE} /> <span style={{ fontSize: 10 }}>미주 삽입</span>
+            </RibbonBtn>
+            <DropdownButton trigger={
+              <RibbonBtn title="다음 각주로 이동" small>
+                <span style={{ fontSize: 10 }}>다음 각주 ▼</span>
+              </RibbonBtn>
+            }>
+              <button className="word-dropdown-item" onMouseDown={(e) => {
+                e.preventDefault();
+                /* 다음 각주 참조로 이동 */
+                const { from } = editor.state.selection;
+                let nextPos = null;
+                editor.state.doc.descendants((node, pos) => {
+                  if (node.type.name === "footnoteReference" && pos > from && nextPos === null) {
+                    nextPos = pos;
+                    return false;
+                  }
+                });
+                if (nextPos !== null) {
+                  editor.chain().focus().setTextSelection(nextPos).scrollIntoView().run();
+                }
+              }}>다음 각주</button>
+              <button className="word-dropdown-item" onMouseDown={(e) => {
+                e.preventDefault();
+                /* 이전 각주 참조로 이동 */
+                const { from } = editor.state.selection;
+                let prevPos = null;
+                editor.state.doc.descendants((node, pos) => {
+                  if (node.type.name === "footnoteReference" && pos < from) {
+                    prevPos = pos;
+                  }
+                });
+                if (prevPos !== null) {
+                  editor.chain().focus().setTextSelection(prevPos).scrollIntoView().run();
+                }
+              }}>이전 각주</button>
+              <div className="word-dropdown-sep" />
+              <button className="word-dropdown-item" onMouseDown={(e) => {
+                e.preventDefault();
+                /* 다음 미주로 이동 */
+                const { from } = editor.state.selection;
+                let nextPos = null;
+                editor.state.doc.descendants((node, pos) => {
+                  if (node.type.name === "footnoteReference" && node.attrs.noteType === "endnote" && pos > from && nextPos === null) {
+                    nextPos = pos;
+                    return false;
+                  }
+                });
+                if (nextPos !== null) {
+                  editor.chain().focus().setTextSelection(nextPos).scrollIntoView().run();
+                }
+              }}>다음 미주</button>
+              <button className="word-dropdown-item" onMouseDown={(e) => {
+                e.preventDefault();
+                /* 이전 미주로 이동 */
+                const { from } = editor.state.selection;
+                let prevPos = null;
+                editor.state.doc.descendants((node, pos) => {
+                  if (node.type.name === "footnoteReference" && node.attrs.noteType === "endnote" && pos < from) {
+                    prevPos = pos;
+                  }
+                });
+                if (prevPos !== null) {
+                  editor.chain().focus().setTextSelection(prevPos).scrollIntoView().run();
+                }
+              }}>이전 미주</button>
+            </DropdownButton>
+            <RibbonBtn onClick={onOpenFootnoteDialog} title="각주/미주 설정" small>
+              <span style={{ fontSize: 10 }}>각주/미주...</span>
+            </RibbonBtn>
+          </div>
         </div>
       </RibbonGroup>
       <GroupSep />
       <RibbonGroup label="인용">
-        <RibbonBtn onClick={() => { const t = window.prompt("인용:"); if (t) editor.chain().focus().insertContent(`<span style="font-size:9pt;color:#3b82f6;">[${t}]</span>`).run(); }} title="인용" small>
+        <RibbonBtn onClick={() => { const t = window.prompt("인용:"); if (t) editor.chain().focus().insertContent(`<span style="font-size:9pt;color:#3b82f6;">[${t}]</span>`).run(); }} title="인용 표식 삽입" small>
           <BookOpen size={ICON_SIZE} /> <span style={{ fontSize: 10 }}>인용</span>
         </RibbonBtn>
       </RibbonGroup>
