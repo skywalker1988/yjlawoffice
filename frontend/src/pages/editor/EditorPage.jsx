@@ -342,7 +342,19 @@ export default function EditorPage() {
     [editor, doc, docId],
   );
 
-  /* ──── Keyboard Shortcuts ──── */
+  /* ──── Fullscreen toggle ──── */
+  const handleToggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen?.();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.();
+      setIsFullscreen(false);
+    }
+  }, []);
+
+  /* ──── Keyboard Shortcuts (ref로 최신 핸들러 참조 — 선언 순서 무관) ──── */
+  const handleInsertCommentRef = useRef(null);
   useEffect(() => {
     const handler = (e) => {
       const ctrl = e.ctrlKey || e.metaKey;
@@ -352,7 +364,7 @@ export default function EditorPage() {
       if (ctrl && e.key === "k") { e.preventDefault(); setDialogOpen("hyperlink"); }
       if (ctrl && e.key === "d") { e.preventDefault(); setDialogOpen("font"); }
       if (ctrl && e.key === "p") { e.preventDefault(); setDialogOpen("printpreview"); }
-      if (ctrl && e.altKey && e.key === "m") { e.preventDefault(); handleInsertComment(); }
+      if (ctrl && e.altKey && e.key === "m") { e.preventDefault(); handleInsertCommentRef.current?.(); }
       if (e.key === "F11") { e.preventDefault(); handleToggleFullscreen(); }
       if (ctrl && e.shiftKey && e.key === ">") { e.preventDefault(); editor?.chain().focus().setFontSize((() => { const s = parseFloat(editor?.getAttributes("textStyle").fontSize || "11"); const sizes = [8,9,10,10.5,11,12,14,16,18,20,22,24,28,36,48,72]; return (sizes.find(x => x > s) || 72) + "pt"; })()).run(); }
       if (ctrl && e.shiftKey && e.key === "<") { e.preventDefault(); editor?.chain().focus().setFontSize((() => { const s = parseFloat(editor?.getAttributes("textStyle").fontSize || "11"); const sizes = [8,9,10,10.5,11,12,14,16,18,20,22,24,28,36,48,72]; return ([...sizes].reverse().find(x => x < s) || 8) + "pt"; })()).run(); }
@@ -368,7 +380,7 @@ export default function EditorPage() {
         e.preventDefault();
         setZoom(z => {
           const delta = e.deltaY > 0 ? -10 : 10;
-          return Math.max(50, Math.min(200, z + delta));
+          return Math.max(25, Math.min(500, z + delta));
         });
       }
     };
@@ -415,32 +427,102 @@ export default function EditorPage() {
     }]);
   }, [editor]);
 
-  /* ──── Pagination: measure content → update page count ──── */
-  const contentAreaHeight = pageH - marginTop - marginBottom; // content area per page in px (unscaled)
-  const PAGE_GAP = 40; // gap between pages in px (unscaled)
+  /* ──── Page dimensions (pagination 등에서 참조하므로 먼저 선언) ──── */
+  const pageDim = PAGE_SIZES.find(p => p.value === pageSize) || PAGE_SIZES[0];
+  const marginPreset = MARGIN_PRESETS.find(m => m.value === margins) || MARGIN_PRESETS[1];
+  const pageW = orientation === "portrait" ? pageDim.width : pageDim.height;
+  const pageH = orientation === "portrait" ? pageDim.height : pageDim.width;
+  const marginTop = margins === "custom" ? customMargins.top : marginPreset.top;
+  const marginBottom = margins === "custom" ? customMargins.bottom : marginPreset.bottom;
+  const marginLeft = margins === "custom" ? customMargins.left : marginPreset.left;
+  const marginRight = margins === "custom" ? customMargins.right : marginPreset.right;
+
+  /* ──── Pagination ──── */
+  const contentAreaHeight = pageH - marginTop - marginBottom;
+  const PAGE_GAP = 40;
+  const gapH = marginBottom + PAGE_GAP + marginTop;
+
+  const [pageBreaks, setPageBreaks] = useState([]);
+
+  /* 최신값을 ref로 유지 — effect 재등록 없이 참조 */
+  const pgRef = useRef({ contentAreaHeight, marginTop, gapH });
+  pgRef.current = { contentAreaHeight, marginTop, gapH };
 
   useEffect(() => {
     if (!editor) return;
-    const measure = () => {
-      const dom = editor.view.dom;
-      if (!dom) return;
-      const scrollH = dom.scrollHeight;
-      const pages = Math.max(1, Math.ceil(scrollH / contentAreaHeight));
-      setDynamicPageCount(pages);
+
+    const applyPageBreaks = () => {
+      requestAnimationFrame(() => {
+        const dom = editor.view.dom;
+        if (!dom) return;
+        const { contentAreaHeight: caH, marginTop: mT, gapH: gap } = pgRef.current;
+        if (caH <= 0) return;
+
+        /* 1단계: 이전에 주입한 margin 전부 제거 */
+        dom.querySelectorAll("[data-pb]").forEach(el => {
+          el.style.marginTop = "";
+          el.removeAttribute("data-pb");
+        });
+        /* 강제 reflow — margin 제거 후 정확한 레이아웃 확보 */
+        void dom.offsetHeight;
+
+        /* 2단계: 모든 자식의 위치를 한 번에 측정 (margin 없는 상태) */
+        const children = Array.from(dom.children);
+        const measurements = children.map(child => ({
+          el: child,
+          top: child.offsetTop,
+          bottom: child.offsetTop + child.offsetHeight,
+        }));
+
+        /* 3단계: 페이지 경계를 넘는 요소 찾아 margin 주입 */
+        let pageNum = 1;
+        const breaks = [];
+        let nextBreak = caH; /* contentAreaHeight 단위로 경계 설정 (editor 좌표) */
+
+        for (const m of measurements) {
+          if (m.bottom > nextBreak) {
+            /* 이 요소의 하단이 페이지 경계를 넘음 → 이 요소부터 다음 페이지 시작 */
+            const breakY = mT + nextBreak + breaks.length * gap;
+            breaks.push(breakY);
+            m.el.style.marginTop = `${gap}px`;
+            m.el.setAttribute("data-pb", String(pageNum + 1));
+            pageNum++;
+            nextBreak += caH;
+          }
+        }
+
+        setPageBreaks(breaks);
+        setDynamicPageCount(pageNum);
+      });
     };
-    // Measure on every update
-    editor.on("update", measure);
-    // Also measure on initial load
-    const timer = setTimeout(measure, 200);
-    // ResizeObserver for more accurate tracking
-    const ro = new ResizeObserver(measure);
+
+    editor.on("update", applyPageBreaks);
+    editor.on("selectionUpdate", applyPageBreaks);
+    const timer = setTimeout(applyPageBreaks, 100);
+    const ro = new ResizeObserver(() => requestAnimationFrame(applyPageBreaks));
     if (editor.view.dom) ro.observe(editor.view.dom);
+
     return () => {
-      editor.off("update", measure);
+      editor.off("update", applyPageBreaks);
+      editor.off("selectionUpdate", applyPageBreaks);
       clearTimeout(timer);
       ro.disconnect();
     };
-  }, [editor, contentAreaHeight]);
+  }, [editor]);
+
+  /* 여백/용지 변경 시 즉시 재계산 */
+  useEffect(() => {
+    if (!editor) return;
+    const dom = editor.view.dom;
+    if (!dom) return;
+    /* 기존 margin 제거 후 다음 프레임에 재계산 트리거 */
+    dom.querySelectorAll("[data-pb]").forEach(el => {
+      el.style.marginTop = "";
+      el.removeAttribute("data-pb");
+    });
+    /* update 이벤트를 강제 발생시켜 applyPageBreaks 재실행 */
+    editor.commands.focus();
+  }, [editor, contentAreaHeight, marginTop, gapH]);
 
   /* ──── Comment handlers ──── */
   const ensureAuthor = useCallback((callback) => {
@@ -499,6 +581,9 @@ export default function EditorPage() {
       // The balloon will auto-focus for input
     });
   }, [editor, ensureAuthor]);
+
+  // ref 동기화 — 키보드 단축키에서 최신 핸들러 참조
+  handleInsertCommentRef.current = handleInsertComment;
 
   const handleDeleteActiveComment = useCallback(() => {
     if (!editor || !commentStore.activeCommentId) return;
@@ -610,34 +695,13 @@ export default function EditorPage() {
   const wordCount = editor?.storage.characterCount?.words() || 0;
   const pageCount = Math.max(1, Math.ceil(charCount / 1800));
 
-  /* ──── Page dimensions ──── */
-  const pageDim = PAGE_SIZES.find(p => p.value === pageSize) || PAGE_SIZES[0];
-  const marginPreset = MARGIN_PRESETS.find(m => m.value === margins) || MARGIN_PRESETS[1];
-  const pageW = orientation === "portrait" ? pageDim.width : pageDim.height;
-  const pageH = orientation === "portrait" ? pageDim.height : pageDim.width;
-  const marginTop = margins === "custom" ? customMargins.top : marginPreset.top;
-  const marginBottom = margins === "custom" ? customMargins.bottom : marginPreset.bottom;
-  const marginLeft = margins === "custom" ? customMargins.left : marginPreset.left;
-  const marginRight = margins === "custom" ? customMargins.right : marginPreset.right;
-
-  /* ──── Fullscreen toggle ──── */
-  const handleToggleFullscreen = useCallback(() => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen?.();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen?.();
-      setIsFullscreen(false);
-    }
-  }, []);
-
   /* ──── Page-width fit ──── */
   const handleFitPageWidth = useCallback(() => {
     const scrollEl = document.querySelector(".editor-canvas-scroll");
     if (!scrollEl) return;
     const availWidth = scrollEl.clientWidth - 60; // padding
     const newZoom = Math.round((availWidth / pageW) * 100);
-    setZoom(Math.max(50, Math.min(200, newZoom)));
+    setZoom(Math.max(25, Math.min(500, newZoom)));
   }, [pageW]);
 
   const RIBBON_TABS = [
@@ -1156,168 +1220,164 @@ export default function EditorPage() {
               </div>
             )}
 
-            {/* ═══ Multi-page A4 Area (인쇄 모양) ═══ */}
-            {viewMode === "edit" && <div ref={editorCanvasRef} style={{
-              display: "flex", flexDirection: "column", alignItems: "center",
-              gap: `${PAGE_GAP * (zoom / 100)}px`, flexShrink: 0,
-            }}>
-              {Array.from({ length: dynamicPageCount }, (_, pageIdx) => {
-                const scaledPageW = pageW * (zoom / 100);
-                const scaledPageH = pageH * (zoom / 100);
-                const scaledMT = marginTop * (zoom / 100);
-                const scaledMB = marginBottom * (zoom / 100);
-                const scaledML = marginLeft * (zoom / 100);
-                const scaledMR = marginRight * (zoom / 100);
-                const scaledContentH = contentAreaHeight * (zoom / 100);
-                const isFirstPage = pageIdx === 0;
+            {/* ═══ A4 편집 영역 (인쇄 모양) ═══ */}
+            {viewMode === "edit" && (() => {
+              const zoomR = zoom / 100;
+              const pageBg = darkMode ? "#2d2d2d" : (pageColor || "#fff");
+              const canvasBg = darkMode ? "#1e1e1e" : "#e8e8e8";
 
-                return (
-                  <div key={pageIdx} className="editor-page-area" style={{
-                    width: scaledPageW,
-                    height: scaledPageH,
-                    background: darkMode ? "#2d2d2d" : (pageColor || "#fff"),
+              return (
+                <div style={{
+                  transform: `scale(${zoomR})`,
+                  transformOrigin: "top center",
+                  width: pageW,
+                  flexShrink: 0,
+                }}>
+                  <div ref={editorCanvasRef} className="editor-page-area" style={{
+                    position: "relative",
+                    width: pageW,
+                    minHeight: pageH,
+                    background: pageBg,
                     boxShadow: darkMode
                       ? "0 1px 4px rgba(0,0,0,0.5)"
                       : "0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06)",
-                    position: "relative",
-                    overflow: "hidden",
                     border: darkMode ? "1px solid #444" : "none",
+                    paddingTop: marginTop,
+                    paddingBottom: marginBottom,
+                    paddingLeft: marginLeft,
+                    paddingRight: marginRight,
+                    boxSizing: "border-box",
                   }}>
-                    {/* 페이지 테두리 (선택 시) */}
-                    {pageBorder && (
-                      <div style={{
-                        position: "absolute", top: 8, left: 8, right: 8, bottom: 8,
-                        border: `${pageBorder.width || 1}px ${pageBorder.style || "solid"} ${pageBorder.color || "#000"}`,
-                        pointerEvents: "none", zIndex: 1,
-                      }} />
-                    )}
 
-                    {/* 워터마크 */}
+                    {/* ── 마진 가이드라인 (Word 스타일: 모서리 L자 표시) ── */}
+                    {/* 상단 좌 */}
+                    <div style={{ position: "absolute", top: marginTop, left: marginLeft - 1, width: 12, height: 1, background: darkMode ? "#555" : "#c0c0c0", pointerEvents: "none", zIndex: 4 }} />
+                    <div style={{ position: "absolute", top: marginTop, left: marginLeft - 1, width: 1, height: 12, background: darkMode ? "#555" : "#c0c0c0", pointerEvents: "none", zIndex: 4 }} />
+                    {/* 상단 우 */}
+                    <div style={{ position: "absolute", top: marginTop, right: marginRight - 1, width: 12, height: 1, background: darkMode ? "#555" : "#c0c0c0", pointerEvents: "none", zIndex: 4 }} />
+                    <div style={{ position: "absolute", top: marginTop, right: marginRight - 1, width: 1, height: 12, background: darkMode ? "#555" : "#c0c0c0", pointerEvents: "none", zIndex: 4 }} />
+                    {/* 하단 좌 (1페이지 기준) */}
+                    <div style={{ position: "absolute", top: pageH - marginBottom, left: marginLeft - 1, width: 12, height: 1, background: darkMode ? "#555" : "#c0c0c0", pointerEvents: "none", zIndex: 4 }} />
+                    <div style={{ position: "absolute", top: pageH - marginBottom - 12, left: marginLeft - 1, width: 1, height: 12, background: darkMode ? "#555" : "#c0c0c0", pointerEvents: "none", zIndex: 4 }} />
+                    {/* 하단 우 (1페이지 기준) */}
+                    <div style={{ position: "absolute", top: pageH - marginBottom, right: marginRight - 1, width: 12, height: 1, background: darkMode ? "#555" : "#c0c0c0", pointerEvents: "none", zIndex: 4 }} />
+                    <div style={{ position: "absolute", top: pageH - marginBottom - 12, right: marginRight - 1, width: 1, height: 12, background: darkMode ? "#555" : "#c0c0c0", pointerEvents: "none", zIndex: 4 }} />
+
+                    {/* ── 페이지 구분 오버레이 (회색 간격 + 페이지 번호 + 마진 가이드) ── */}
+                    {pageBreaks.map((breakY, i) => (
+                      <div key={`pgb-${i}`} style={{
+                        position: "absolute",
+                        top: breakY,
+                        left: -1,
+                        right: -1,
+                        height: gapH,
+                        zIndex: 3, pointerEvents: "none",
+                        display: "flex", flexDirection: "column",
+                      }}>
+                        {/* 하단 여백 (페이지 배경색) */}
+                        <div style={{ height: marginBottom, background: pageBg, position: "relative" }}>
+                          {/* 하단 마진 가이드 — L자 */}
+                          <div style={{ position: "absolute", bottom: 0, left: marginLeft - 1, width: 12, height: 1, background: darkMode ? "#555" : "#c0c0c0" }} />
+                          <div style={{ position: "absolute", bottom: 0, left: marginLeft - 1, width: 1, height: 12, background: darkMode ? "#555" : "#c0c0c0" }} />
+                          <div style={{ position: "absolute", bottom: 0, right: marginRight - 1, width: 12, height: 1, background: darkMode ? "#555" : "#c0c0c0" }} />
+                          <div style={{ position: "absolute", bottom: 0, right: marginRight - 1, width: 1, height: 12, background: darkMode ? "#555" : "#c0c0c0" }} />
+                          {/* 바닥글 */}
+                          <div style={{
+                            position: "absolute", bottom: 4, left: marginLeft, right: marginRight,
+                            textAlign: "center", fontSize: "9pt", color: "#bbb",
+                          }}>{footerText || `- ${i + 1} -`}</div>
+                          {/* 하단 그림자 */}
+                          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 2,
+                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }} />
+                        </div>
+                        {/* 회색 간격 (페이지 사이 공간) */}
+                        <div style={{
+                          flex: "0 0 auto", height: PAGE_GAP, background: canvasBg,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>
+                          <span style={{ fontSize: 9, color: darkMode ? "#666" : "#aaa", fontFamily: "'Segoe UI', sans-serif" }}>
+                            {i + 2}페이지
+                          </span>
+                        </div>
+                        {/* 상단 여백 (페이지 배경색) */}
+                        <div style={{ height: marginTop, background: pageBg, position: "relative" }}>
+                          {/* 상단 마진 가이드 — L자 */}
+                          <div style={{ position: "absolute", top: 0, left: marginLeft - 1, width: 12, height: 1, background: darkMode ? "#555" : "#c0c0c0" }} />
+                          <div style={{ position: "absolute", top: 0, left: marginLeft - 1, width: 1, height: 12, background: darkMode ? "#555" : "#c0c0c0" }} />
+                          <div style={{ position: "absolute", top: 0, right: marginRight - 1, width: 12, height: 1, background: darkMode ? "#555" : "#c0c0c0" }} />
+                          <div style={{ position: "absolute", top: 0, right: marginRight - 1, width: 1, height: 12, background: darkMode ? "#555" : "#c0c0c0" }} />
+                          {/* 상단 그림자 */}
+                          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2,
+                            boxShadow: "0 -2px 4px rgba(0,0,0,0.1)" }} />
+                          {/* 머리글 */}
+                          <div style={{
+                            position: "absolute", top: 4, left: marginLeft, right: marginRight,
+                            textAlign: "center", fontSize: "9pt", color: "#bbb",
+                          }}>{headerText}</div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* ── 워터마크 ── */}
                     {watermarkText && (
                       <div style={{
-                        position: "absolute", top: "50%", left: "50%",
+                        position: "absolute", top: pageH / 2, left: "50%",
                         transform: "translate(-50%, -50%) rotate(-45deg)",
-                        fontSize: `${54 * (zoom / 100)}px`, color: "rgba(192,192,192,0.25)",
+                        fontSize: 54, color: "rgba(192,192,192,0.25)",
                         fontWeight: 300, whiteSpace: "nowrap", pointerEvents: "none",
-                        zIndex: 0, userSelect: "none",
-                        fontFamily: "'Segoe UI', '맑은 고딕', sans-serif",
-                        letterSpacing: 8,
+                        userSelect: "none", fontFamily: "'Segoe UI', '맑은 고딕', sans-serif",
+                        letterSpacing: 8, zIndex: 0,
                       }}>{watermarkText}</div>
                     )}
 
-                    {/* Header */}
-                    {showHeaderFooter && viewMode === "edit" && (
+                    {/* ── 머리글 (1페이지) ── */}
+                    {showHeaderFooter && (
                       <div style={{
-                        position: "absolute", top: 8, left: scaledML, right: scaledMR,
-                        height: scaledMT - 16,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: `${9 * (zoom / 100)}pt`, color: "#aaa",
-                        pointerEvents: isFirstPage ? "auto" : "none",
+                        position: "absolute", top: 0, left: marginLeft, right: marginRight,
+                        height: marginTop, display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "9pt", color: "#aaa", zIndex: 1,
                       }}>
-                        {isFirstPage ? (
-                          <input type="text" value={headerText} onChange={(e) => setHeaderText(e.target.value)}
-                            placeholder="머리글" style={{
-                              width: "100%", border: "none", outline: "none", background: "transparent",
-                              textAlign: "center", fontSize: "inherit", color: "#999", fontFamily: "'맑은 고딕', sans-serif",
-                            }} />
-                        ) : (
-                          <span>{headerText}</span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Editor content — only rendered in the first page shell,
-                        subsequent pages use CSS clip to show the right portion */}
-                    {isFirstPage ? (
-                      <div style={{
-                        position: "absolute",
-                        top: scaledMT,
-                        left: scaledML,
-                        right: scaledMR,
-                        bottom: scaledMB,
-                        overflow: "visible",
-                        columnCount: columns > 1 ? columns : undefined,
-                        columnGap: columns > 1 ? `${30 * (zoom / 100)}px` : undefined,
-                      }}>
-                        {/* Title */}
-                        {doc.title && viewMode === "edit" && (
-                          <div style={{
-                            fontSize: `${22 * (zoom / 100)}px`, fontWeight: 700, color: "#1a1a1a",
-                            marginBottom: 8, fontFamily: "'Noto Serif KR', Georgia, serif",
-                          }}>{doc.title}</div>
-                        )}
-                        {doc.subtitle && viewMode === "edit" && (
-                          <div style={{
-                            fontSize: `${14 * (zoom / 100)}px`, color: "#777", marginBottom: 20,
-                            fontFamily: "'맑은 고딕', sans-serif",
-                          }}>{doc.subtitle}</div>
-                        )}
-
-                        {viewMode === "edit" ? (
-                          <>
-                            <EditorContent editor={editor} />
-                            <FootnoteArea
-                              editor={editor}
-                              footnotes={footnotes}
-                              setFootnotes={setFootnotes}
-                              onHeightChange={setFootnoteAreaHeight}
-                            />
-                            <FloatingToolbar editor={editor} onInsertComment={handleInsertComment} />
-                            <ContextMenu editor={editor}
-                              onOpenFontDialog={() => setDialogOpen("font")}
-                              onOpenParagraphDialog={() => setDialogOpen("paragraph")}
-                              onOpenHyperlinkDialog={() => setDialogOpen("hyperlink")}
-                              onOpenTableDialog={() => setDialogOpen("table")}
-                              onInsertComment={handleInsertComment}
-                              commentStore={commentStore}
-                              commentDispatch={commentDispatch}
-                              commentAuthor={commentAuthor}
-                            />
-                            <CommentIndicators editor={editor} commentStore={commentStore} dispatch={commentDispatch} />
-                          </>
-                        ) : (
-                          <div className="ProseMirror"
-                            style={{ minHeight: 900, fontFamily: "'맑은 고딕', sans-serif", fontSize: "11pt", lineHeight: 1.75, color: "#1a1a1a" }}
-                            dangerouslySetInnerHTML={{ __html: editor?.getHTML() || "" }}
-                          />
-                        )}
-                      </div>
-                    ) : (
-                      /* Subsequent pages: show continuation of content via negative offset */
-                      <div style={{
-                        position: "absolute",
-                        top: scaledMT,
-                        left: scaledML,
-                        right: scaledMR,
-                        bottom: scaledMB,
-                        overflow: "hidden",
-                        pointerEvents: "none",
-                      }} />
-                    )}
-
-                    {/* Footer / Page number */}
-                    <div style={{
-                      position: "absolute", bottom: 8, left: scaledML, right: scaledMR,
-                      height: scaledMB - 16,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: `${9 * (zoom / 100)}pt`, color: "#aaa",
-                      pointerEvents: isFirstPage ? "auto" : "none",
-                    }}>
-                      {isFirstPage && showHeaderFooter && viewMode === "edit" ? (
-                        <input type="text" value={footerText} onChange={(e) => setFooterText(e.target.value)}
-                          placeholder={`- ${pageIdx + 1} -`}
-                          style={{
+                        <input type="text" value={headerText} onChange={(e) => setHeaderText(e.target.value)}
+                          placeholder="머리글" style={{
                             width: "100%", border: "none", outline: "none", background: "transparent",
                             textAlign: "center", fontSize: "inherit", color: "#999", fontFamily: "'맑은 고딕', sans-serif",
                           }} />
-                      ) : (
-                        <span style={{ color: "#bbb" }}>{footerText || `- ${pageIdx + 1} -`}</span>
-                      )}
-                    </div>
+                      </div>
+                    )}
+
+                    {/* ── 제목 ── */}
+                    {doc.title && (
+                      <div style={{
+                        fontSize: 22, fontWeight: 700,
+                        color: darkMode ? "#eee" : "#1a1a1a",
+                        marginBottom: 8, fontFamily: "'Noto Serif KR', Georgia, serif",
+                      }}>{doc.title}</div>
+                    )}
+                    {doc.subtitle && (
+                      <div style={{
+                        fontSize: 14, color: "#777", marginBottom: 20,
+                        fontFamily: "'맑은 고딕', sans-serif",
+                      }}>{doc.subtitle}</div>
+                    )}
+
+                    {/* ── 에디터 본문 ── */}
+                    <EditorContent editor={editor} />
+                    <FootnoteArea editor={editor} footnotes={footnotes} setFootnotes={setFootnotes} onHeightChange={setFootnoteAreaHeight} />
+                    <FloatingToolbar editor={editor} onInsertComment={handleInsertComment} />
+                    <ContextMenu editor={editor}
+                      onOpenFontDialog={() => setDialogOpen("font")}
+                      onOpenParagraphDialog={() => setDialogOpen("paragraph")}
+                      onOpenHyperlinkDialog={() => setDialogOpen("hyperlink")}
+                      onOpenTableDialog={() => setDialogOpen("table")}
+                      onInsertComment={handleInsertComment}
+                      commentStore={commentStore} commentDispatch={commentDispatch}
+                      commentAuthor={commentAuthor}
+                    />
+                    <CommentIndicators editor={editor} commentStore={commentStore} dispatch={commentDispatch} />
                   </div>
-                );
-              })}
-            </div>}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Comment Panel (right side) */}
@@ -1383,13 +1443,13 @@ export default function EditorPage() {
             <div style={{ width: 1, height: 14, background: "rgba(255,255,255,0.2)", margin: "0 6px" }} />
 
             {/* 줌 컨트롤 */}
-            <button type="button" onClick={() => setZoom(z => Math.max(10, z - 10))} title="축소"
+            <button type="button" onClick={() => setZoom(z => Math.max(25, z - 10))} title="축소"
               style={{ background: "none", border: "none", color: "rgba(255,255,255,0.85)", cursor: "pointer", padding: "2px 3px", display: "flex", borderRadius: 2 }}
               onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.15)"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "none"; }}>
               <ZoomOut size={13} />
             </button>
-            <input type="range" min="10" max="500" value={zoom}
+            <input type="range" min="25" max="500" value={zoom}
               onChange={e => setZoom(+e.target.value)}
               style={{
                 width: 100, height: 4, cursor: "pointer",

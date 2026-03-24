@@ -5,7 +5,8 @@ export const editorStyles = `
 /* ──── ProseMirror Core ──── */
 .ProseMirror {
   outline: none;
-  min-height: 900px;
+  min-height: 200px;
+  position: relative;
   font-family: '맑은 고딕', 'Malgun Gothic', 'Noto Sans KR', sans-serif;
   font-size: 11pt;
   line-height: 1.75;

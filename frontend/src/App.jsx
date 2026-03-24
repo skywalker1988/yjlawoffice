@@ -1,6 +1,35 @@
 /** 앱 라우터 설정 — 공개/에디터/관리자 경로 분기 */
-import { useState } from "react";
+import { useState, Component } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+/* ── 에러 바운더리: 렌더링 에러를 화면에 표시 ── */
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null, errorInfo: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error, errorInfo) {
+    this.setState({ errorInfo });
+    console.error("ErrorBoundary caught:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 40, fontFamily: "monospace", background: "#1e1e1e", color: "#f44", minHeight: "100vh" }}>
+          <h2 style={{ color: "#ff6b6b" }}>렌더링 에러 발생</h2>
+          <pre style={{ whiteSpace: "pre-wrap", color: "#ffa" }}>{this.state.error?.toString()}</pre>
+          <pre style={{ whiteSpace: "pre-wrap", color: "#aaa", marginTop: 20, fontSize: 12 }}>
+            {this.state.errorInfo?.componentStack}
+          </pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 import Layout from "./components/Layout";
 import HomePage from "./pages/HomePage";
 import VaultPage from "./pages/VaultPage";
@@ -78,8 +107,8 @@ export default function App() {
           <Route path="/history" element={<HistoryPage />} />
         </Route>
 
-        <Route path="/editor" element={<EditorPage />} />
-        <Route path="/editor/:id" element={<EditorPage />} />
+        <Route path="/editor" element={<ErrorBoundary><EditorPage /></ErrorBoundary>} />
+        <Route path="/editor/:id" element={<ErrorBoundary><EditorPage /></ErrorBoundary>} />
         <Route path="/admin/*" element={<AdminArea />} />
       </Routes>
     </BrowserRouter>
