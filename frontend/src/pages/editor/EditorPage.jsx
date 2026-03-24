@@ -179,6 +179,12 @@ export default function EditorPage() {
       LineNumbers,
     ],
     editable: true,
+    /* ProseMirror의 기본 스크롤을 비활성화 — 페이지 갭을 모르기 때문에
+       페이지네이션 전 위치(회색 갭 영역)로 스크롤하는 문제 방지.
+       대신 applyPageBreaks 후 커스텀 scrollToCursor로 처리 */
+    editorProps: {
+      handleScrollToSelection: () => true,
+    },
     onUpdate: ({ editor: editorInstance }) => {
       if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
       setSaveStatus("수정됨");
@@ -553,41 +559,43 @@ export default function EditorPage() {
       setPageBreaks(breaks);
       setDynamicPageCount(pageNum);
 
-      /* 4단계: 페이지가 새로 생겼으면 커서 위치로 부드럽게 스크롤 */
-      if (breaks.length !== prevBreakCount.current) {
-        prevBreakCount.current = breaks.length;
-        scrollToCursor();
-      }
+      /* 4단계: 커서가 갭 영역에 가려지지 않도록 항상 스크롤 보정.
+         ProseMirror 기본 scrollIntoView를 비활성화했으므로
+         페이지네이션 후 매번 커서 가시성을 확인해야 함 */
+      prevBreakCount.current = breaks.length;
+      scrollToCursor();
     };
 
-    /** 커서가 보이는 영역으로 부드럽게 스크롤 */
+    /**
+     * 커서가 보이는 영역으로 즉시 스크롤.
+     * applyPageBreaks 내부(rAF)에서 동기적으로 호출되므로
+     * 추가 rAF 없이 바로 실행하여 갭 영역이 보이는 깜빡임 방지.
+     */
     const scrollToCursor = () => {
-      requestAnimationFrame(() => {
-        const sel = window.getSelection();
-        if (!sel || sel.rangeCount === 0) return;
-        const range = sel.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        if (!rect || (rect.width === 0 && rect.height === 0)) return;
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
+      const range = sel.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      if (!rect || (rect.width === 0 && rect.height === 0)) return;
 
-        const scrollEl = document.querySelector(".editor-canvas-scroll");
-        if (!scrollEl) return;
+      const scrollEl = document.querySelector(".editor-canvas-scroll");
+      if (!scrollEl) return;
 
-        const containerRect = scrollEl.getBoundingClientRect();
-        const cursorRelativeTop = rect.top - containerRect.top;
-        const cursorRelativeBottom = rect.bottom - containerRect.top;
-        const visibleHeight = containerRect.height;
+      const containerRect = scrollEl.getBoundingClientRect();
+      const cursorRelativeTop = rect.top - containerRect.top;
+      const cursorRelativeBottom = rect.bottom - containerRect.top;
+      const visibleHeight = containerRect.height;
 
-        /* 커서가 뷰포트 밖에 있으면 스크롤 */
-        if (cursorRelativeBottom > visibleHeight - 40) {
-          /* 커서가 아래로 벗어남 → 커서를 화면 중간으로 */
-          const targetScroll = scrollEl.scrollTop + cursorRelativeBottom - visibleHeight + visibleHeight * 0.4;
-          scrollEl.scrollTo({ top: targetScroll, behavior: "smooth" });
-        } else if (cursorRelativeTop < 40) {
-          /* 커서가 위로 벗어남 */
-          const targetScroll = scrollEl.scrollTop + cursorRelativeTop - visibleHeight * 0.4;
-          scrollEl.scrollTo({ top: Math.max(0, targetScroll), behavior: "smooth" });
-        }
-      });
+      /* 커서가 뷰포트 밖에 있으면 즉시 스크롤 */
+      if (cursorRelativeBottom > visibleHeight - 40) {
+        /* 커서가 아래로 벗어남 → 커서를 화면 40% 위치로 */
+        const targetScroll = scrollEl.scrollTop + cursorRelativeBottom - visibleHeight + visibleHeight * 0.4;
+        scrollEl.scrollTo({ top: targetScroll, behavior: "auto" });
+      } else if (cursorRelativeTop < 40) {
+        /* 커서가 위로 벗어남 */
+        const targetScroll = scrollEl.scrollTop + cursorRelativeTop - visibleHeight * 0.4;
+        scrollEl.scrollTo({ top: Math.max(0, targetScroll), behavior: "auto" });
+      }
     };
 
     /* 디바운스된 applyPageBreaks — 빠른 타이핑 시 과도한 재계산 방지 */
