@@ -20,6 +20,7 @@ export const api = {
   patch: (path, body) => request("PATCH", path, body),
   put: (path, body) => request("PUT", path, body),
   del: (path) => request("DELETE", path),
+  delete: (path) => request("DELETE", path),
   upload: async (path, file) => {
     const form = new FormData();
     form.append("file", file);

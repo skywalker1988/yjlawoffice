@@ -11,7 +11,7 @@ export default function HomePage() {
   const [searchFocused, setSearchFocused] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
   const [dashboard, setDashboard] = useState(null);
-  const heroVideo = localStorage.getItem("heroVideo") || "/hero-video.mp4";
+  const [heroVideo, setHeroVideo] = useState("/videos/manhattan-city-timelapse.mp4");
   const navigate = useNavigate();
   const ref = useReveal();
   const debounceRef = useRef(null);
@@ -23,6 +23,31 @@ export default function HomePage() {
       if (debounceRef.current) clearTimeout(debounceRef.current);
       if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
     };
+  }, []);
+
+  // 활성 히어로 영상 로드 (localStorage 캐시 우선, API 갱신)
+  useEffect(() => {
+    const cached = localStorage.getItem("activeHeroVideo");
+    if (cached) setHeroVideo(cached);
+    api.get("/hero-videos/active")
+      .then((json) => {
+        if (json.data?.url) {
+          setHeroVideo(json.data.url);
+          localStorage.setItem("activeHeroVideo", json.data.url);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // 관리자 페이지에서 활성 영상 변경 시 실시간 반영
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === "activeHeroVideo" && e.newValue) {
+        setHeroVideo(e.newValue);
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
   // Dashboard data
@@ -79,15 +104,15 @@ export default function HomePage() {
         style={{ height: "100vh", minHeight: 700 }}
       >
         <video
+          key={heroVideo}
           autoPlay
           muted
           loop
           playsInline
+          src={heroVideo}
           className="absolute inset-0 w-full h-full object-cover"
           style={{ filter: "brightness(0.7) contrast(1.15) saturate(0.9)" }}
-        >
-          <source src={heroVideo} type="video/mp4" />
-        </video>
+        />
         <div
           className="absolute inset-0"
           style={{

@@ -59,6 +59,7 @@ import { FootnoteArea, EndnoteArea, FootnoteEndnoteDialog } from "./modules/Foot
 import { isMarkdown, htmlToMarkdown, exportHtml, exportDocx, exportPdf, exportMarkdown, exportHwpx, importDocx, autoSaveToLocal, loadAutoSave } from "./modules/fileUtils";
 import { MetaDrawer } from "./modules/MetaDrawer";
 import { DocListSidebar } from "./modules/DocListSidebar";
+import { VisualPagination, visualPaginationKey } from "./modules/pagination-extension";
 import {
   Save, Undo2, Redo2, FileText, BookOpen, Globe, ZoomIn, ZoomOut,
   ChevronUp, ChevronDown, Settings, PanelTopClose, PanelTop,
@@ -180,6 +181,7 @@ export default function EditorPage() {
       DateField,
       NonBreakingSpace,
       LineNumbers,
+      VisualPagination,
     ],
     editable: true,
     /* ProseMirror의 기본 스크롤을 비활성화 — 페이지 갭을 모르기 때문에
@@ -491,18 +493,19 @@ export default function EditorPage() {
   const gapH = marginBottom + PAGE_GAP + marginTop;
 
   const [pageBreaks, setPageBreaks] = useState([]);
+  const paginationSignatureRef = useRef("");
 
   /* 최신값을 ref로 유지 — effect 재등록 없이 참조 */
-  const pgRef = useRef({ contentAreaHeight, marginTop, marginBottom, gapH, pageH });
-  pgRef.current = { contentAreaHeight, marginTop, marginBottom, gapH, pageH };
+  const pageBg = darkMode ? "#2d2d2d" : (pageColor || "#fff");
+  const canvasBg = darkMode ? "#1e1e1e" : "#e8e8e8";
 
   /* 디바운스 타이머 ref */
   const pageBreakTimer = useRef(null);
   /* 이전 페이지 브레이크 수 — 변경 시 스크롤 보정용 */
-  const prevBreakCount = useRef(0);
 
   useEffect(() => {
     if (!editor) return;
+    return;
 
     /**
      * 워드 스타일 페이지네이션 핵심 알고리즘:
@@ -664,6 +667,7 @@ export default function EditorPage() {
   /* 여백/용지 변경 시 즉시 재계산 */
   useEffect(() => {
     if (!editor) return;
+    return;
     const dom = editor.view.dom;
     if (!dom) return;
     dom.querySelectorAll("[data-pb]").forEach(el => {
@@ -675,6 +679,200 @@ export default function EditorPage() {
   }, [editor, contentAreaHeight, marginTop, gapH]);
 
   /* ──── Comment handlers ──── */
+  useEffect(() => {
+    if (!editor) return;
+
+    if (viewMode !== "edit") {
+      if (paginationSignatureRef.current) {
+        paginationSignatureRef.current = "";
+        editor.view.dispatch(editor.state.tr.setMeta(visualPaginationKey, { breaks: [] }));
+      }
+      return;
+    }
+
+    const resolveRunningText = (value, pageNumber) => (value || "").replace(/\{PAGE\}/g, String(pageNumber));
+
+    const scrollToCursor = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
+      const range = sel.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      if (!rect || (rect.width === 0 && rect.height === 0)) return;
+
+      const scrollEl = document.querySelector(".editor-canvas-scroll");
+      if (!scrollEl) return;
+
+      const containerRect = scrollEl.getBoundingClientRect();
+      const cursorRelativeTop = rect.top - containerRect.top;
+      const cursorRelativeBottom = rect.bottom - containerRect.top;
+      const visibleHeight = containerRect.height;
+
+      if (cursorRelativeBottom > visibleHeight - 40) {
+        const targetScroll = scrollEl.scrollTop + cursorRelativeBottom - visibleHeight + visibleHeight * 0.4;
+        scrollEl.scrollTo({ top: targetScroll, behavior: "auto" });
+      } else if (cursorRelativeTop < 40) {
+        const targetScroll = scrollEl.scrollTop + cursorRelativeTop - visibleHeight * 0.4;
+        scrollEl.scrollTo({ top: Math.max(0, targetScroll), behavior: "auto" });
+      }
+    };
+
+    const buildBreakSpec = (pos, nextPage, afterPage) => ({
+      pos,
+      page: nextPage,
+      afterPage,
+      pageWidth: pageW,
+      pageGap: PAGE_GAP,
+      marginTop,
+      marginBottom,
+      marginLeft,
+      marginRight,
+      pageBg,
+      canvasBg,
+      guideColor: darkMode ? "#555" : "#c0c0c0",
+      labelColor: darkMode ? "#777" : "#aaa",
+      shadowColor: darkMode ? "rgba(0,0,0,0.45)" : "rgba(0,0,0,0.08)",
+      headerText: resolveRunningText(headerText, nextPage),
+      footerText: resolveRunningText(footerText, afterPage),
+    });
+
+    const applyPageBreaks = () => {
+      const dom = editor.view.dom;
+      if (!dom || contentAreaHeight <= 0) return;
+
+      const docEntries = [];
+      editor.state.doc.forEach((node, offset) => {
+        docEntries.push({ node, offset });
+      });
+
+      const firstPageOffset = Math.max(0, dom.offsetTop - marginTop);
+      const firstPageHeight = Math.max(120, contentAreaHeight - firstPageOffset);
+      let pageNum = 1;
+      let pageTop = 0;
+      let pageBottom = firstPageHeight;
+      let existingGapHeight = 0;
+      let docIndex = 0;
+      let pendingForcedBreaks = 0;
+      const breaks = [];
+
+      for (const child of Array.from(dom.children)) {
+        if (!(child instanceof HTMLElement)) continue;
+
+        if (child.dataset.pageGap === "true") {
+          existingGapHeight += child.offsetHeight;
+          continue;
+        }
+
+        const entry = docEntries[docIndex++];
+        if (!entry) break;
+
+        const nodeType = entry.node.type.name;
+        const sectionType = entry.node.attrs?.sectionType || "next-page";
+        const isForcedBreakNode = nodeType === "pageBreak"
+          || (nodeType === "sectionBreak" && sectionType !== "continuous");
+
+        if (isForcedBreakNode) {
+          pendingForcedBreaks += 1;
+          continue;
+        }
+
+        if (entry.node.attrs?.pageBreakBefore) pendingForcedBreaks += 1;
+
+        const realTop = child.offsetTop - existingGapHeight;
+        const realBottom = realTop + child.offsetHeight;
+        const fitsSinglePage = child.offsetHeight <= contentAreaHeight;
+
+        while (pendingForcedBreaks > 0) {
+          breaks.push(buildBreakSpec(entry.offset, pageNum + 1, pageNum));
+          pageNum += 1;
+          pageTop = realTop;
+          pageBottom = realTop + contentAreaHeight;
+          pendingForcedBreaks -= 1;
+        }
+
+        while (realTop >= pageBottom - 1) {
+          pageNum += 1;
+          pageTop = pageBottom;
+          pageBottom = pageTop + contentAreaHeight;
+        }
+
+        if (realBottom <= pageBottom + 1) continue;
+
+        if (fitsSinglePage && realTop > pageTop + 1) {
+          breaks.push(buildBreakSpec(entry.offset, pageNum + 1, pageNum));
+          pageNum += 1;
+          pageTop = realTop;
+          pageBottom = realTop + contentAreaHeight;
+          continue;
+        }
+
+        while (realBottom > pageBottom + 1) {
+          pageNum += 1;
+          pageBottom += contentAreaHeight;
+        }
+      }
+
+      pageNum += pendingForcedBreaks;
+      setDynamicPageCount(Math.max(1, pageNum));
+      setPageBreaks(breaks);
+
+      const signature = JSON.stringify({
+        breaks: breaks.map(({ pos, page, afterPage }) => [pos, page, afterPage]),
+        pageW,
+        marginTop,
+        marginBottom,
+        marginLeft,
+        marginRight,
+        pageBg,
+        canvasBg,
+        headerText,
+        footerText,
+      });
+
+      if (signature !== paginationSignatureRef.current) {
+        paginationSignatureRef.current = signature;
+        editor.view.dispatch(editor.state.tr.setMeta(visualPaginationKey, { breaks }));
+      }
+
+      scrollToCursor();
+    };
+
+    const schedulePagination = () => {
+      if (pageBreakTimer.current) cancelAnimationFrame(pageBreakTimer.current);
+      pageBreakTimer.current = requestAnimationFrame(applyPageBreaks);
+    };
+
+    editor.on("update", schedulePagination);
+    editor.on("selectionUpdate", scrollToCursor);
+    const timer = setTimeout(schedulePagination, 100);
+    const ro = new ResizeObserver(schedulePagination);
+    ro.observe(editor.view.dom);
+    if (editorCanvasRef.current) ro.observe(editorCanvasRef.current);
+
+    return () => {
+      editor.off("update", schedulePagination);
+      editor.off("selectionUpdate", scrollToCursor);
+      clearTimeout(timer);
+      if (pageBreakTimer.current) cancelAnimationFrame(pageBreakTimer.current);
+      ro.disconnect();
+    };
+  }, [
+    editor,
+    viewMode,
+    contentAreaHeight,
+    pageW,
+    marginTop,
+    marginBottom,
+    marginLeft,
+    marginRight,
+    pageBg,
+    canvasBg,
+    darkMode,
+    headerText,
+    footerText,
+    doc.title,
+    doc.subtitle,
+  ]);
+
   const ensureAuthor = useCallback((callback) => {
     if (commentAuthor) {
       callback(commentAuthor);
@@ -953,7 +1151,7 @@ export default function EditorPage() {
 
         {/* ═══ Title Bar (MS Word 365 스타일) ═══ */}
         <div style={{
-          height: 32, background: darkMode ? "#1e1e1e" : "#185ABD", display: "flex", alignItems: "center",
+          height: 32, background: darkMode ? "#1e1e1e" : "#1a2332", display: "flex", alignItems: "center",
           padding: "0 8px", flexShrink: 0, color: "#fff",
           fontFamily: "'Segoe UI', '맑은 고딕', sans-serif", userSelect: "none",
         }}>
@@ -1059,21 +1257,21 @@ export default function EditorPage() {
               style={{
                 padding: "0 14px", border: "none", borderBottom: "none",
                 background: tab.isFile
-                  ? (darkMode ? "#0078D4" : "#185ABD")
+                  ? (darkMode ? "#0078D4" : "#1a2332")
                   : activeTab === tab.id && !ribbonCollapsed
                     ? (darkMode ? "#3a3a3a" : "#ffffff")
                     : "transparent",
                 color: tab.isFile
                   ? "#fff"
                   : activeTab === tab.id && !ribbonCollapsed
-                    ? (darkMode ? "#fff" : "#185ABD")
+                    ? (darkMode ? "#fff" : "#1a2332")
                     : (darkMode ? "#ccc" : "#444"),
                 fontSize: 12, fontWeight: activeTab === tab.id ? 600 : 400,
                 cursor: "pointer",
                 fontFamily: "'Segoe UI', '맑은 고딕', sans-serif",
                 display: "flex", alignItems: "center",
                 borderTop: activeTab === tab.id && !ribbonCollapsed && !tab.isFile
-                  ? `2px solid ${darkMode ? "#0078D4" : "#185ABD"}`
+                  ? `2px solid ${darkMode ? "#0078D4" : "#1a2332"}`
                   : "2px solid transparent",
                 marginTop: 2,
                 borderRadius: 0,
@@ -1365,7 +1563,7 @@ export default function EditorPage() {
                   <div style={{
                     fontSize: 28, fontWeight: 700, color: darkMode ? "#eee" : "#1a1a1a",
                     marginBottom: 12, fontFamily: "'Noto Serif KR', Georgia, serif",
-                    borderBottom: "2px solid #185ABD", paddingBottom: 12,
+                    borderBottom: "2px solid #1a2332", paddingBottom: 12,
                   }}>{doc.title}</div>
                 )}
                 {doc.subtitle && (
@@ -1432,7 +1630,7 @@ export default function EditorPage() {
                     <div style={{ position: "absolute", top: pageH - marginBottom - 12, right: marginRight - 1, width: 1, height: 12, background: darkMode ? "#555" : "#c0c0c0", pointerEvents: "none", zIndex: 4 }} />
 
                     {/* ── 페이지 구분 오버레이 (회색 간격 + 페이지 번호 + 마진 가이드) ── */}
-                    {pageBreaks.map((breakY, i) => (
+                    {false && pageBreaks.map((breakY, i) => (
                       <div key={`pgb-${i}`} style={{
                         position: "absolute",
                         top: breakY,
@@ -1566,7 +1764,7 @@ export default function EditorPage() {
 
         {/* ═══ Status Bar (MS Word 365 스타일) ═══ */}
         <div style={{
-          height: 24, background: darkMode ? "#1e1e1e" : "#185ABD", display: "flex", alignItems: "center",
+          height: 24, background: darkMode ? "#1e1e1e" : "#1a2332", display: "flex", alignItems: "center",
           justifyContent: "space-between", padding: "0 10px", flexShrink: 0,
           color: "#fff", fontSize: 11,
           fontFamily: "'Segoe UI', '맑은 고딕', sans-serif", userSelect: "none",

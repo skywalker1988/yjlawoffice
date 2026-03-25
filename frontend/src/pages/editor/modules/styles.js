@@ -337,8 +337,94 @@ export const editorStyles = `
 .editor-page-area { position: relative; }
 .editor-page-area .ProseMirror { min-height: auto !important; }
 /* 페이지 전환 시 부드러운 margin 애니메이션 */
-.editor-page-area .ProseMirror > [data-pb] {
-  transition: margin-top 0.15s ease-out;
+.editor-page-area .ProseMirror [data-page-gap] {
+  box-sizing: border-box;
+}
+.editor-page-area .ProseMirror .page-break,
+.editor-page-area .ProseMirror .section-break[data-section-type="next-page"] {
+  display: none;
+}
+.editor-page-gap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  user-select: none;
+  pointer-events: auto;
+  z-index: 2;
+}
+.editor-page-gap-surface {
+  position: relative;
+  flex-shrink: 0;
+  background: var(--page-gap-page-bg);
+}
+.editor-page-gap-surface.footer {
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.04);
+}
+.editor-page-gap-surface.header {
+  box-shadow: inset 0 1px 0 rgba(0,0,0,0.04);
+}
+.editor-page-gap-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--page-gap-canvas-bg);
+  color: var(--page-gap-label);
+  font-size: 9px;
+  font-family: 'Segoe UI', sans-serif;
+  letter-spacing: 0.2px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.05);
+}
+.editor-page-gap-running-text {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 9pt;
+  color: #b3b3b3;
+  font-family: 'Malgun Gothic', 'Noto Sans KR', sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.editor-page-gap-running-text.footer-text {
+  bottom: 4px;
+}
+.editor-page-gap-running-text.header-text {
+  top: 4px;
+}
+.editor-page-gap-guide {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+.editor-page-gap-guide.top,
+.editor-page-gap-guide.bottom {
+  width: 12px;
+  height: 1px;
+  background: var(--page-gap-guide);
+}
+.editor-page-gap-guide.left::after,
+.editor-page-gap-guide.right::after {
+  content: "";
+  position: absolute;
+  width: 1px;
+  height: 12px;
+  background: var(--page-gap-guide);
+}
+.editor-page-gap-guide.top.left::after,
+.editor-page-gap-guide.top.right::after {
+  top: 0;
+}
+.editor-page-gap-guide.bottom.left::after,
+.editor-page-gap-guide.bottom.right::after {
+  bottom: 0;
+}
+.editor-page-gap-guide.left::after {
+  left: 0;
+}
+.editor-page-gap-guide.right::after {
+  right: 0;
 }
 /* 스크롤 컨테이너 부드러운 스크롤 */
 .editor-canvas-scroll {

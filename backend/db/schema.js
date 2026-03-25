@@ -176,12 +176,36 @@ const historyEvents = sqliteTable("history_events", {
   updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
 });
 
+// =============================================
+// hero_videos — 히어로 배경 영상 관리
+// =============================================
+const HERO_VIDEO_CATEGORIES = [
+  "manhattan",   // 맨하탄
+  "nyc",         // 뉴욕시
+  "cityscape",   // 도시 풍경
+  "office",      // 오피스/비즈니스
+  "nature",      // 자연
+  "abstract",    // 추상
+];
+
+const heroVideos = sqliteTable("hero_videos", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  title: text("title").notNull(),
+  url: text("url").notNull(),
+  category: text("category").notNull().default("manhattan"),
+  isActive: integer("is_active").notNull().default(0),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+});
+
 module.exports = {
   DOCUMENT_TYPES,
   DOCUMENT_STATUSES,
   FILE_TYPES,
   RELATION_TYPES,
   HISTORY_CATEGORIES,
+  HERO_VIDEO_CATEGORIES,
   documents,
   tags,
   documentTags,
@@ -192,4 +216,5 @@ module.exports = {
   documentRelations,
   highlights,
   historyEvents,
+  heroVideos,
 };

@@ -1,0 +1,218 @@
+@import "tailwindcss";
+
+/* ── Premiere Pro 다크 테마 ── */
+:root {
+  --bg-primary: #1e1e1e;
+  --bg-secondary: #252526;
+  --bg-tertiary: #2d2d30;
+  --bg-elevated: #333337;
+  --bg-hover: #3e3e42;
+  --bg-active: #094771;
+
+  --border-primary: #3e3e42;
+  --border-secondary: #4a4a4e;
+  --border-focus: #007acc;
+
+  --text-primary: #cccccc;
+  --text-secondary: #999999;
+  --text-muted: #6b6b6b;
+  --text-bright: #e0e0e0;
+  --text-active: #ffffff;
+
+  --accent: #007acc;
+  --accent-hover: #1a8ad4;
+  --accent-dim: rgba(0, 122, 204, 0.15);
+
+  --timeline-bg: #1a1a1a;
+  --timeline-track: #232323;
+  --timeline-track-alt: #262626;
+  --timeline-ruler: #2d2d2d;
+  --playhead: #ff4444;
+
+  --clip-video: #4a90d9;
+  --clip-audio: #5cb85c;
+  --clip-image: #f0ad4e;
+  --clip-selected: #007acc;
+
+  --danger: #d9534f;
+  --warning: #f0ad4e;
+  --success: #5cb85c;
+
+  --panel-gap: 2px;
+  --panel-radius: 0px;
+
+  --font-mono: "JetBrains Mono", "Cascadia Code", "Fira Code", "Consolas", monospace;
+  --font-ui: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* ── 스크롤바 (Premiere 스타일) ── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-hover);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-secondary);
+}
+
+/* ── 패널 리사이즈 핸들 ── */
+[data-panel-group-direction="horizontal"] > [data-resize-handle],
+[data-panel-group-direction="vertical"] > [data-resize-handle] {
+  background: var(--bg-primary) !important;
+  transition: background 0.15s;
+}
+[data-resize-handle]:hover,
+[data-resize-handle][data-resize-handle-active] {
+  background: var(--accent) !important;
+}
+[data-panel-group-direction="horizontal"] > [data-resize-handle] {
+  width: 3px !important;
+}
+[data-panel-group-direction="vertical"] > [data-resize-handle] {
+  height: 3px !important;
+}
+
+/* ── 패널 공통 ── */
+.panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel-header {
+  height: 28px;
+  min-height: 28px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-primary);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: 0.03em;
+}
+.panel-header-tab {
+  padding: 0 10px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.panel-header-tab:hover {
+  color: var(--text-secondary);
+}
+.panel-header-tab.active {
+  color: var(--text-bright);
+  border-bottom-color: var(--accent);
+}
+.panel-content {
+  flex: 1;
+  overflow: auto;
+  padding: 8px;
+}
+
+/* ── 버튼 ── */
+.btn {
+  padding: 4px 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  font-size: 11px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.12s;
+}
+.btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-secondary);
+}
+.btn:active {
+  background: var(--accent-dim);
+}
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+.btn-primary:hover {
+  background: var(--accent-hover);
+}
+
+/* ── 입력 ── */
+.input {
+  padding: 4px 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  color: var(--text-primary);
+  font-size: 11px;
+  outline: none;
+  font-family: var(--font-ui);
+}
+.input:focus {
+  border-color: var(--border-focus);
+}
+
+/* ── 툴바 버튼 ── */
+.tool-btn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.12s;
+}
+.tool-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-bright);
+}
+.tool-btn.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── 타임코드 ── */
+.timecode {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+  color: var(--text-bright);
+}

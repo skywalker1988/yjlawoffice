@@ -11,15 +11,15 @@ import { api } from "../../utils/api";
 import { CATEGORY_CONFIG, REGIONS } from "../../utils/constants";
 
 const GOV = {
-  navy: "#0b1a2e",
-  navyLight: "#1a2f4e",
-  gold: "#c9a961",
-  goldBg: "rgba(201,169,97,0.08)",
-  text: "#1b2a4a",
-  textSec: "#5a6a85",
-  textMuted: "#8e99ab",
-  border: "#dce1e8",
-  headerBg: "#0f2341",
+  navy: "#1a2332",
+  navyLight: "#243447",
+  gold: "#1a2332",
+  goldBg: "rgba(26,35,50,0.05)",
+  text: "#1a1a1a",
+  textSec: "#6b7280",
+  textMuted: "#9ca3af",
+  border: "#e5e7eb",
+  headerBg: "#1a2332",
   rowAlt: "#fafbfc",
 };
 
