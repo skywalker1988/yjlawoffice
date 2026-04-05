@@ -25,6 +25,16 @@ const { analyzeMarkdown } = require("../lib/markdown-analyzer");
 
 const router = Router();
 
+// UUID 형식 검증 헬퍼
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function validateId(id, res) {
+  if (!id || !UUID_REGEX.test(id)) {
+    res.status(400).json({ data: null, error: "유효하지 않은 ID 형식입니다", meta: null });
+    return false;
+  }
+  return true;
+}
+
 // Multer setup for file uploads
 const storage = multer.memoryStorage();
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
@@ -229,6 +239,24 @@ router.post("/upload", upload.single("file"), async (req, res) => {
       });
     }
 
+    // MIME 타입 검증
+    const ALLOWED_MIMES = {
+      pdf: ["application/pdf"],
+      md: ["text/markdown", "text/plain", "application/octet-stream"],
+      markdown: ["text/markdown", "text/plain", "application/octet-stream"],
+      txt: ["text/plain", "application/octet-stream"],
+      html: ["text/html", "application/octet-stream"],
+      htm: ["text/html", "application/octet-stream"],
+    };
+    const allowedMimes = ALLOWED_MIMES[ext];
+    if (allowedMimes && !allowedMimes.includes(req.file.mimetype)) {
+      return res.status(400).json({
+        data: null,
+        error: `잘못된 파일 형식입니다. .${ext} 파일의 MIME 타입이 올바르지 않습니다.`,
+        meta: null,
+      });
+    }
+
     const now = new Date();
     const year = now.getFullYear().toString();
     const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -372,7 +400,8 @@ router.post("/upload-markdown", upload.single("file"), async (req, res) => {
               .returning();
             createdTagIds.push(newTag.id);
           }
-        } catch {
+        } catch (tagErr) {
+          console.warn(`[Tag Create] "${tagName}" 태그 생성 중 오류 발생, 기존 태그 재조회:`, tagErr.message);
           // UNIQUE 제약 위반 시 기존 태그 재조회
           const [existing] = await db
             .select()
@@ -466,6 +495,7 @@ router.post("/analyze-markdown", upload.single("file"), async (req, res) => {
 router.get("/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    if (!validateId(id, res)) return;
 
     const [doc] = await db.select().from(documents).where(eq(documents.id, id));
     if (!doc) {
@@ -521,6 +551,7 @@ router.get("/:id", async (req, res) => {
 router.patch("/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    if (!validateId(id, res)) return;
 
     const [existing] = await db.select().from(documents).where(eq(documents.id, id));
     if (!existing) {
@@ -582,6 +613,7 @@ router.patch("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    if (!validateId(id, res)) return;
 
     const [existing] = await db.select().from(documents).where(eq(documents.id, id));
     if (!existing) {

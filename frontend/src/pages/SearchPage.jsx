@@ -45,7 +45,7 @@ export default function SearchPage() {
         .then((data) => {
           setResults(Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : []);
         })
-        .catch(() => setResults([]))
+        .catch(err => { console.error("[SearchPage] 검색 실패:", err); setResults([]); })
         .finally(() => setLoading(false));
     },
     [typeFilter]

@@ -31,7 +31,7 @@ export default function HomePage() {
           localStorage.setItem("activeHeroVideo", json.data.url);
         }
       })
-      .catch(() => {});
+      .catch(err => console.error("[HomePage] 영상 로드 실패:", err));
   }, []);
 
   useEffect(() => {
@@ -112,8 +112,8 @@ export default function HomePage() {
       <section className="section" style={{ background: "#fff" }}>
         <div className="container">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-5 stagger" style={{ marginBottom: 72 }}>
-            {STATS.map((s, i) => (
-              <div key={i} className="reveal text-center" style={{ padding: "28px 20px", background: "#f9f9f8", border: "1px solid rgba(0,0,0,0.06)" }}>
+            {STATS.map((s) => (
+              <div key={s.label} className="reveal text-center" style={{ padding: "28px 20px", background: "#f9f9f8", border: "1px solid rgba(0,0,0,0.06)" }}>
                 <p style={{ fontSize: 28, marginBottom: 8 }}>{s.icon}</p>
                 <p className="font-en" style={{ fontSize: "clamp(1.8rem, 3vw, 2.4rem)", fontWeight: 300, color: "var(--accent-gold)" }}>{s.value}</p>
                 <p style={{ fontSize: 13, color: "#999", marginTop: 4, fontWeight: 300 }}>{s.label}</p>

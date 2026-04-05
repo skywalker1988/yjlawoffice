@@ -47,9 +47,13 @@ import AdminHeroVideos from "./pages/admin/AdminHeroVideos";
 import AdminLawyers from "./pages/admin/AdminLawyers";
 
 function AdminArea() {
-  const [auth, setAuth] = useState(!!sessionStorage.getItem("admin"));
-  const login = () => { sessionStorage.setItem("admin", "1"); setAuth(true); };
-  const logout = () => { sessionStorage.removeItem("admin"); setAuth(false); };
+  const [auth, setAuth] = useState(!!sessionStorage.getItem("admin_token"));
+  const login = () => {
+    const token = Date.now().toString(36) + Math.random().toString(36).slice(2);
+    sessionStorage.setItem("admin_token", token);
+    setAuth(true);
+  };
+  const logout = () => { sessionStorage.removeItem("admin_token"); setAuth(false); };
 
   if (!auth) return <AdminLogin onLogin={login} />;
 
@@ -74,11 +78,11 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<Layout />}>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/practice" element={<PracticePage />} />
-          <Route path="/lawyers" element={<LawyersPage />} />
-          <Route path="/consultation" element={<ConsultationPage />} />
+          <Route path="/" element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
+          <Route path="/about" element={<ErrorBoundary><AboutPage /></ErrorBoundary>} />
+          <Route path="/practice" element={<ErrorBoundary><PracticePage /></ErrorBoundary>} />
+          <Route path="/lawyers" element={<ErrorBoundary><LawyersPage /></ErrorBoundary>} />
+          <Route path="/consultation" element={<ErrorBoundary><ConsultationPage /></ErrorBoundary>} />
         </Route>
 
         <Route path="/editor" element={<ErrorBoundary><EditorPage /></ErrorBoundary>} />
