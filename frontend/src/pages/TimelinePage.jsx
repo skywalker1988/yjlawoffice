@@ -36,7 +36,7 @@ export default function TimelinePage() {
         const docs = data.data || [];
         setDocuments(docs);
       })
-      .catch(() => {})
+      .catch(err => console.error("[TimelinePage] 문서 로드 실패:", err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -224,10 +224,12 @@ export default function TimelinePage() {
             width={svgWidth}
             height={svgHeight}
             style={{ display: "block" }}
+            role="img"
+            aria-label="문서 타임라인: 시간에 따른 문서 분포"
           >
             {/* Tick lines & labels */}
             {ticks.map((tick, i) => (
-              <g key={i}>
+              <g key={tick.label || i}>
                 <line
                   x1={tick.x}
                   y1={headerHeight}

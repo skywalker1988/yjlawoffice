@@ -14,20 +14,35 @@ import { api } from "../utils/api";
 
 /** 그래프 물리 시뮬레이션 파라미터 */
 const GRAPH_CONFIG = {
+  /** 노드 간 척력 강도 — 높을수록 노드가 멀리 밀려남 */
   REPULSION_STRENGTH: 1500,
+  /** 연결선의 기본 길이(px) */
   SPRING_REST_LENGTH: 120,
+  /** 스프링 강성 — 연결된 노드를 당기는 힘 */
   SPRING_STIFFNESS: 0.002,
+  /** 동일 그룹 노드 간 인력 강도 */
   GROUP_ATTRACTION: 0.004,
+  /** 최소 연결 가중치 — 이 값 미만이면 연결선 미표시 */
   MIN_EDGE_WEIGHT: 2,
+  /** 동일 국가에서 연결로 간주할 연도 차이 */
   SAME_COUNTRY_YEAR_THRESHOLD: 100,
+  /** 동일 국가 근접 연도 기준 (높은 가중치) */
   SAME_COUNTRY_CLOSE_YEAR: 30,
+  /** 동일 카테고리에서 연결로 간주할 연도 차이 */
   SAME_CATEGORY_YEAR_THRESHOLD: 50,
+  /** 버블 라벨이 페이드아웃 시작하는 줌 레벨 */
   BUBBLE_FADE_START_ZOOM: 0.8,
+  /** 버블 라벨 페이드아웃 범위 */
   BUBBLE_FADE_RANGE: 0.4,
 };
 
 function parseMeta(doc) {
-  try { return doc.metadata ? JSON.parse(doc.metadata) : {}; } catch { return {}; }
+  if (!doc.metadata) return {};
+  if (typeof doc.metadata === "object") return doc.metadata;
+  try { return JSON.parse(doc.metadata); } catch (e) {
+    console.error("[GraphPage] metadata 파싱 실패:", e);
+    return {};
+  }
 }
 
 function getEra(year) {
@@ -68,21 +83,24 @@ export default function GraphPage() {
   useEffect(() => {
     api.get("/documents?limit=500")
       .then(j => setDocs(j.data || []))
-      .catch(() => {})
+      .catch(err => console.error("[GraphPage] 문서 로드 실패:", err))
       .finally(() => setLoading(false));
   }, []);
 
-  // Measure — use ResizeObserver for accuracy
+  // Measure — use ResizeObserver for accuracy (디바운스 적용)
   useEffect(() => {
     if (!wrapRef.current) return;
+    let resizeTimeout = null;
     const ro = new ResizeObserver(entries => {
-      for (const e of entries) {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => {
+        const e = entries[entries.length - 1];
         const { width, height } = e.contentRect;
         if (width > 10 && height > 10) setCanvasSize({ width: Math.floor(width), height: Math.floor(height) });
-      }
+      }, 200);
     });
     ro.observe(wrapRef.current);
-    return () => ro.disconnect();
+    return () => { clearTimeout(resizeTimeout); ro.disconnect(); };
   }, []);
 
   // Group key extractor — works for all document types

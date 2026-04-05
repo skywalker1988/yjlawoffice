@@ -26,6 +26,14 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ data: null, error: "name and slug are required", meta: null });
     }
 
+    // parentId 존재 여부 검증
+    if (parentId) {
+      const [parent] = await db.select().from(categories).where(eq(categories.id, parentId));
+      if (!parent) {
+        return res.status(400).json({ data: null, error: "존재하지 않는 부모 카테고리입니다", meta: null });
+      }
+    }
+
     const [inserted] = await db
       .insert(categories)
       .values({
@@ -52,6 +60,17 @@ router.patch("/:id", async (req, res) => {
     const [existing] = await db.select().from(categories).where(eq(categories.id, id));
     if (!existing) {
       return res.status(404).json({ data: null, error: "Category not found", meta: null });
+    }
+
+    // 순환 참조 방지: 자기 자신을 부모로 설정 불가
+    if (req.body.parentId === id) {
+      return res.status(400).json({ data: null, error: "자기 자신을 부모 카테고리로 설정할 수 없습니다", meta: null });
+    }
+    if (req.body.parentId) {
+      const [parent] = await db.select().from(categories).where(eq(categories.id, req.body.parentId));
+      if (!parent) {
+        return res.status(400).json({ data: null, error: "존재하지 않는 부모 카테고리입니다", meta: null });
+      }
     }
 
     const updateData = {};

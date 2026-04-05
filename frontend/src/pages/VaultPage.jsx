@@ -29,6 +29,8 @@ export default function VaultPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [importanceFilter, setImportanceFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
+  const searchDebounceRef = useRef(null);
 
   // Markdown upload state
   const [dragOver, setDragOver] = useState(false);
@@ -39,6 +41,13 @@ export default function VaultPage() {
 
   // Refresh trigger
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // 검색어 디바운스 (500ms)
+  useEffect(() => {
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => setDebouncedSearchQuery(searchQuery), 500);
+    return () => { if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current); };
+  }, [searchQuery]);
 
   // Handle markdown file upload
   const handleMarkdownUpload = useCallback(async (file) => {
@@ -109,7 +118,7 @@ export default function VaultPage() {
     if (typeFilter) params.set("document_type", typeFilter);
     if (statusFilter) params.set("status", statusFilter);
     if (importanceFilter) params.set("importance", importanceFilter);
-    if (searchQuery) params.set("q", searchQuery);
+    if (debouncedSearchQuery) params.set("q", debouncedSearchQuery);
 
     api.get(`/documents?${params}`)
       .then((data) => {
@@ -117,9 +126,9 @@ export default function VaultPage() {
         const total = data.meta?.total || 0;
         setTotalPages(data.meta?.totalPages || Math.max(1, Math.ceil(total / limit)));
       })
-      .catch(() => setDocuments([]))
+      .catch(err => { console.error("[VaultPage] 문서 로드 실패:", err); setDocuments([]); })
       .finally(() => setLoading(false));
-  }, [page, typeFilter, statusFilter, importanceFilter, searchQuery, refreshTrigger]);
+  }, [page, typeFilter, statusFilter, importanceFilter, debouncedSearchQuery, refreshTrigger]);
 
   useEffect(() => {
     fetchDocuments();
@@ -128,7 +137,7 @@ export default function VaultPage() {
   // Reset page on filter change
   useEffect(() => {
     setPage(1);
-  }, [typeFilter, statusFilter, importanceFilter, searchQuery]);
+  }, [typeFilter, statusFilter, importanceFilter, debouncedSearchQuery]);
 
   return (
     <div className="section" ref={ref}
@@ -419,7 +428,7 @@ export default function VaultPage() {
                     )}
                     {doc.tags?.slice(0, 5).map((tag, i) => (
                       <span
-                        key={i}
+                        key={tag.id || tag.name || i}
                         style={{
                           fontSize: 10,
                           color: "#aaa",
@@ -515,7 +524,7 @@ export default function VaultPage() {
                   <div className="flex gap-1 mt-3 flex-wrap">
                     {doc.tags.slice(0, 3).map((tag, i) => (
                       <span
-                        key={i}
+                        key={tag.id || tag.name || i}
                         style={{
                           fontSize: 10,
                           color: "#aaa",

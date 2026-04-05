@@ -8,6 +8,16 @@ const { eq, desc, asc, and, gte, lte, like, count, sql } = require("drizzle-orm"
 
 const router = Router();
 
+// UUID 형식 검증 헬퍼
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function validateId(id, res) {
+  if (!id || !UUID_REGEX.test(id)) {
+    res.status(400).json({ data: null, error: "유효하지 않은 ID 형식입니다", meta: null });
+    return false;
+  }
+  return true;
+}
+
 // GET /api/sb/history — list with filters
 router.get("/", async (req, res) => {
   try {
@@ -155,6 +165,7 @@ router.post("/", async (req, res) => {
 // GET /api/sb/history/:id
 router.get("/:id", async (req, res) => {
   try {
+    if (!validateId(req.params.id, res)) return;
     const [event] = await db.select().from(historyEvents).where(eq(historyEvents.id, req.params.id));
     if (!event) {
       return res.status(404).json({ data: null, error: "Event not found", meta: null });
@@ -169,6 +180,7 @@ router.get("/:id", async (req, res) => {
 router.patch("/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    if (!validateId(id, res)) return;
     const [existing] = await db.select().from(historyEvents).where(eq(historyEvents.id, id));
     if (!existing) {
       return res.status(404).json({ data: null, error: "Event not found", meta: null });
@@ -197,6 +209,7 @@ router.patch("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
+    if (!validateId(id, res)) return;
     const [existing] = await db.select().from(historyEvents).where(eq(historyEvents.id, id));
     if (!existing) {
       return res.status(404).json({ data: null, error: "Event not found", meta: null });

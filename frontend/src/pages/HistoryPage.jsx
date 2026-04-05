@@ -41,7 +41,12 @@ function FullscreenControl() {
   useEffect(() => {
     const container = map.getContainer();
     const btn = L.DomUtil.create("div", "leaflet-bar leaflet-control");
-    btn.innerHTML = `<a href="#" title="전체화면" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;font-size:18px;text-decoration:none;color:#333;background:#fff;">⛶</a>`;
+    const a = document.createElement("a");
+    a.href = "#";
+    a.title = "전체화면";
+    a.style.cssText = "display:flex;align-items:center;justify-content:center;width:34px;height:34px;font-size:18px;text-decoration:none;color:#333;background:#fff;";
+    a.textContent = "⛶";
+    btn.appendChild(a);
     btn.style.cursor = "pointer";
     const toggle = (e) => {
       e.preventDefault(); e.stopPropagation();
@@ -52,7 +57,7 @@ function FullscreenControl() {
     const ctrl = L.Control.extend({ onAdd: () => btn });
     const instance = new ctrl({ position: "topright" });
     instance.addTo(map);
-    return () => { instance.remove(); };
+    return () => { btn.removeEventListener("click", toggle); instance.remove(); };
   }, [map]);
   return null;
 }
@@ -61,7 +66,12 @@ function LocateControl() {
   const map = useMap();
   useEffect(() => {
     const btn = L.DomUtil.create("div", "leaflet-bar leaflet-control");
-    btn.innerHTML = `<a href="#" title="내 위치" style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;font-size:16px;text-decoration:none;color:#333;background:#fff;">◎</a>`;
+    const a = document.createElement("a");
+    a.href = "#";
+    a.title = "내 위치";
+    a.style.cssText = "display:flex;align-items:center;justify-content:center;width:34px;height:34px;font-size:16px;text-decoration:none;color:#333;background:#fff;";
+    a.textContent = "◎";
+    btn.appendChild(a);
     btn.style.cursor = "pointer";
     const locate = (e) => {
       e.preventDefault(); e.stopPropagation();
@@ -71,7 +81,7 @@ function LocateControl() {
     const ctrl = L.Control.extend({ onAdd: () => btn });
     const instance = new ctrl({ position: "topright" });
     instance.addTo(map);
-    return () => { instance.remove(); };
+    return () => { btn.removeEventListener("click", locate); instance.remove(); };
   }, [map]);
   return null;
 }
@@ -111,7 +121,7 @@ export default function HistoryPage() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [search]);
 
-  useEffect(() => { api.get("/history/stats").then(j => setStats(j.data)).catch(() => {}); }, []);
+  useEffect(() => { api.get("/history/stats").then(j => setStats(j.data)).catch(err => console.error("[HistoryPage] stats 로드 실패:", err)); }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -124,7 +134,7 @@ export default function HistoryPage() {
     if (debouncedSearch) p.set("q", debouncedSearch);
     api.get(`/history?${p}`)
       .then(j => setEvents(j.data ?? []))
-      .catch(() => setEvents([])).finally(() => setLoading(false));
+      .catch(err => { console.error("[HistoryPage] 이벤트 로드 실패:", err); setEvents([]); }).finally(() => setLoading(false));
   }, [category, region, yearFrom, yearTo, debouncedSearch]);
 
   const toggleCategory = (cat) => setActiveCategories(prev => { const n = new Set(prev); n.has(cat) ? n.delete(cat) : n.add(cat); return n; });
@@ -155,7 +165,7 @@ export default function HistoryPage() {
         <div style={{ position: "relative", textAlign: "center", zIndex: 2, padding: "0 24px" }}>
           <div className="sep mx-auto" style={{ marginBottom: 24 }} />
           <h1 className="font-serif" style={{ fontSize: "clamp(1.8rem, 4vw, 3rem)", fontWeight: 300, letterSpacing: "0.25em", color: "#fff", marginBottom: 8 }}>WORLD HISTORY</h1>
-          <p className="font-en" style={{ fontSize: 12, letterSpacing: "0.2em", color: "rgba(255,255,255,0.3)" }}>INTERACTIVE MAP & TIMELINE</p>
+          <p className="font-en" style={{ fontSize: 12, letterSpacing: "0.2em", color: "rgba(255,255,255,0.55)" }}>INTERACTIVE MAP & TIMELINE</p>
         </div>
       </section>
 

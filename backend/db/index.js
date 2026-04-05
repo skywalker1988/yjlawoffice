@@ -167,6 +167,14 @@ function initTables() {
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE INDEX IF NOT EXISTS idx_documents_status ON documents(status);
+    CREATE INDEX IF NOT EXISTS idx_documents_document_type ON documents(document_type);
+    CREATE INDEX IF NOT EXISTS idx_documents_created_at ON documents(created_at);
+    CREATE INDEX IF NOT EXISTS idx_documents_importance ON documents(importance);
+    CREATE INDEX IF NOT EXISTS idx_history_events_year ON history_events(year);
+    CREATE INDEX IF NOT EXISTS idx_history_events_category ON history_events(category);
+    CREATE INDEX IF NOT EXISTS idx_history_events_region ON history_events(region);
   `);
 }
 
@@ -233,7 +241,8 @@ function sanitizeFTSQuery(query) {
     .replace(/\b(AND|OR|NOT|NEAR)\b/gi, " ")
     .trim();
   // 각 단어를 쌍따옴표로 감싸서 안전하게 매칭
-  const tokens = cleaned.split(/\s+/).filter(Boolean);
+  const MAX_TOKEN_LENGTH = 100;
+  const tokens = cleaned.split(/\s+/).filter(t => t && t.length <= MAX_TOKEN_LENGTH);
   if (tokens.length === 0) return null;
   return tokens.map(t => `"${t}"`).join(" ");
 }
