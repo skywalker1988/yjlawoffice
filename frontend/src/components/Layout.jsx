@@ -7,6 +7,8 @@ const NAV = [
   { to: "/practice", label: "업무분야" },
   { to: "/lawyers", label: "변호사 소개" },
   { to: "/consultation", label: "상담안내" },
+  { to: "/blog", label: "법률 칼럼" },
+  { to: "/cases", label: "성공 사례" },
 ];
 
 export default function Layout() {

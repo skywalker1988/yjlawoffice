@@ -1,0 +1,13 @@
+{
+  "name": "윤정 법률사무소",
+  "short_name": "윤정법률",
+  "description": "윤정 법률사무소 공식 홈페이지",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0f1923",
+  "lang": "ko",
+  "icons": [
+    { "src": "/favicon.png", "sizes": "192x192", "type": "image/png" }
+  ]
+}

@@ -6,9 +6,35 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// 보안 헤더 설정
+app.use(helmet({
+  contentSecurityPolicy: false, // SPA에서 인라인 스크립트 허용
+  crossOriginEmbedderPolicy: false,
+}));
+
+// API 요청 속도 제한
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15분
+  max: 200, // IP당 최대 200요청
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { data: null, error: "너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.", meta: null },
+});
+app.use("/api/", apiLimiter);
+
+// 상담 신청 전용 속도 제한 (더 엄격)
+const consultationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1시간
+  max: 10, // IP당 최대 10요청
+  message: { data: null, error: "상담 신청 횟수를 초과했습니다. 1시간 후 다시 시도해주세요.", meta: null },
+});
+app.use("/api/sb/consultations", consultationLimiter);
 
 app.use(cors({
   origin: process.env.ALLOWED_ORIGINS
@@ -31,6 +57,9 @@ app.use("/api/sb/dashboard", require("./routes/sb-dashboard"));
 app.use("/api/sb/history", require("./routes/sb-history"));
 app.use("/api/sb/hero-videos", require("./routes/sb-hero-videos"));
 app.use("/api/sb/lawyers", require("./routes/sb-lawyers"));
+app.use("/api/sb/consultations", require("./routes/sb-consultations"));
+app.use("/api/sb/blog", require("./routes/sb-blog"));
+app.use("/api/sb/cases", require("./routes/sb-cases"));
 
 // 글로벌 에러 핸들러
 app.use((err, req, res, next) => {
