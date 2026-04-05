@@ -32,12 +32,10 @@ class ErrorBoundary extends Component {
 }
 import Layout from "./components/Layout";
 import HomePage from "./pages/HomePage";
-import VaultPage from "./pages/VaultPage";
-import DocumentDetailPage from "./pages/DocumentDetailPage";
-import SearchPage from "./pages/SearchPage";
-import GraphPage from "./pages/GraphPage";
-import TimelinePage from "./pages/TimelinePage";
-import HistoryPage from "./pages/HistoryPage";
+import AboutPage from "./pages/AboutPage";
+import LawyersPage from "./pages/LawyersPage";
+import PracticePage from "./pages/PracticePage";
+import ConsultationPage from "./pages/ConsultationPage";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminDocuments from "./pages/admin/AdminDocuments";
@@ -46,6 +44,7 @@ import AdminHistory from "./pages/admin/AdminHistory";
 import EditorPage from "./pages/editor/EditorPage";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminHeroVideos from "./pages/admin/AdminHeroVideos";
+import AdminLawyers from "./pages/admin/AdminLawyers";
 
 function AdminArea() {
   const [auth, setAuth] = useState(!!sessionStorage.getItem("admin"));
@@ -62,6 +61,7 @@ function AdminArea() {
         <Route path="tags" element={<AdminTags />} />
         <Route path="history" element={<AdminHistory />} />
         <Route path="hero-videos" element={<AdminHeroVideos />} />
+        <Route path="lawyers" element={<AdminLawyers />} />
         <Route path="editor" element={<EditorPage />} />
         <Route path="editor/:id" element={<EditorPage />} />
       </Routes>
@@ -75,12 +75,10 @@ export default function App() {
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<HomePage />} />
-          <Route path="/vault" element={<VaultPage />} />
-          <Route path="/vault/:id" element={<DocumentDetailPage />} />
-          <Route path="/search" element={<SearchPage />} />
-          <Route path="/graph" element={<GraphPage />} />
-          <Route path="/timeline" element={<TimelinePage />} />
-          <Route path="/history" element={<HistoryPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/practice" element={<PracticePage />} />
+          <Route path="/lawyers" element={<LawyersPage />} />
+          <Route path="/consultation" element={<ConsultationPage />} />
         </Route>
 
         <Route path="/editor" element={<ErrorBoundary><EditorPage /></ErrorBoundary>} />

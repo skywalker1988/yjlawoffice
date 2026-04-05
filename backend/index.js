@@ -26,6 +26,7 @@ app.use("/api/sb/collections", require("./routes/sb-collections"));
 app.use("/api/sb/dashboard", require("./routes/sb-dashboard"));
 app.use("/api/sb/history", require("./routes/sb-history"));
 app.use("/api/sb/hero-videos", require("./routes/sb-hero-videos"));
+app.use("/api/sb/lawyers", require("./routes/sb-lawyers"));
 
 // 글로벌 에러 핸들러
 app.use((err, req, res, next) => {

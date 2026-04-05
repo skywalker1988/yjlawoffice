@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" font-family="'Noto Sans KR', 'Malgun Gothic', sans-serif">
+  <defs>
+    <!-- 도로 패턴 -->
+    <pattern id="roadPattern" patternUnits="userSpaceOnUse" width="20" height="20">
+      <rect width="20" height="20" fill="#f0f0ed"/>
+    </pattern>
+    <!-- 건물 그림자 -->
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="108%">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="#00000015"/>
+    </filter>
+    <!-- 도보 경로 점선 -->
+    <marker id="arrowEnd" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#c8a97e"/>
+    </marker>
+  </defs>
+
+  <!-- 배경 -->
+  <rect width="800" height="500" fill="#f7f6f3" rx="8"/>
+
+  <!-- 타이틀 영역 -->
+  <rect x="0" y="0" width="800" height="52" fill="#1a1a2e" rx="8"/>
+  <rect x="0" y="40" width="800" height="16" fill="#1a1a2e"/>
+  <text x="400" y="33" text-anchor="middle" fill="#c8a97e" font-size="14" font-weight="500" letter-spacing="3">
+    교대역 → 윤정 법률사무소 도보 약도
+  </text>
+
+  <!-- ============ 도로 시스템 ============ -->
+
+  <!-- 서초대로 (메인 도로 - 가로) -->
+  <rect x="40" y="200" width="720" height="60" fill="#e8e5de" rx="2"/>
+  <line x1="40" y1="230" x2="760" y2="230" stroke="#d4d0c8" stroke-width="1.5" stroke-dasharray="12,8"/>
+  <text x="400" y="236" text-anchor="middle" fill="#999" font-size="11" font-weight="400" letter-spacing="4">서 초 대 로</text>
+
+  <!-- 법원로 (세로 도로) -->
+  <rect x="520" y="60" width="45" height="380" fill="#eae7e0" rx="2"/>
+  <text x="542" y="120" text-anchor="middle" fill="#aaa" font-size="10" transform="rotate(90, 542, 120)" letter-spacing="3">법원로</text>
+
+  <!-- 서초중앙로 (세로 도로) -->
+  <rect x="280" y="60" width="40" height="380" fill="#eae7e0" rx="2"/>
+  <text x="300" y="120" text-anchor="middle" fill="#aaa" font-size="10" transform="rotate(90, 300, 120)" letter-spacing="3">서초중앙로</text>
+
+  <!-- 작은 골목 -->
+  <rect x="380" y="260" width="25" height="140" fill="#eeebe5" rx="1"/>
+
+  <!-- ============ 건물 블록들 ============ -->
+
+  <!-- 서초구청 방면 블록 -->
+  <rect x="60" y="80" width="200" height="100" fill="#e2dfd8" rx="4" filter="url(#shadow)"/>
+  <text x="160" y="135" text-anchor="middle" fill="#bbb" font-size="10">서초구청 방면</text>
+
+  <!-- 서울중앙지법 방면 -->
+  <rect x="340" y="80" width="160" height="100" fill="#dddad3" rx="4" filter="url(#shadow)"/>
+  <text x="420" y="130" text-anchor="middle" fill="#aaa" font-size="10">서울중앙지방법원</text>
+  <text x="420" y="145" text-anchor="middle" fill="#aaa" font-size="9">방면</text>
+
+  <!-- 하단 블록 좌측 -->
+  <rect x="60" y="280" width="200" height="120" fill="#e2dfd8" rx="4" filter="url(#shadow)"/>
+  <text x="160" y="345" text-anchor="middle" fill="#bbb" font-size="10">주변 건물</text>
+
+  <!-- 하단 블록 우측 (사무실 블록) -->
+  <rect x="420" y="280" width="80" height="100" fill="#dddad3" rx="4" filter="url(#shadow)"/>
+
+  <!-- ============ 주요 랜드마크 ============ -->
+
+  <!-- 교대역 -->
+  <g>
+    <rect x="130" y="210" width="90" height="40" fill="#3b5998" rx="20" filter="url(#shadow)"/>
+    <circle cx="145" cy="230" r="8" fill="#fff" opacity="0.9"/>
+    <text x="145" y="234" text-anchor="middle" fill="#3b5998" font-size="9" font-weight="700">2</text>
+    <text x="195" y="234" text-anchor="middle" fill="#fff" font-size="12" font-weight="500">교대역</text>
+  </g>
+
+  <!-- 서초역 -->
+  <g>
+    <rect x="580" y="210" width="90" height="40" fill="#3b5998" rx="20" filter="url(#shadow)"/>
+    <circle cx="595" cy="230" r="8" fill="#fff" opacity="0.9"/>
+    <text x="595" y="234" text-anchor="middle" fill="#3b5998" font-size="9" font-weight="700">2</text>
+    <text x="645" y="234" text-anchor="middle" fill="#fff" font-size="12" font-weight="500">서초역</text>
+  </g>
+
+  <!-- 서초역 3번 출구 표시 -->
+  <g>
+    <rect x="555" y="255" width="56" height="22" fill="#fff" stroke="#3b5998" stroke-width="1.5" rx="4"/>
+    <text x="583" y="270" text-anchor="middle" fill="#3b5998" font-size="10" font-weight="600">3번 출구</text>
+    <line x1="583" y1="277" x2="583" y2="300" stroke="#3b5998" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <circle cx="583" cy="305" r="4" fill="#3b5998"/>
+  </g>
+
+  <!-- ============ 윤정 법률사무소 (목적지) ============ -->
+  <g>
+    <!-- 건물 하이라이트 -->
+    <rect x="465" y="295" width="90" height="65" fill="#1a1a2e" rx="6" filter="url(#shadow)"/>
+    <!-- 건물 아이콘 -->
+    <rect x="475" y="305" width="6" height="20" fill="#c8a97e" rx="1"/>
+    <rect x="485" y="300" width="6" height="25" fill="#c8a97e" rx="1"/>
+    <rect x="495" y="308" width="6" height="17" fill="#c8a97e" rx="1"/>
+    <!-- 텍스트 -->
+    <text x="530" y="322" text-anchor="middle" fill="#c8a97e" font-size="11" font-weight="600">윤정</text>
+    <text x="530" y="338" text-anchor="middle" fill="#c8a97e" font-size="9" font-weight="400">법률사무소</text>
+    <text x="530" y="355" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="8">오퓨런스빌딩 7F</text>
+  </g>
+
+  <!-- ============ 도보 경로 ============ -->
+
+  <!-- 경로: 서초역 3번 출구 → 사무실 -->
+  <path
+    d="M 583 305 C 583 330, 540 340, 510 335"
+    fill="none"
+    stroke="#c8a97e"
+    stroke-width="3"
+    stroke-dasharray="8,5"
+    marker-end="url(#arrowEnd)"
+    opacity="0.9"
+  />
+
+  <!-- 도보 시간 라벨 -->
+  <g>
+    <rect x="540" y="342" width="70" height="24" fill="#c8a97e" rx="12"/>
+    <text x="575" y="358" text-anchor="middle" fill="#fff" font-size="10" font-weight="500">도보 3분</text>
+  </g>
+
+  <!-- 교대역에서 오는 경로 (선택적 경로) -->
+  <path
+    d="M 220 230 L 460 230 L 460 260 L 500 300"
+    fill="none"
+    stroke="#999"
+    stroke-width="2"
+    stroke-dasharray="6,4"
+    opacity="0.5"
+  />
+  <g>
+    <rect x="330" y="268" width="76" height="22" fill="#fff" stroke="#ccc" stroke-width="1" rx="11"/>
+    <text x="368" y="283" text-anchor="middle" fill="#999" font-size="9">교대역 도보 8분</text>
+  </g>
+
+  <!-- ============ 범례 ============ -->
+  <g transform="translate(60, 430)">
+    <rect width="680" height="50" fill="#fff" rx="6" stroke="rgba(0,0,0,0.06)" stroke-width="1"/>
+    <circle cx="30" cy="25" r="6" fill="#3b5998"/>
+    <text x="45" y="29" fill="#666" font-size="10">지하철역</text>
+
+    <line x1="110" y1="25" x2="145" y2="25" stroke="#c8a97e" stroke-width="3" stroke-dasharray="6,4"/>
+    <text x="155" y="29" fill="#666" font-size="10">추천 경로</text>
+
+    <line x1="250" y1="25" x2="285" y2="25" stroke="#999" stroke-width="2" stroke-dasharray="4,3" opacity="0.5"/>
+    <text x="295" y="29" fill="#666" font-size="10">대체 경로</text>
+
+    <rect x="385" y="17" width="16" height="16" fill="#1a1a2e" rx="3"/>
+    <text x="410" y="29" fill="#666" font-size="10">윤정 법률사무소</text>
+
+    <text x="560" y="29" fill="#bbb" font-size="9" font-style="italic">서초대로 254, 오퓨런스빌딩 7층</text>
+  </g>
+</svg>

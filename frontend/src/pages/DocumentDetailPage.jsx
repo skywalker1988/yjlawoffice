@@ -179,7 +179,7 @@ const HIGHLIGHT_COLORS = [
 
 const THEME_PRESETS = [
   { name: "Office", colors: ["#4472c4", "#ed7d31", "#a5a5a5", "#ffc000", "#5b9bd5"] },
-  { name: "전문가", colors: ["#2b579a", "#333333", "#888888", "#b08d57", "#5a8f7b"] },
+  { name: "전문가", colors: ["#2b579a", "#333333", "#888888", "#6366f1", "#5a8f7b"] },
   { name: "모던", colors: ["#1a1a2e", "#16213e", "#0f3460", "#e94560", "#533483"] },
   { name: "자연", colors: ["#606c38", "#283618", "#dda15e", "#bc6c25", "#fefae0"] },
 ];
@@ -1547,7 +1547,7 @@ export default function DocumentDetailPage() {
           {doc.author && <div><span style={{ color: "#888" }}>저자: </span><span>{parseAuthor(doc.author)}</span></div>}
           <div>
             <span style={{ color: "#888" }}>중요도: </span>
-            {[1, 2, 3, 4, 5].map(s => <span key={s} style={{ color: s <= (doc.importance || 3) ? "#b08d57" : "#ddd", fontSize: 11 }}>★</span>)}
+            {[1, 2, 3, 4, 5].map(s => <span key={s} style={{ color: s <= (doc.importance || 3) ? "#6366f1" : "#ddd", fontSize: 11 }}>★</span>)}
           </div>
         </div>
       </RibbonGroup>

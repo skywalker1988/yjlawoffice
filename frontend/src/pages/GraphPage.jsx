@@ -823,7 +823,7 @@ export default function GraphPage() {
         {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
           <div>
-            <p className="font-en" style={{ fontSize: 10, letterSpacing: "0.2em", color: "#b08d57", marginBottom: 6 }}>KNOWLEDGE GRAPH</p>
+            <p className="font-en" style={{ fontSize: 10, letterSpacing: "0.2em", color: "#6366f1", marginBottom: 6 }}>KNOWLEDGE GRAPH</p>
             <h1 className="font-serif" style={{ fontSize: "clamp(1.3rem, 2.5vw, 1.8rem)", fontWeight: 300, color: "#1a1a1a" }}>지식 그래프</h1>
           </div>
           <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
@@ -907,10 +907,10 @@ export default function GraphPage() {
             return (
               <div style={{ alignSelf: "start", position: "sticky", top: 120 }}>
                 <div style={{ background: "#fff", borderRadius: 10, border: "1px solid rgba(0,0,0,0.08)", overflow: "hidden" }}>
-                  <div style={{ height: 3, background: "#b08d57" }} />
+                  <div style={{ height: 3, background: "#6366f1" }} />
                   <div style={{ padding: 16 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                      <span style={{ fontSize: 10, color: "#b08d57", fontWeight: 600 }}>
+                      <span style={{ fontSize: 10, color: "#6366f1", fontWeight: 600 }}>
                         {selMeta.country || ""} {selMeta.year ? (selMeta.year < 0 ? `BC ${Math.abs(selMeta.year)}` : selMeta.year) : ""}
                       </span>
                       <button onClick={() => setSelectedNodeId(null)} style={{ background: "none", border: "none", color: "#ccc", fontSize: 16, cursor: "pointer" }}>&times;</button>
@@ -925,7 +925,7 @@ export default function GraphPage() {
 
                     <div style={{ display: "flex", gap: 2, marginBottom: 4 }}>
                       {Array.from({ length: 5 }, (_, i) => (
-                        <span key={i} style={{ color: i < (selDoc.importance || 3) ? "#b08d57" : "#ddd", fontSize: 11 }}>{"\u2605"}</span>
+                        <span key={i} style={{ color: i < (selDoc.importance || 3) ? "#6366f1" : "#ddd", fontSize: 11 }}>{"\u2605"}</span>
                       ))}
                     </div>
 
@@ -933,11 +933,11 @@ export default function GraphPage() {
                     {selInsights.length > 0 && (
                       <>
                         <div style={{ height: 1, background: "rgba(0,0,0,0.06)", margin: "10px 0" }} />
-                        <p style={{ fontSize: 9, color: "#b08d57", fontWeight: 700, marginBottom: 6, letterSpacing: "0.08em" }}>HISTORICAL INSIGHT</p>
+                        <p style={{ fontSize: 9, color: "#6366f1", fontWeight: 700, marginBottom: 6, letterSpacing: "0.08em" }}>HISTORICAL INSIGHT</p>
                         <div style={{ maxHeight: 300, overflowY: "auto" }}>
                         {selInsights.map((ins, i) => (
                           <div key={i} style={{ background: "#fafaf6", border: "1px solid rgba(0,0,0,0.05)", borderRadius: 6, padding: "8px 10px", marginBottom: 6 }}>
-                            <p style={{ fontSize: 10, color: "#b08d57", fontWeight: 600, margin: "0 0 3px" }}>
+                            <p style={{ fontSize: 10, color: "#6366f1", fontWeight: 600, margin: "0 0 3px" }}>
                               {ins.icon && <span style={{ marginRight: 4 }}>{ins.icon}</span>}
                               {ins.title}
                             </p>
@@ -970,9 +970,9 @@ export default function GraphPage() {
                             {/* Strength bar + percentage */}
                             <div style={{ display: "flex", alignItems: "center", gap: 6, paddingLeft: 44 }}>
                               <div style={{ flex: 1, height: 3, background: "#f0f0ee", borderRadius: 2, overflow: "hidden" }}>
-                                <div style={{ width: `${cn.pct}%`, height: "100%", background: cn.pct >= 70 ? "#b08d57" : cn.pct >= 40 ? "#ccc" : "#ddd", borderRadius: 2 }} />
+                                <div style={{ width: `${cn.pct}%`, height: "100%", background: cn.pct >= 70 ? "#6366f1" : cn.pct >= 40 ? "#ccc" : "#ddd", borderRadius: 2 }} />
                               </div>
-                              <span style={{ fontSize: 9, color: cn.pct >= 70 ? "#b08d57" : "#bbb", fontWeight: 600, width: 30, textAlign: "right" }}>
+                              <span style={{ fontSize: 9, color: cn.pct >= 70 ? "#6366f1" : "#bbb", fontWeight: 600, width: 30, textAlign: "right" }}>
                                 {cn.pct}%
                               </span>
                             </div>
@@ -992,7 +992,7 @@ export default function GraphPage() {
                     )}
 
                     <button onClick={() => navigate(`/vault/${selDoc.id}`)}
-                      style={{ marginTop: 14, width: "100%", padding: "8px 0", borderRadius: 6, background: "#b08d57", color: "#fff", border: "none", fontSize: 12, fontWeight: 500, cursor: "pointer" }}>
+                      style={{ marginTop: 14, width: "100%", padding: "8px 0", borderRadius: 6, background: "#6366f1", color: "#fff", border: "none", fontSize: 12, fontWeight: 500, cursor: "pointer" }}>
                       문서 보기 &rarr;
                     </button>
                   </div>

@@ -1,18 +1,20 @@
 @import "tailwindcss";
 
-/* ===== DESIGN TOKENS — 밝은 톤 ===== */
+/* ===== DESIGN TOKENS — 프리미엄 로펌 (다크 네이비 + 골드) ===== */
 :root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f3;
-  --bg-tertiary: #eaeae8;
-  --bg-dark: #1a1a1a;
+  --bg-primary: #faf9f7;
+  --bg-secondary: #f3f1ed;
+  --bg-tertiary: #eae7e1;
+  --bg-dark: #0f1923;
+  --bg-navy: #1a1a2e;
   --text-primary: #1a1a1a;
-  --text-secondary: #666666;
+  --text-secondary: #555555;
   --text-muted: #999999;
   --accent-gold: #b08d57;
-  --accent-gold-hover: #967640;
-  --border-color: rgba(0, 0, 0, 0.1);
-  --border-subtle: rgba(0, 0, 0, 0.06);
+  --accent-gold-hover: #9a7a48;
+  --accent-gold-light: rgba(176, 141, 87, 0.12);
+  --border-color: rgba(0, 0, 0, 0.08);
+  --border-subtle: rgba(0, 0, 0, 0.05);
 
   --font-serif: 'Cormorant Garamond', 'Noto Serif KR', Georgia, serif;
   --font-serif-kr: 'Noto Serif KR', Georgia, serif;

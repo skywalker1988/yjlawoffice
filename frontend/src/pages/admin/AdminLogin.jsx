@@ -17,7 +17,7 @@ export default function AdminLogin({ onLogin }) {
   const [locked, setLocked] = useState(false);
   const [lockRemain, setLockRemain] = useState(0);
 
-  const [heroVideo, setHeroVideo] = useState("/videos/manhattan-city-timelapse.mp4");
+  const [heroVideo, setHeroVideo] = useState("/videos/manhattan-panoramic.mp4");
 
   // 활성 히어로 영상 로드 (localStorage 캐시 우선, API 갱신)
   useEffect(() => {

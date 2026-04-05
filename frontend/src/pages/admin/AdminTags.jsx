@@ -7,16 +7,15 @@ import { Input } from "../../components/ui/Input";
 import { api } from "../../utils/api";
 
 const GOV = {
-  navy: "#1a2332",
-  navyLight: "#243447",
-  gold: "#1a2332",
-  goldBg: "rgba(26,35,50,0.05)",
-  text: "#1a1a1a",
-  textSec: "#6b7280",
-  textMuted: "#9ca3af",
-  border: "#e5e7eb",
-  headerBg: "#1a2332",
-  rowAlt: "#fafbfc",
+  accent: "#4f46e5",
+  accentLight: "#6366f1",
+  accentDim: "rgba(79,70,229,0.07)",
+  text: "#1e293b",
+  textSec: "#475569",
+  textMuted: "#94a3b8",
+  border: "#e5e8ed",
+  headerBg: `linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)`,
+  rowAlt: "#f9fafb",
 };
 
 const PRESET_COLORS = [
@@ -106,9 +105,9 @@ export default function AdminTags() {
   return (
     <div>
       {/* 페이지 헤더 */}
-      <div style={{ marginBottom: 28, paddingBottom: 16, borderBottom: `2px solid ${GOV.navy}` }}>
+      <div style={{ marginBottom: 28, paddingBottom: 16, borderBottom: `2px solid ${GOV.accent}` }}>
         <h1 style={{
-          fontSize: 22, fontWeight: 700, color: GOV.navy,
+          fontSize: 22, fontWeight: 700, color: GOV.accent,
           fontFamily: "'Georgia', serif", letterSpacing: "0.03em",
         }}>
           태그 관리
@@ -125,10 +124,10 @@ export default function AdminTags() {
       }}>
         <div style={{
           background: GOV.headerBg, padding: "10px 20px",
-          borderBottom: `2px solid ${GOV.gold}`,
+          borderBottom: `2px solid ${GOV.accent}`,
         }}>
           <h3 style={{
-            fontSize: 11, fontWeight: 700, color: GOV.gold,
+            fontSize: 11, fontWeight: 700, color: GOV.accent,
             letterSpacing: "0.12em", textTransform: "uppercase",
           }}>
             신규 태그 등록
@@ -160,7 +159,7 @@ export default function AdminTags() {
             </div>
             <button onClick={handleCreate} disabled={creating || !newName.trim()} style={{
               padding: "8px 24px", fontSize: 12, fontWeight: 600,
-              background: GOV.navy, color: GOV.gold, border: "none",
+              background: GOV.accent, color: GOV.accent, border: "none",
               borderRadius: 2, cursor: "pointer",
               opacity: creating || !newName.trim() ? 0.5 : 1,
               letterSpacing: "0.06em",
@@ -189,7 +188,7 @@ export default function AdminTags() {
           {tags.map((tag) => (
             <div key={tag.id} style={{
               background: "#fff", border: `1px solid ${GOV.border}`,
-              borderLeft: `4px solid ${tag.color || GOV.navy}`,
+              borderLeft: `4px solid ${tag.color || GOV.accent}`,
               borderRadius: 2, padding: "16px 20px",
               transition: "box-shadow 0.15s",
             }}
@@ -206,7 +205,7 @@ export default function AdminTags() {
                   <div className="flex gap-2">
                     <button onClick={handleUpdate} style={{
                       padding: "5px 14px", fontSize: 11, fontWeight: 600,
-                      background: GOV.navy, color: GOV.gold, border: "none",
+                      background: GOV.accent, color: GOV.accent, border: "none",
                       borderRadius: 2, cursor: "pointer",
                     }}>저장</button>
                     <button onClick={() => setEditId(null)} style={{
@@ -221,7 +220,7 @@ export default function AdminTags() {
                   <div className="flex items-center gap-3 mb-2">
                     <div style={{
                       width: 10, height: 10, borderRadius: 1,
-                      background: tag.color || GOV.navy, flexShrink: 0,
+                      background: tag.color || GOV.accent, flexShrink: 0,
                     }} />
                     <span style={{
                       fontSize: 14, fontWeight: 600, color: GOV.text, flex: 1,

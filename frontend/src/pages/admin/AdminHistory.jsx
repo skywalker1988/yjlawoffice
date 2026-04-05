@@ -11,16 +11,15 @@ import { api } from "../../utils/api";
 import { CATEGORY_CONFIG, REGIONS } from "../../utils/constants";
 
 const GOV = {
-  navy: "#1a2332",
-  navyLight: "#243447",
-  gold: "#1a2332",
-  goldBg: "rgba(26,35,50,0.05)",
-  text: "#1a1a1a",
-  textSec: "#6b7280",
-  textMuted: "#9ca3af",
-  border: "#e5e7eb",
-  headerBg: "#1a2332",
-  rowAlt: "#fafbfc",
+  accent: "#4f46e5",
+  accentLight: "#6366f1",
+  accentDim: "rgba(79,70,229,0.07)",
+  text: "#1e293b",
+  textSec: "#475569",
+  textMuted: "#94a3b8",
+  border: "#e5e8ed",
+  headerBg: `linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)`,
+  rowAlt: "#f9fafb",
 };
 
 const EMPTY_FORM = {
@@ -29,34 +28,38 @@ const EMPTY_FORM = {
   latitude: "", longitude: "", source: "", relatedDocumentId: "",
 };
 
-/** 정부 스타일 모달 */
+/** 프리미엄 모달 */
 function GovModal({ title, onClose, children, variant = "default" }) {
-  const headerBg = variant === "danger" ? "#7f1d1d" : GOV.headerBg;
-  const headerBorder = variant === "danger" ? "#ef4444" : GOV.gold;
-  const headerColor = variant === "danger" ? "#fecaca" : GOV.gold;
+  const headerBg = variant === "danger"
+    ? "linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%)"
+    : GOV.headerBg;
+  const headerColor = variant === "danger" ? "#fecaca" : GOV.accent;
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 50,
       display: "flex", alignItems: "center", justifyContent: "center",
     }}>
-      <div style={{ position: "absolute", inset: 0, background: "rgba(11,26,46,0.6)" }} onClick={onClose} />
       <div style={{
-        position: "relative", background: "#fff", borderRadius: 2,
+        position: "absolute", inset: 0,
+        background: "rgba(8,14,23,0.55)",
+        backdropFilter: "blur(4px)",
+      }} onClick={onClose} />
+      <div style={{
+        position: "relative", background: "#fff", borderRadius: 14,
         maxWidth: 560, width: "95%", maxHeight: "90vh", overflowY: "auto",
-        boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-        border: `1px solid ${GOV.border}`,
+        boxShadow: "0 24px 80px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05)",
+        overflow: "hidden",
       }} onClick={(e) => e.stopPropagation()}>
         <div style={{
-          background: headerBg, padding: "12px 24px",
-          borderBottom: `2px solid ${headerBorder}`,
+          background: headerBg, padding: "14px 28px",
+          borderBottom: variant === "danger" ? "1px solid rgba(239,68,68,0.3)" : "1px solid rgba(201,169,110,0.2)",
         }}>
           <h3 style={{
-            fontSize: 12, fontWeight: 700, color: headerColor,
+            fontSize: 13, fontWeight: 600, color: headerColor,
             letterSpacing: "0.1em", textTransform: "uppercase",
-            fontFamily: "'Georgia', serif",
           }}>{title}</h3>
         </div>
-        <div style={{ padding: "24px" }}>{children}</div>
+        <div style={{ padding: "28px" }}>{children}</div>
       </div>
     </div>
   );
@@ -178,11 +181,11 @@ export default function AdminHistory() {
       {/* 페이지 헤더 */}
       <div style={{
         display: "flex", alignItems: "flex-end", justifyContent: "space-between",
-        marginBottom: 28, paddingBottom: 16, borderBottom: `2px solid ${GOV.navy}`,
+        marginBottom: 28, paddingBottom: 16, borderBottom: `2px solid ${GOV.accent}`,
       }}>
         <div>
           <h1 style={{
-            fontSize: 22, fontWeight: 700, color: GOV.navy,
+            fontSize: 22, fontWeight: 700, color: GOV.accent,
             fontFamily: "'Georgia', serif", letterSpacing: "0.03em",
           }}>세계사 관리</h1>
           <p style={{ fontSize: 12, color: GOV.textMuted, marginTop: 4 }}>
@@ -192,11 +195,11 @@ export default function AdminHistory() {
         <button onClick={openCreate} style={{
           display: "inline-flex", alignItems: "center", gap: 6,
           padding: "8px 20px", fontSize: 12, fontWeight: 600,
-          background: GOV.navy, color: GOV.gold, border: "none",
+          background: GOV.accent, color: GOV.accent, border: "none",
           borderRadius: 2, cursor: "pointer", letterSpacing: "0.06em",
         }}
         onMouseEnter={e => e.currentTarget.style.background = "#142d52"}
-        onMouseLeave={e => e.currentTarget.style.background = GOV.navy}
+        onMouseLeave={e => e.currentTarget.style.background = GOV.accent}
         >
           + 신규 이벤트 등록
         </button>
@@ -216,7 +219,7 @@ export default function AdminHistory() {
               }}>
                 <span style={{ fontSize: 12, color: GOV.textSec, fontWeight: 500 }}>{cfg.label}</span>
                 <span style={{
-                  fontSize: 20, fontWeight: 600, color: GOV.navy,
+                  fontSize: 20, fontWeight: 600, color: GOV.accent,
                   fontFamily: "'Georgia', serif",
                 }}>{item.count}</span>
               </div>
@@ -229,7 +232,7 @@ export default function AdminHistory() {
       <div style={{
         display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center",
         marginBottom: 20, padding: "12px 20px",
-        background: GOV.goldBg, border: `1px solid rgba(201,169,97,0.15)`,
+        background: GOV.accentBg, border: `1px solid rgba(201,169,97,0.15)`,
         borderRadius: 2,
       }}>
         <span style={{
@@ -271,10 +274,10 @@ export default function AdminHistory() {
                   <th key={h} style={{
                     textAlign: i === 5 ? "right" : "left",
                     padding: "10px 14px",
-                    color: GOV.gold,
+                    color: GOV.accent,
                     fontWeight: 700, fontSize: 10,
                     letterSpacing: "0.12em", textTransform: "uppercase",
-                    borderBottom: `2px solid ${GOV.gold}`,
+                    borderBottom: `2px solid ${GOV.accent}`,
                   }}>{h}</th>
                 ))}
               </tr>
@@ -325,7 +328,7 @@ export default function AdminHistory() {
                     <td style={{ padding: "10px 14px" }}>
                       {Array.from({ length: 5 }, (_, j) => (
                         <span key={j} style={{
-                          color: j < event.importance ? GOV.gold : "#ddd",
+                          color: j < event.importance ? GOV.accent : "#ddd",
                           fontSize: 11, letterSpacing: "1px",
                         }}>★</span>
                       ))}
@@ -357,8 +360,8 @@ export default function AdminHistory() {
         <div className="flex items-center justify-center gap-3" style={{ marginTop: 24 }}>
           <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} style={{
             padding: "6px 16px", fontSize: 11, fontWeight: 600,
-            background: page <= 1 ? "#f0f0f0" : GOV.navy,
-            color: page <= 1 ? GOV.textMuted : GOV.gold,
+            background: page <= 1 ? "#f0f0f0" : GOV.accent,
+            color: page <= 1 ? GOV.textMuted : GOV.accent,
             border: "none", borderRadius: 2,
             cursor: page <= 1 ? "not-allowed" : "pointer",
           }}>이전</button>
@@ -367,8 +370,8 @@ export default function AdminHistory() {
           </span>
           <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} style={{
             padding: "6px 16px", fontSize: 11, fontWeight: 600,
-            background: page >= totalPages ? "#f0f0f0" : GOV.navy,
-            color: page >= totalPages ? GOV.textMuted : GOV.gold,
+            background: page >= totalPages ? "#f0f0f0" : GOV.accent,
+            color: page >= totalPages ? GOV.textMuted : GOV.accent,
             border: "none", borderRadius: 2,
             cursor: page >= totalPages ? "not-allowed" : "pointer",
           }}>다음</button>
@@ -441,7 +444,7 @@ export default function AdminHistory() {
             }}>취소</button>
             <button onClick={handleSave} disabled={saving} style={{
               padding: "8px 24px", fontSize: 12, fontWeight: 600,
-              background: GOV.navy, color: GOV.gold, border: "none",
+              background: GOV.accent, color: GOV.accent, border: "none",
               borderRadius: 2, cursor: "pointer",
               opacity: saving ? 0.5 : 1,
             }}>

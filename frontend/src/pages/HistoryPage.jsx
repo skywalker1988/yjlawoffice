@@ -291,7 +291,7 @@ export default function HistoryPage() {
                               </div>
                               {event.relatedDocumentId && (
                                 <button onClick={() => navigate(`/vault/${event.relatedDocumentId}`)}
-                                  style={{ fontSize: 11, color: "#b08d57", background: "none", border: "none", padding: 0, cursor: "pointer", marginTop: 8, fontWeight: 600 }}>
+                                  style={{ fontSize: 11, color: "#6366f1", background: "none", border: "none", padding: 0, cursor: "pointer", marginTop: 8, fontWeight: 600 }}>
                                   📄 관련 문서 보기 →
                                 </button>
                               )}
@@ -316,7 +316,7 @@ export default function HistoryPage() {
                       const coords = (event.latitude != null && event.longitude != null) ? [event.latitude, event.longitude] : (REGION_COORDS[event.region] || null);
                       return (
                         <div key={event.id} onClick={() => { setSelectedEvent(event); if (coords) setFlyTarget([...coords]); }}
-                          style={{ padding: "9px 14px", borderBottom: "1px solid rgba(0,0,0,0.04)", cursor: "pointer", background: isSel ? "rgba(176,141,87,0.06)" : "transparent", borderLeft: isSel ? "3px solid #b08d57" : "3px solid transparent", transition: "all 0.12s" }}>
+                          style={{ padding: "9px 14px", borderBottom: "1px solid rgba(0,0,0,0.04)", cursor: "pointer", background: isSel ? "rgba(99,102,241,0.06)" : "transparent", borderLeft: isSel ? "3px solid #6366f1" : "3px solid transparent", transition: "all 0.12s" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 2 }}>
                             <span style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: cfg.color, flexShrink: 0, display: "inline-block" }} />
                             <span style={{ fontSize: 10, color: "#aaa" }}>{formatEventDate(event)}</span>
@@ -343,7 +343,7 @@ export default function HistoryPage() {
                   {eras.map(([eraName, eraEvents]) => (
                     <div key={eraName} style={{ marginBottom: 48 }}>
                       <div style={{ display: "flex", justifyContent: "center", marginBottom: 24 }}>
-                        <span className="font-serif" style={{ background: "#fff", padding: "6px 20px", fontSize: "clamp(1rem, 2vw, 1.2rem)", fontWeight: 300, color: "#b08d57", letterSpacing: "0.1em", position: "relative", zIndex: 1 }}>{eraName}</span>
+                        <span className="font-serif" style={{ background: "#fff", padding: "6px 20px", fontSize: "clamp(1rem, 2vw, 1.2rem)", fontWeight: 300, color: "#6366f1", letterSpacing: "0.1em", position: "relative", zIndex: 1 }}>{eraName}</span>
                       </div>
                       {eraEvents.map((event, i) => {
                         const cfg = CATEGORY_CONFIG[event.category] || { label: event.category, color: "#999" };

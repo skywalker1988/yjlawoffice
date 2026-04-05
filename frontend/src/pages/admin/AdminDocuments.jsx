@@ -13,16 +13,17 @@ import { api } from "../../utils/api";
 import { STATUS_OPTIONS } from "../../utils/constants";
 
 const GOV = {
-  navy: "#1a2332",
-  gold: "#1a2332",
-  goldBg: "rgba(26,35,50,0.05)",
-  text: "#1a1a1a",
-  textSec: "#6b7280",
-  textMuted: "#9ca3af",
-  border: "#e5e7eb",
+  accent: "#4f46e5",
+  accentLight: "#6366f1",
+  accentDim: "rgba(79,70,229,0.07)",
+  text: "#1e293b",
+  textSec: "#475569",
+  textMuted: "#94a3b8",
+  border: "#e5e8ed",
+  borderLight: "#f0f2f5",
   cardBg: "#ffffff",
-  headerBg: "#1a2332",
-  rowAlt: "#fafbfc",
+  headerBg: `linear-gradient(135deg, #4f46e5 0%, #6366f1 100%)`,
+  rowAlt: "#f9fafb",
 };
 
 const EMPTY_FORM = {
@@ -32,23 +33,30 @@ const EMPTY_FORM = {
   tagIds: [], categoryIds: [],
 };
 
-/** 정부 스타일 페이지 헤더 */
+/** 프리미엄 페이지 헤더 */
 function PageHeader({ title, subtitle, action }) {
   return (
     <div style={{
       display: "flex", alignItems: "flex-end", justifyContent: "space-between",
-      marginBottom: 28, paddingBottom: 16,
-      borderBottom: `2px solid ${GOV.navy}`,
+      marginBottom: 32, paddingBottom: 20,
+      borderBottom: `1px solid ${GOV.border}`,
     }}>
       <div>
+        <div style={{
+          fontSize: 11, fontWeight: 600, color: GOV.accent,
+          letterSpacing: "0.22em", textTransform: "uppercase", marginBottom: 8,
+          opacity: 0.8,
+        }}>
+          DOCUMENT MANAGEMENT
+        </div>
         <h1 style={{
-          fontSize: 22, fontWeight: 700, color: GOV.navy,
-          fontFamily: "'Georgia', serif", letterSpacing: "0.03em",
+          fontSize: 24, fontWeight: 600, color: GOV.text,
+          letterSpacing: "-0.02em",
         }}>
           {title}
         </h1>
         {subtitle && (
-          <p style={{ fontSize: 12, color: GOV.textMuted, marginTop: 4 }}>{subtitle}</p>
+          <p style={{ fontSize: 12, color: GOV.textMuted, marginTop: 6 }}>{subtitle}</p>
         )}
       </div>
       {action}
@@ -56,34 +64,38 @@ function PageHeader({ title, subtitle, action }) {
   );
 }
 
-/** 정부 스타일 모달 래퍼 */
+/** 프리미엄 모달 래퍼 */
 function GovModal({ title, onClose, children }) {
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 1000,
       display: "flex", alignItems: "flex-start", justifyContent: "center",
-      paddingTop: 40, overflowY: "auto",
+      paddingTop: 48, overflowY: "auto",
     }}>
-      <div style={{ position: "fixed", inset: 0, background: "rgba(11,26,46,0.6)" }} onClick={onClose} />
       <div style={{
-        position: "relative", background: "#fff", borderRadius: 2,
+        position: "fixed", inset: 0,
+        background: "rgba(8,14,23,0.55)",
+        backdropFilter: "blur(4px)",
+      }} onClick={onClose} />
+      <div style={{
+        position: "relative", background: "#fff", borderRadius: 14,
         maxWidth: 720, width: "95%", marginBottom: 40,
-        boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-        border: `1px solid ${GOV.border}`,
+        boxShadow: "0 24px 80px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05)",
+        overflow: "hidden",
       }}>
-        {/* 모달 헤더 — 네이비 바 */}
+        {/* 모달 헤더 */}
         <div style={{
-          background: GOV.headerBg, padding: "14px 28px",
-          borderBottom: `2px solid ${GOV.gold}`,
+          background: GOV.headerBg, padding: "16px 30px",
+          borderBottom: `1px solid rgba(79,70,229,0.15)`,
         }}>
           <h3 style={{
-            fontSize: 14, fontWeight: 700, color: GOV.gold,
-            letterSpacing: "0.08em", fontFamily: "'Georgia', serif",
+            fontSize: 14, fontWeight: 600, color: GOV.accent,
+            letterSpacing: "0.1em",
           }}>
             {title}
           </h3>
         </div>
-        <div style={{ padding: "24px 28px" }}>
+        <div style={{ padding: "28px 30px" }}>
           {children}
         </div>
       </div>
@@ -245,13 +257,14 @@ export default function AdminDocuments() {
         action={
           <button onClick={openCreate} style={{
             display: "inline-flex", alignItems: "center", gap: 6,
-            padding: "8px 20px", fontSize: 12, fontWeight: 600,
-            background: GOV.navy, color: GOV.gold, border: "none",
-            borderRadius: 2, cursor: "pointer", letterSpacing: "0.06em",
-            transition: "background 0.15s",
+            padding: "10px 22px", fontSize: 12, fontWeight: 600,
+            background: `linear-gradient(135deg, ${GOV.accent} 0%, ${GOV.accentLight} 100%)`,
+            color: GOV.accent, border: "none",
+            borderRadius: 8, cursor: "pointer", letterSpacing: "0.06em",
+            transition: "all 0.25s", boxShadow: "0 2px 8px rgba(15,25,35,0.15)",
           }}
-          onMouseEnter={e => e.currentTarget.style.background = "#142d52"}
-          onMouseLeave={e => e.currentTarget.style.background = GOV.navy}
+          onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 4px 16px rgba(15,25,35,0.25)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+          onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 2px 8px rgba(15,25,35,0.15)"; e.currentTarget.style.transform = "translateY(0)"; }}
           >
             + 새 문서 등록
           </button>
@@ -262,8 +275,8 @@ export default function AdminDocuments() {
       <div style={{
         display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center",
         marginBottom: 24, padding: "14px 20px",
-        background: GOV.goldBg, border: `1px solid rgba(201,169,97,0.15)`,
-        borderRadius: 2,
+        background: GOV.accentBg, border: `1px solid rgba(79,70,229,0.1)`,
+        borderRadius: 10,
       }}>
         <span style={{ fontSize: 10, fontWeight: 700, color: GOV.textSec, letterSpacing: "0.12em", textTransform: "uppercase", marginRight: 4 }}>
           필터:
@@ -334,7 +347,7 @@ export default function AdminDocuments() {
             <div>
               <div className="flex items-center justify-between" style={{ marginBottom: 4 }}>
                 <FieldLabel>본문 (Markdown)</FieldLabel>
-                <label style={{ fontSize: 11, color: GOV.gold, cursor: "pointer", fontWeight: 600 }}>
+                <label style={{ fontSize: 11, color: GOV.accent, cursor: "pointer", fontWeight: 600 }}>
                   {uploading ? "업로드 중..." : "파일 업로드"}
                   <input type="file" style={{ display: "none" }} onChange={handleFileUpload} disabled={uploading} />
                 </label>
@@ -349,8 +362,8 @@ export default function AdminDocuments() {
                   {allTags.map((tag) => (
                     <label key={tag.id} className="flex items-center gap-1 cursor-pointer" style={{
                       fontSize: 11, padding: "4px 10px", borderRadius: 2,
-                      border: `1px solid ${form.tagIds.includes(tag.id) ? (tag.color || GOV.navy) : GOV.border}`,
-                      background: form.tagIds.includes(tag.id) ? (tag.color || GOV.navy) : "transparent",
+                      border: `1px solid ${form.tagIds.includes(tag.id) ? (tag.color || GOV.accent) : GOV.border}`,
+                      background: form.tagIds.includes(tag.id) ? (tag.color || GOV.accent) : "transparent",
                       color: form.tagIds.includes(tag.id) ? "#fff" : GOV.textSec,
                       fontWeight: form.tagIds.includes(tag.id) ? 600 : 400,
                     }}>
@@ -369,8 +382,8 @@ export default function AdminDocuments() {
                   {allCategories.map((cat) => (
                     <label key={cat.id} className="flex items-center gap-1 cursor-pointer" style={{
                       fontSize: 11, padding: "4px 10px", borderRadius: 2,
-                      border: `1px solid ${form.categoryIds.includes(cat.id) ? (cat.color || GOV.navy) : GOV.border}`,
-                      background: form.categoryIds.includes(cat.id) ? (cat.color || GOV.navy) : "transparent",
+                      border: `1px solid ${form.categoryIds.includes(cat.id) ? (cat.color || GOV.accent) : GOV.border}`,
+                      background: form.categoryIds.includes(cat.id) ? (cat.color || GOV.accent) : "transparent",
                       color: form.categoryIds.includes(cat.id) ? "#fff" : GOV.textSec,
                       fontWeight: form.categoryIds.includes(cat.id) ? 600 : 400,
                     }}>
@@ -393,7 +406,7 @@ export default function AdminDocuments() {
               </button>
               <button onClick={handleSave} disabled={saving || !form.title.trim()} style={{
                 padding: "8px 24px", fontSize: 12, fontWeight: 600,
-                background: GOV.navy, color: GOV.gold, border: "none",
+                background: GOV.accent, color: GOV.accent, border: "none",
                 borderRadius: 2, cursor: "pointer",
                 opacity: saving || !form.title.trim() ? 0.5 : 1,
               }}>
@@ -434,8 +447,9 @@ export default function AdminDocuments() {
         </div>
       ) : (
         <div style={{
-          border: `1px solid ${GOV.border}`, borderRadius: 2,
+          border: `1px solid ${GOV.border}`, borderRadius: 12,
           overflow: "hidden", background: "#fff",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
         }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12.5 }}>
             <thead>
@@ -444,11 +458,10 @@ export default function AdminDocuments() {
                   <th key={h} style={{
                     textAlign: i === 5 ? "right" : "left",
                     padding: "10px 14px",
-                    color: GOV.gold,
-                    fontWeight: 700, fontSize: 10,
+                    color: "#ffffff",
+                    fontWeight: 600, fontSize: 10,
                     letterSpacing: "0.12em",
                     textTransform: "uppercase",
-                    borderBottom: `2px solid ${GOV.gold}`,
                   }}>
                     {h}
                   </th>
@@ -491,7 +504,7 @@ export default function AdminDocuments() {
                     {STATUS_OPTIONS.find((s) => s.value === doc.status)?.label || doc.status}
                   </td>
                   <td style={{ padding: "10px 14px" }}>
-                    <span style={{ color: GOV.gold, fontSize: 12, letterSpacing: "1px" }}>
+                    <span style={{ color: GOV.accent, fontSize: 12, letterSpacing: "1px" }}>
                       {"★".repeat(doc.importance || 0)}
                     </span>
                     <span style={{ color: "#ddd", fontSize: 12, letterSpacing: "1px" }}>
@@ -530,7 +543,7 @@ export default function AdminDocuments() {
         <div className="flex justify-center items-center gap-3" style={{ marginTop: 24 }}>
           <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)} style={{
             padding: "6px 16px", fontSize: 11, fontWeight: 600,
-            background: page <= 1 ? "#f0f0f0" : GOV.navy, color: page <= 1 ? GOV.textMuted : GOV.gold,
+            background: page <= 1 ? "#f0f0f0" : GOV.accent, color: page <= 1 ? GOV.textMuted : GOV.accent,
             border: "none", borderRadius: 2, cursor: page <= 1 ? "not-allowed" : "pointer",
           }}>이전</button>
           <span style={{
@@ -541,7 +554,7 @@ export default function AdminDocuments() {
           </span>
           <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} style={{
             padding: "6px 16px", fontSize: 11, fontWeight: 600,
-            background: page >= totalPages ? "#f0f0f0" : GOV.navy, color: page >= totalPages ? GOV.textMuted : GOV.gold,
+            background: page >= totalPages ? "#f0f0f0" : GOV.accent, color: page >= totalPages ? GOV.textMuted : GOV.accent,
             border: "none", borderRadius: 2, cursor: page >= totalPages ? "not-allowed" : "pointer",
           }}>다음</button>
         </div>

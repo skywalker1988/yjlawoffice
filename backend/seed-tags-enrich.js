@@ -62,7 +62,7 @@ async function seed() {
     if (existing.length > 0) {
       tagMap[name] = existing[0].id;
     } else {
-      const [t] = await db.insert(tags).values({ name, color: "#b08d57" }).returning();
+      const [t] = await db.insert(tags).values({ name, color: "#6366f1" }).returning();
       tagMap[name] = t.id;
       console.log(`  + 태그 생성: ${name}`);
     }

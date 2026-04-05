@@ -7,8 +7,10 @@ import { api } from "../../utils/api";
 
 /* ── 디자인 토큰 ── */
 const T = {
-  navy: "#1a2332", text: "#1a1a1a", textSec: "#6b7280",
-  textMuted: "#9ca3af", border: "#e5e7eb", card: "#ffffff",
+  accent: "#4f46e5", accentLight: "#6366f1",
+  accentDim: "rgba(79,70,229,0.07)",
+  text: "#1e293b", textSec: "#475569",
+  textMuted: "#94a3b8", border: "#e5e8ed", card: "#ffffff",
   red: "#ef4444", green: "#16a34a",
 };
 /* 에디터 다크 테마 */
@@ -111,7 +113,7 @@ export default function AdminHeroVideos() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h1 style={{ fontSize: 24, fontWeight: 600, color: T.text }}>히어로 영상</h1>
           <button onClick={() => { setEditingId(null); setForm({ title: "", url: "", category: "manhattan" }); setUploadMode(false); setShowForm(true); }}
-            style={{ background: T.navy, color: "#fff", border: "none", padding: "10px 24px", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", cursor: "pointer" }}>
+            style={{ background: T.accent, color: "#fff", border: "none", padding: "10px 24px", fontSize: 11, fontWeight: 600, letterSpacing: "0.1em", cursor: "pointer" }}>
             + 새 영상
           </button>
         </div>
@@ -144,9 +146,9 @@ export default function AdminHeroVideos() {
           {[{ key: "", label: "전체" }, ...Object.entries(CATEGORIES).map(([k, v]) => ({ key: k, label: v }))].map(c => (
             <button key={c.key} onClick={() => setFilter(c.key)} style={{
               padding: "6px 14px", fontSize: 11, fontWeight: 500, cursor: "pointer",
-              background: filter === c.key ? T.navy : "transparent",
+              background: filter === c.key ? T.accent : "transparent",
               color: filter === c.key ? "#fff" : T.textSec,
-              border: `1px solid ${filter === c.key ? T.navy : T.border}`,
+              border: `1px solid ${filter === c.key ? T.accent : T.border}`,
               transition: "all 0.15s",
             }}>{c.label}</button>
           ))}
@@ -184,7 +186,7 @@ export default function AdminHeroVideos() {
             style={pgBtn(page > 1)}>← 이전</button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
             <button key={p} onClick={() => setPage(p)}
-              style={{ ...pgBtn(true), background: p === page ? T.navy : "transparent", color: p === page ? "#fff" : T.textSec, minWidth: 32 }}>
+              style={{ ...pgBtn(true), background: p === page ? T.accent : "transparent", color: p === page ? "#fff" : T.textSec, minWidth: 32 }}>
               {p}
             </button>
           ))}
@@ -220,7 +222,7 @@ export default function AdminHeroVideos() {
       {showForm && (
         <Overlay onClose={() => setShowForm(false)}>
           <div style={{ background: T.card, maxWidth: 520, width: "95%" }}>
-            <div style={{ background: T.navy, padding: "16px 28px" }}>
+            <div style={{ background: T.accent, padding: "16px 28px" }}>
               <div style={{ fontSize: 9, fontWeight: 600, color: "rgba(255,255,255,0.4)", letterSpacing: "0.18em", marginBottom: 4 }}>
                 {editingId ? "EDIT" : "ADD NEW"}
               </div>
@@ -232,7 +234,7 @@ export default function AdminHeroVideos() {
                   {[false, true].map(m => (
                     <button key={String(m)} type="button" onClick={() => setUploadMode(m)}
                       style={{ padding: "8px 20px", fontSize: 11, fontWeight: 600, background: "none", border: "none", cursor: "pointer",
-                        color: uploadMode === m ? T.navy : T.textMuted, borderBottom: uploadMode === m ? `2px solid ${T.navy}` : "2px solid transparent" }}>
+                        color: uploadMode === m ? T.accent : T.textMuted, borderBottom: uploadMode === m ? `2px solid ${T.accent}` : "2px solid transparent" }}>
                       {m ? "파일 업로드" : "URL 입력"}
                     </button>
                   ))}
@@ -266,7 +268,7 @@ export default function AdminHeroVideos() {
               </select>
               <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 28 }}>
                 <button type="button" onClick={() => setShowForm(false)} style={{ padding: "10px 24px", fontSize: 12, background: "transparent", border: `1px solid ${T.border}`, cursor: "pointer" }}>취소</button>
-                <button type="submit" disabled={saving} style={{ padding: "10px 28px", fontSize: 12, fontWeight: 600, background: T.navy, color: "#fff", border: "none", cursor: "pointer", opacity: saving ? 0.6 : 1 }}>
+                <button type="submit" disabled={saving} style={{ padding: "10px 28px", fontSize: 12, fontWeight: 600, background: T.accent, color: "#fff", border: "none", cursor: "pointer", opacity: saving ? 0.6 : 1 }}>
                   {saving ? "저장 중..." : editingId ? "수정" : "추가"}
                 </button>
               </div>
@@ -699,7 +701,7 @@ function VCard({ v, onActivate, onEdit, onDelete, onEditor }) {
   return (
     <div onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
       style={{
-        background: T.card, border: v.isActive ? `2px solid ${T.navy}` : `1px solid ${T.border}`,
+        background: T.card, border: v.isActive ? `2px solid ${T.accent}` : `1px solid ${T.border}`,
         overflow: "hidden", transition: "box-shadow 0.2s, transform 0.2s",
         boxShadow: hov ? "0 8px 24px rgba(0,0,0,0.12)" : "0 1px 3px rgba(0,0,0,0.04)",
         transform: hov ? "translateY(-2px)" : "none",
@@ -709,7 +711,7 @@ function VCard({ v, onActivate, onEdit, onDelete, onEditor }) {
         <div style={{ position: "absolute", inset: 0, background: hov ? "rgba(0,0,0,0.05)" : "rgba(0,0,0,0.2)", transition: "background 0.2s", display: "flex", alignItems: "center", justifyContent: "center" }}>
           {!hov && <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(4px)" }}><span style={{ fontSize: 14, color: "#fff", marginLeft: 2 }}>▶</span></div>}
         </div>
-        {v.isActive && <div style={{ position: "absolute", top: 8, right: 8, background: T.navy, color: "#fff", fontSize: 8, fontWeight: 700, padding: "3px 8px", letterSpacing: "0.15em" }}>ACTIVE</div>}
+        {v.isActive && <div style={{ position: "absolute", top: 8, right: 8, background: T.accent, color: "#fff", fontSize: 8, fontWeight: 700, padding: "3px 8px", letterSpacing: "0.15em" }}>ACTIVE</div>}
         <div style={{ position: "absolute", bottom: 8, left: 8, background: "rgba(0,0,0,0.6)", color: "rgba(255,255,255,0.8)", fontSize: 9, fontWeight: 500, padding: "2px 8px", backdropFilter: "blur(4px)" }}>
           {CATEGORIES[v.category] || v.category}
         </div>
@@ -717,7 +719,7 @@ function VCard({ v, onActivate, onEdit, onDelete, onEditor }) {
       <div style={{ padding: "10px 14px" }}>
         <div style={{ fontSize: 13, fontWeight: 500, color: T.text, marginBottom: 10, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{v.title}</div>
         <div style={{ display: "flex", gap: 6 }}>
-          {!v.isActive && <button onClick={e => { e.stopPropagation(); onActivate(v.id); }} style={cBtn(T.navy)}>활성화</button>}
+          {!v.isActive && <button onClick={e => { e.stopPropagation(); onActivate(v.id); }} style={cBtn(T.accent)}>활성화</button>}
           <button onClick={e => { e.stopPropagation(); onEditor(); }} style={cBtn("#6c63ff")}>편집</button>
           <button onClick={e => { e.stopPropagation(); onEdit(); }} style={cBtn(T.textSec)}>수정</button>
           <button onClick={e => { e.stopPropagation(); onDelete(); }} style={cBtn(T.red)}>삭제</button>

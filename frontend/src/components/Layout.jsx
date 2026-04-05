@@ -3,11 +3,10 @@ import { useState, useEffect } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 
 const NAV = [
-  { to: "/vault", label: "VAULT" },
-  { to: "/search", label: "SEARCH" },
-  { to: "/graph", label: "GRAPH" },
-  { to: "/timeline", label: "TIMELINE" },
-  { to: "/history", label: "HISTORY" },
+  { to: "/about", label: "사무소 소개" },
+  { to: "/practice", label: "업무분야" },
+  { to: "/lawyers", label: "변호사 소개" },
+  { to: "/consultation", label: "상담안내" },
 ];
 
 export default function Layout() {
@@ -40,7 +39,7 @@ export default function Layout() {
         <div style={{ borderBottom: heroTop ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.04)" }}>
           <div className="container flex items-center justify-between" style={{ height: 30 }}>
             <div className="flex gap-4" style={{ fontSize: 10 }}>
-              <span className="font-en" style={{ letterSpacing: "0.1em", color: heroTop ? "rgba(255,255,255,0.7)" : "#999" }}>SECOND BRAIN</span>
+              <span className="font-en" style={{ letterSpacing: "0.1em", color: heroTop ? "rgba(255,255,255,0.7)" : "#999" }}>YOUNJEONG LAW OFFICE</span>
             </div>
             <div className="hidden md:flex gap-6" style={{ fontSize: 10, color: heroTop ? "rgba(255,255,255,0.4)" : "#999" }}>
               <Link to="/admin" className="hover:opacity-70 transition-opacity">ADMIN</Link>
@@ -115,35 +114,43 @@ export default function Layout() {
       <main className="flex-1"><Outlet /></main>
 
       {/* ==================== FOOTER ==================== */}
-      <footer style={{ background: "#fafaf9", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
-        <div className="container" style={{ paddingTop: 64, paddingBottom: 40 }}>
+      <footer style={{ background: "#0f1923", borderTop: "none" }}>
+        <div className="container" style={{ paddingTop: 72, paddingBottom: 40 }}>
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12" style={{ marginBottom: 48 }}>
             <div className="md:col-span-5">
-              <p className="font-serif" style={{ fontSize: 20, color: "#1a1a1a", letterSpacing: "0.14em", marginBottom: 24 }}>SECOND BRAIN</p>
-              <div style={{ fontSize: 13, color: "#999", lineHeight: 2.2 }}>
-                <p>법률 지식 관리 시스템</p>
-                <p>문서 · 판례 · 법령 · 논문</p>
+              <p className="font-serif" style={{ fontSize: 22, color: "#b08d57", letterSpacing: "0.14em", marginBottom: 24 }}>윤정 법률사무소</p>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 2.2 }}>
+                <p>진실된 마음으로 의뢰인의 목소리에 귀를 기울이며</p>
+                <p>최선의 법률적 해법을 제시합니다</p>
+              </div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.3)", marginTop: 20, lineHeight: 2 }}>
+                <p>서울특별시 서초구 서초대로 254, 오퓨런스빌딩 7층</p>
+                <p>TEL 02-535-0461</p>
               </div>
             </div>
             <div className="md:col-span-3">
-              <p className="font-en" style={{ fontSize: 10, color: "#bbb", letterSpacing: "0.2em", marginBottom: 20 }}>MENU</p>
+              <p className="font-en" style={{ fontSize: 10, color: "#b08d57", letterSpacing: "0.2em", marginBottom: 20 }}>MENU</p>
               <div className="space-y-3" style={{ fontSize: 13 }}>
                 {NAV.map((item) => (
-                  <Link key={item.to} to={item.to} className="block transition-colors duration-300 hover:text-[#1a1a1a]" style={{ color: "#bbb", textDecoration: "none" }}>{item.label}</Link>
+                  <Link key={item.to} to={item.to} className="block transition-colors duration-300 hover:text-[#b08d57]" style={{ color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>{item.label}</Link>
                 ))}
               </div>
             </div>
             <div className="md:col-span-4">
-              <p className="font-en" style={{ fontSize: 10, color: "#bbb", letterSpacing: "0.2em", marginBottom: 20 }}>MANAGEMENT</p>
-              <Link to="/admin"
-                className="inline-block font-en transition-all duration-300 hover:border-[var(--accent-gold)] hover:text-[var(--accent-gold)]"
-                style={{ border: "1px solid rgba(0,0,0,0.12)", color: "#999", padding: "12px 32px", fontSize: 12, letterSpacing: "0.15em", textDecoration: "none" }}>
-                관리자 페이지
+              <p className="font-en" style={{ fontSize: 10, color: "#b08d57", letterSpacing: "0.2em", marginBottom: 20 }}>CONTACT</p>
+              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 2.2 }}>
+                <p>평일 09:00 - 18:00</p>
+                <p>예약 상담 우선 진행</p>
+              </div>
+              <Link to="/consultation"
+                className="inline-block font-en transition-all duration-300 hover:border-[#b08d57] hover:text-[#b08d57]"
+                style={{ border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.5)", padding: "12px 32px", fontSize: 12, letterSpacing: "0.15em", textDecoration: "none", marginTop: 20 }}>
+                상담 예약
               </Link>
             </div>
           </div>
-          <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: 24 }} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <p style={{ fontSize: 10, color: "#ccc" }}>&copy; 2025-2026 SECOND BRAIN. All Rights Reserved.</p>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 24 }} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <p style={{ fontSize: 10, color: "rgba(255,255,255,0.2)" }}>&copy; 2025-2026 윤정 법률사무소 YOUNJEONG LAW OFFICE. All Rights Reserved.</p>
           </div>
         </div>
       </footer>

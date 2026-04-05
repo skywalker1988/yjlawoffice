@@ -53,7 +53,7 @@ const documents = sqliteTable("documents", {
 const tags = sqliteTable("tags", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull().unique(),
-  color: text("color").default("#b08d57"),
+  color: text("color").default("#6366f1"),
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
 });
 
@@ -98,7 +98,7 @@ const collections = sqliteTable("collections", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name").notNull(),
   description: text("description"),
-  color: text("color").default("#b08d57"),
+  color: text("color").default("#6366f1"),
   icon: text("icon"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
@@ -138,7 +138,7 @@ const highlights = sqliteTable("highlights", {
   positionEnd: integer("position_end").notNull(),
   highlightText: text("highlight_text").notNull(),
   note: text("note"),
-  color: text("color").notNull().default("#b08d57"),
+  color: text("color").notNull().default("#6366f1"),
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
 });
 
@@ -199,6 +199,35 @@ const heroVideos = sqliteTable("hero_videos", {
   updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
 });
 
+// =============================================
+// lawyers — 변호사 소개
+// =============================================
+const LAWYER_POSITIONS = [
+  "대표변호사",
+  "파트너변호사",
+  "시니어변호사",
+  "어소시에이트",
+  "고문변호사",
+];
+
+const lawyers = sqliteTable("lawyers", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  nameEn: text("name_en"),
+  position: text("position").notNull().default("어소시에이트"),
+  photoUrl: text("photo_url"),
+  education: text("education"),
+  career: text("career"),
+  specialties: text("specialties"),
+  introduction: text("introduction"),
+  email: text("email"),
+  phone: text("phone"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isActive: integer("is_active").notNull().default(1),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+});
+
 module.exports = {
   DOCUMENT_TYPES,
   DOCUMENT_STATUSES,
@@ -217,4 +246,6 @@ module.exports = {
   highlights,
   historyEvents,
   heroVideos,
+  LAWYER_POSITIONS,
+  lawyers,
 };

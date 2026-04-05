@@ -261,7 +261,7 @@ export const TEXT_EFFECTS = [
 /* ── 6. 문서 테마 ── */
 export const DOCUMENT_THEMES = [
   { id: "office", label: "Office", primary: "#4472C4", secondary: "#ED7D31", accent1: "#A5A5A5", accent2: "#FFC000", accent3: "#5B9BD5", headingFont: "'맑은 고딕'", bodyFont: "'맑은 고딕'" },
-  { id: "elegant", label: "우아한", primary: "#1e3a5f", secondary: "#b08d57", accent1: "#8b7355", accent2: "#c4a882", headingFont: "'Noto Serif KR'", bodyFont: "'맑은 고딕'" },
+  { id: "elegant", label: "우아한", primary: "#1e3a5f", secondary: "#6366f1", accent1: "#8b7355", accent2: "#c4a882", headingFont: "'Noto Serif KR'", bodyFont: "'맑은 고딕'" },
   { id: "modern", label: "모던", primary: "#2563eb", secondary: "#0891b2", accent1: "#7c3aed", accent2: "#059669", headingFont: "'Noto Sans KR'", bodyFont: "'Noto Sans KR'" },
   { id: "classic", label: "클래식", primary: "#333333", secondary: "#666666", accent1: "#999999", accent2: "#cccccc", headingFont: "'바탕'", bodyFont: "'바탕'" },
   { id: "nature", label: "자연", primary: "#15803d", secondary: "#854d0e", accent1: "#166534", accent2: "#a16207", headingFont: "'Noto Sans KR'", bodyFont: "'맑은 고딕'" },

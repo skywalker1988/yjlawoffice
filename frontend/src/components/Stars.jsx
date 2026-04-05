@@ -15,7 +15,7 @@ export function Stars({ rating, size = 12 }) {
         <span
           key={level}
           style={{
-            color: level <= rating ? "var(--accent-gold, #b08d57)" : "#ddd",
+            color: level <= rating ? "var(--accent-gold, #6366f1)" : "#ddd",
             fontSize: size,
           }}
         >

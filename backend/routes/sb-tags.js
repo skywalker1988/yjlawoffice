@@ -45,7 +45,7 @@ router.post("/", async (req, res) => {
 
     const [inserted] = await db
       .insert(tags)
-      .values({ name, color: color ?? "#b08d57" })
+      .values({ name, color: color ?? "#6366f1" })
       .returning();
 
     res.json({ data: inserted, error: null, meta: null });

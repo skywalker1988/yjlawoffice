@@ -1960,7 +1960,7 @@ async function seed() {
     if (existing.length > 0) {
       tagMap[name] = existing[0].id;
     } else {
-      const [inserted] = await db.insert(tags).values({ name, color: "#b08d57" }).returning();
+      const [inserted] = await db.insert(tags).values({ name, color: "#6366f1" }).returning();
       tagMap[name] = inserted.id;
     }
   }

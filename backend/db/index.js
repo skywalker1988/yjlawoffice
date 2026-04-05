@@ -54,7 +54,7 @@ function initTables() {
     CREATE TABLE IF NOT EXISTS tags (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL UNIQUE,
-      color TEXT DEFAULT '#b08d57',
+      color TEXT DEFAULT '#6366f1',
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -85,7 +85,7 @@ function initTables() {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       description TEXT,
-      color TEXT DEFAULT '#b08d57',
+      color TEXT DEFAULT '#6366f1',
       icon TEXT,
       sort_order INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -115,7 +115,7 @@ function initTables() {
       position_end INTEGER NOT NULL,
       highlight_text TEXT NOT NULL,
       note TEXT,
-      color TEXT NOT NULL DEFAULT '#b08d57',
+      color TEXT NOT NULL DEFAULT '#6366f1',
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -126,6 +126,24 @@ function initTables() {
       category TEXT NOT NULL DEFAULT 'manhattan',
       is_active INTEGER NOT NULL DEFAULT 0,
       sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS lawyers (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      name_en TEXT,
+      position TEXT NOT NULL DEFAULT '어소시에이트',
+      photo_url TEXT,
+      education TEXT,
+      career TEXT,
+      specialties TEXT,
+      introduction TEXT,
+      email TEXT,
+      phone TEXT,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      is_active INTEGER NOT NULL DEFAULT 1,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );

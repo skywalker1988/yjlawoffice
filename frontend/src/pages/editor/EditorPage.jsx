@@ -75,7 +75,7 @@ function isMarkdownText(text) {
    MAIN COMPONENT
    ═══════════════════════════════════════════════════════════ */
 export default function EditorPage() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [doc, setDoc] = useState({ ...EMPTY_DOC });
   const [docId, setDocId] = useState(null);
   const [documents, setDocuments] = useState([]);
@@ -252,23 +252,17 @@ export default function EditorPage() {
     Promise.all([
       api.get("/documents?limit=200").then((j) => setDocuments(j.data || [])).catch(() => {}),
       api.get("/tags").then((j) => setTags(j.data || [])).catch(() => {}),
-    ]).finally(() => {
-      // Show splash for at least 800ms for visual polish
-      setTimeout(() => setLoading(false), 800);
-    });
+    ]).catch(() => {});
   }, []);
 
-  /* ──── 자동 저장 복원: 에디터 준비 후 로컬 백업이 있으면 복원 여부 확인 ──── */
+  /* ──── 자동 저장 복원: 에디터 준비 후 로컬 백업이 있으면 자동 복원 ──── */
   useEffect(() => {
-    if (!editor || docId) return; // 이미 문서를 로드한 경우 건너뜀
+    if (!editor || docId) return;
     const saved = loadAutoSave();
     if (saved && saved.html) {
-      const shouldRestore = window.confirm("이전에 자동 저장된 문서가 있습니다. 복원하시겠습니까?");
-      if (shouldRestore) {
-        editor.commands.setContent(saved.html);
-        if (saved.title) setDoc(d => ({ ...d, title: saved.title }));
-        setSaveStatus("복원됨");
-      }
+      editor.commands.setContent(saved.html);
+      if (saved.title) setDoc(d => ({ ...d, title: saved.title }));
+      setSaveStatus("복원됨");
     }
   }, [editor]); // eslint-disable-line react-hooks/exhaustive-deps
 

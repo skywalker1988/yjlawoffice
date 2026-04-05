@@ -46,7 +46,7 @@ router.post("/", async (req, res) => {
       .values({
         name,
         description: description ?? null,
-        color: color ?? "#b08d57",
+        color: color ?? "#6366f1",
         icon: icon ?? null,
       })
       .returning();
