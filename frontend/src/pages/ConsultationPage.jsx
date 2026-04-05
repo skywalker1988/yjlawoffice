@@ -1,6 +1,11 @@
-/** 상담안내 페이지 — 상담 절차, 연락처, 지도(카카오/네이버/구글), 약도 */
+/** 상담안내 페이지 — 상담 절차, 연락처, 상담 신청 폼, FAQ, 지도(카카오/네이버/구글), 약도 */
 import { useState } from "react";
 import useReveal from "../hooks/useReveal";
+import { api } from "../utils/api";
+import { Input } from "../components/ui/Input";
+import { Select } from "../components/ui/Select";
+import { Button } from "../components/ui/Button";
+import { Textarea } from "../components/ui/Textarea";
 
 /* ── 서초역 3번 출구 기준 사무실 좌표 ── */
 const OFFICE_LAT = 37.4920;
@@ -34,6 +39,38 @@ const MAP_TABS = [
   { id: "google", label: "구글지도" },
 ];
 
+/** 상담 분야 옵션 */
+const CONSULTATION_CATEGORIES = [
+  { value: "civil", label: "민사" },
+  { value: "criminal", label: "형사" },
+  { value: "family", label: "가사" },
+  { value: "admin", label: "행정" },
+  { value: "tax", label: "조세" },
+  { value: "realestate", label: "부동산" },
+  { value: "corporate", label: "기업법무" },
+  { value: "other", label: "기타" },
+];
+
+/** 상담 폼 초기값 */
+const INITIAL_FORM = {
+  name: "",
+  phone: "",
+  email: "",
+  category: "civil",
+  message: "",
+  agreed: false,
+};
+
+/** 자주 묻는 질문 */
+const FAQ_ITEMS = [
+  { q: "상담 비용은 어떻게 되나요?", a: "초기 상담은 사건의 복잡도와 분야에 따라 상이합니다. 전화 또는 카카오톡으로 문의하시면 상담 유형에 맞는 안내를 드립니다." },
+  { q: "상담 예약은 어떻게 하나요?", a: "전화(02-535-0461), 카카오톡, 또는 위 상담 신청 폼을 통해 예약하실 수 있습니다. 예약 상담이 우선 진행됩니다." },
+  { q: "방문 상담이 가능한가요?", a: "네, 서초역 3번 출구 도보 3분 거리의 사무소에서 직접 상담이 가능합니다. 사전 예약을 권장드립니다." },
+  { q: "상담 후 수임이 필수인가요?", a: "아닙니다. 상담을 통해 사건의 방향성을 파악하신 후 자유롭게 결정하실 수 있습니다." },
+  { q: "어떤 분야를 전문으로 하나요?", a: "민사·형사·가사·행정·조세·부동산·기업법무 등 폭넓은 분야에서 실무 경험을 보유하고 있습니다." },
+  { q: "비밀이 보장되나요?", a: "변호사법에 따라 상담 내용은 철저히 비밀이 보장됩니다. 모든 정보는 안전하게 관리됩니다." },
+];
+
 /** 각 지도 서비스의 임베드/링크 URL 생성 */
 function getMapUrl(type) {
   switch (type) {
@@ -65,6 +102,49 @@ function getMapExternalUrl(type) {
 export default function ConsultationPage() {
   const ref = useReveal();
   const [activeMap, setActiveMap] = useState("kakao");
+  const [form, setForm] = useState(INITIAL_FORM);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitResult, setSubmitResult] = useState(null); // { type: "success" | "error", msg }
+  const [openFaq, setOpenFaq] = useState(null);
+
+  /** 폼 필드 업데이트 핸들러 */
+  function handleFormChange(e) {
+    const { name, value, type, checked } = e.target;
+    setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+  }
+
+  /** 상담 신청 제출 */
+  async function handleFormSubmit(e) {
+    e.preventDefault();
+    setSubmitResult(null);
+
+    if (!form.agreed) {
+      setSubmitResult({ type: "error", msg: "개인정보 수집 및 이용에 동의해주세요." });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await api.post("/consultations", {
+        name: form.name,
+        phone: form.phone,
+        email: form.email || undefined,
+        category: form.category,
+        message: form.message,
+      });
+      setSubmitResult({ type: "success", msg: "상담 신청이 접수되었습니다. 빠른 시일 내에 연락드리겠습니다." });
+      setForm(INITIAL_FORM);
+    } catch (err) {
+      setSubmitResult({ type: "error", msg: err.message || "신청 중 오류가 발생했습니다." });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  /** FAQ 아코디언 토글 */
+  function handleFaqToggle(index) {
+    setOpenFaq((prev) => (prev === index ? null : index));
+  }
 
   return (
     <div ref={ref}>
@@ -193,6 +273,201 @@ export default function ConsultationPage() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== 상담 신청 폼 ==================== */}
+      <section className="section" style={{ background: "#f9f9f8", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+        <div className="container" style={{ maxWidth: 720 }}>
+          <div className="text-center reveal" style={{ marginBottom: 48 }}>
+            <p className="font-en" style={{ fontSize: 11, letterSpacing: "0.25em", color: "var(--accent-gold)", marginBottom: 14 }}>
+              CONTACT FORM
+            </p>
+            <h2 className="font-serif" style={{ fontSize: "clamp(1.3rem, 2.5vw, 1.8rem)", fontWeight: 300, color: "#1a1a1a", marginBottom: 12 }}>
+              온라인 상담 신청
+            </h2>
+            <p style={{ fontSize: 14, color: "#888", fontWeight: 300 }}>
+              아래 양식을 작성해 주시면 빠른 시일 내에 연락드리겠습니다
+            </p>
+          </div>
+
+          <form onSubmit={handleFormSubmit} className="reveal" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            {/* 이름 + 연락처 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label style={{ fontSize: 13, color: "#555", marginBottom: 6, display: "block" }}>
+                  이름 <span style={{ color: "var(--accent-gold)" }}>*</span>
+                </label>
+                <Input
+                  name="name"
+                  value={form.name}
+                  onChange={handleFormChange}
+                  placeholder="홍길동"
+                  required
+                  style={{ background: "#fff" }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 13, color: "#555", marginBottom: 6, display: "block" }}>
+                  연락처 <span style={{ color: "var(--accent-gold)" }}>*</span>
+                </label>
+                <Input
+                  name="phone"
+                  value={form.phone}
+                  onChange={handleFormChange}
+                  placeholder="010-1234-5678"
+                  required
+                  style={{ background: "#fff" }}
+                />
+              </div>
+            </div>
+
+            {/* 이메일 + 상담 분야 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label style={{ fontSize: 13, color: "#555", marginBottom: 6, display: "block" }}>이메일</label>
+                <Input
+                  name="email"
+                  type="email"
+                  value={form.email}
+                  onChange={handleFormChange}
+                  placeholder="example@email.com"
+                  style={{ background: "#fff" }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: 13, color: "#555", marginBottom: 6, display: "block" }}>
+                  상담 분야 <span style={{ color: "var(--accent-gold)" }}>*</span>
+                </label>
+                <Select
+                  name="category"
+                  value={form.category}
+                  onChange={handleFormChange}
+                  style={{ background: "#fff" }}
+                >
+                  {CONSULTATION_CATEGORIES.map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </Select>
+              </div>
+            </div>
+
+            {/* 상담 내용 */}
+            <div>
+              <label style={{ fontSize: 13, color: "#555", marginBottom: 6, display: "block" }}>
+                상담 내용 <span style={{ color: "var(--accent-gold)" }}>*</span>
+              </label>
+              <Textarea
+                name="message"
+                value={form.message}
+                onChange={handleFormChange}
+                placeholder="상담받고자 하는 내용을 간략히 작성해 주세요 (10자 이상)"
+                rows={5}
+                required
+                style={{ background: "#fff" }}
+              />
+            </div>
+
+            {/* 개인정보 동의 */}
+            <label className="flex items-start gap-3" style={{ cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                name="agreed"
+                checked={form.agreed}
+                onChange={handleFormChange}
+                style={{ marginTop: 3, accentColor: "var(--accent-gold)" }}
+              />
+              <span style={{ fontSize: 13, color: "#666", lineHeight: 1.6 }}>
+                상담 신청을 위해 이름, 연락처, 이메일 등 개인정보를 수집·이용하는 것에 동의합니다.
+                수집된 정보는 상담 목적으로만 사용되며, 상담 완료 후 관련 법령에 따라 안전하게 관리됩니다.
+              </span>
+            </label>
+
+            {/* 결과 메시지 */}
+            {submitResult && (
+              <div
+                style={{
+                  padding: "14px 20px",
+                  fontSize: 14,
+                  borderRadius: 6,
+                  background: submitResult.type === "success" ? "#f0fdf4" : "#fef2f2",
+                  color: submitResult.type === "success" ? "#166534" : "#991b1b",
+                  border: `1px solid ${submitResult.type === "success" ? "#bbf7d0" : "#fecaca"}`,
+                }}
+              >
+                {submitResult.msg}
+              </div>
+            )}
+
+            {/* 제출 버튼 */}
+            <div className="text-center" style={{ marginTop: 8 }}>
+              <Button
+                type="submit"
+                size="lg"
+                disabled={submitting}
+                style={{ minWidth: 200, letterSpacing: "0.05em" }}
+              >
+                {submitting ? "접수 중..." : "상담 신청하기"}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      {/* ==================== FAQ 섹션 ==================== */}
+      <section className="section" style={{ background: "#fff", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+        <div className="container" style={{ maxWidth: 720 }}>
+          <div className="text-center reveal" style={{ marginBottom: 48 }}>
+            <p className="font-en" style={{ fontSize: 11, letterSpacing: "0.25em", color: "var(--accent-gold)", marginBottom: 14 }}>
+              FAQ
+            </p>
+            <h2 className="font-serif" style={{ fontSize: "clamp(1.3rem, 2.5vw, 1.8rem)", fontWeight: 300, color: "#1a1a1a" }}>
+              자주 묻는 질문
+            </h2>
+          </div>
+
+          <div className="reveal" style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+            {FAQ_ITEMS.map((item, idx) => {
+              const isOpen = openFaq === idx;
+              return (
+                <div key={idx} style={{ borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+                  <button
+                    type="button"
+                    onClick={() => handleFaqToggle(idx)}
+                    className="w-full text-left flex items-center justify-between transition-colors duration-200 hover:bg-[#fafaf9]"
+                    style={{ padding: "20px 4px", cursor: "pointer", background: "transparent", border: "none" }}
+                  >
+                    <span style={{ fontSize: 15, color: "#1a1a1a", fontWeight: 400, flex: 1, paddingRight: 16 }}>
+                      {item.q}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 18,
+                        color: "var(--accent-gold)",
+                        transition: "transform 0.3s ease",
+                        transform: isOpen ? "rotate(45deg)" : "rotate(0deg)",
+                        flexShrink: 0,
+                      }}
+                    >
+                      +
+                    </span>
+                  </button>
+                  <div
+                    style={{
+                      maxHeight: isOpen ? 200 : 0,
+                      overflow: "hidden",
+                      transition: "max-height 0.3s ease, opacity 0.3s ease",
+                      opacity: isOpen ? 1 : 0,
+                    }}
+                  >
+                    <p style={{ padding: "0 4px 20px", fontSize: 14, color: "#666", lineHeight: 1.8, fontWeight: 300 }}>
+                      {item.a}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

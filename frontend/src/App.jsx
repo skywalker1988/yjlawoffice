@@ -45,6 +45,9 @@ import EditorPage from "./pages/editor/EditorPage";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminHeroVideos from "./pages/admin/AdminHeroVideos";
 import AdminLawyers from "./pages/admin/AdminLawyers";
+import BlogPage from "./pages/BlogPage";
+import BlogDetailPage from "./pages/BlogDetailPage";
+import CasesPage from "./pages/CasesPage";
 
 function AdminArea() {
   const [auth, setAuth] = useState(!!sessionStorage.getItem("admin_token"));
@@ -83,6 +86,9 @@ export default function App() {
           <Route path="/practice" element={<ErrorBoundary><PracticePage /></ErrorBoundary>} />
           <Route path="/lawyers" element={<ErrorBoundary><LawyersPage /></ErrorBoundary>} />
           <Route path="/consultation" element={<ErrorBoundary><ConsultationPage /></ErrorBoundary>} />
+          <Route path="/blog" element={<ErrorBoundary><BlogPage /></ErrorBoundary>} />
+          <Route path="/blog/:slug" element={<ErrorBoundary><BlogDetailPage /></ErrorBoundary>} />
+          <Route path="/cases" element={<ErrorBoundary><CasesPage /></ErrorBoundary>} />
         </Route>
 
         <Route path="/editor" element={<ErrorBoundary><EditorPage /></ErrorBoundary>} />

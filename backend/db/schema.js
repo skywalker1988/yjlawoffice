@@ -258,6 +258,45 @@ const consultations = sqliteTable("consultations", {
   updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
 });
 
+// =============================================
+// blog_posts — 블로그/법률 칼럼
+// =============================================
+const BLOG_CATEGORIES = ["legal_column", "case_analysis", "legal_news", "law_guide"];
+
+const blogPosts = sqliteTable("blog_posts", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  category: text("category").notNull().default("legal_column"),
+  excerpt: text("excerpt"),
+  content: text("content").notNull(),
+  author: text("author"),
+  thumbnailUrl: text("thumbnail_url"),
+  isPublished: integer("is_published").notNull().default(0),
+  viewCount: integer("view_count").notNull().default(0),
+  publishedAt: text("published_at"),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+});
+
+// =============================================
+// case_results — 성공 사례
+// =============================================
+const CASE_CATEGORIES = ["civil", "criminal", "family", "administrative", "tax", "real_estate", "corporate"];
+
+const caseResults = sqliteTable("case_results", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  title: text("title").notNull(),
+  category: text("category").notNull().default("civil"),
+  result: text("result").notNull(),
+  summary: text("summary").notNull(),
+  detail: text("detail"),
+  isPublished: integer("is_published").notNull().default(0),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+});
+
 module.exports = {
   DOCUMENT_TYPES,
   DOCUMENT_STATUSES,
@@ -281,4 +320,8 @@ module.exports = {
   CONSULTATION_CATEGORIES,
   CONSULTATION_STATUSES,
   consultations,
+  BLOG_CATEGORIES,
+  blogPosts,
+  CASE_CATEGORIES,
+  caseResults,
 };
