@@ -172,9 +172,59 @@ function initTables() {
     CREATE INDEX IF NOT EXISTS idx_documents_document_type ON documents(document_type);
     CREATE INDEX IF NOT EXISTS idx_documents_created_at ON documents(created_at);
     CREATE INDEX IF NOT EXISTS idx_documents_importance ON documents(importance);
+    CREATE TABLE IF NOT EXISTS consultations (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      phone TEXT NOT NULL,
+      email TEXT,
+      category TEXT NOT NULL DEFAULT 'general',
+      message TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      admin_note TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE INDEX IF NOT EXISTS idx_history_events_year ON history_events(year);
     CREATE INDEX IF NOT EXISTS idx_history_events_category ON history_events(category);
     CREATE INDEX IF NOT EXISTS idx_history_events_region ON history_events(region);
+    CREATE INDEX IF NOT EXISTS idx_consultations_status ON consultations(status);
+    CREATE INDEX IF NOT EXISTS idx_consultations_created_at ON consultations(created_at);
+
+    CREATE TABLE IF NOT EXISTS blog_posts (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      slug TEXT NOT NULL UNIQUE,
+      category TEXT NOT NULL DEFAULT 'legal_column',
+      excerpt TEXT,
+      content TEXT NOT NULL,
+      author TEXT,
+      thumbnail_url TEXT,
+      is_published INTEGER NOT NULL DEFAULT 0,
+      view_count INTEGER NOT NULL DEFAULT 0,
+      published_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS case_results (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      category TEXT NOT NULL DEFAULT 'civil',
+      result TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      detail TEXT,
+      is_published INTEGER NOT NULL DEFAULT 0,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_blog_posts_slug ON blog_posts(slug);
+    CREATE INDEX IF NOT EXISTS idx_blog_posts_category ON blog_posts(category);
+    CREATE INDEX IF NOT EXISTS idx_blog_posts_is_published ON blog_posts(is_published);
+    CREATE INDEX IF NOT EXISTS idx_case_results_category ON case_results(category);
+    CREATE INDEX IF NOT EXISTS idx_case_results_is_published ON case_results(is_published);
   `);
 }
 

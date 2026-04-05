@@ -228,6 +228,36 @@ const lawyers = sqliteTable("lawyers", {
   updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
 });
 
+// =============================================
+// consultations — 상담 신청
+// =============================================
+const CONSULTATION_CATEGORIES = [
+  "general",    // 일반 상담
+  "civil",      // 민사
+  "criminal",   // 형사
+  "family",     // 가사
+  "admin",      // 행정
+  "tax",        // 조세
+  "realestate", // 부동산
+  "corporate",  // 기업법무
+  "other",      // 기타
+];
+
+const CONSULTATION_STATUSES = ["pending", "confirmed", "completed", "cancelled"];
+
+const consultations = sqliteTable("consultations", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  phone: text("phone").notNull(),
+  email: text("email"),
+  category: text("category").notNull().default("general"),
+  message: text("message").notNull(),
+  status: text("status").notNull().default("pending"),
+  adminNote: text("admin_note"),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+});
+
 module.exports = {
   DOCUMENT_TYPES,
   DOCUMENT_STATUSES,
@@ -248,4 +278,7 @@ module.exports = {
   heroVideos,
   LAWYER_POSITIONS,
   lawyers,
+  CONSULTATION_CATEGORIES,
+  CONSULTATION_STATUSES,
+  consultations,
 };
