@@ -90,6 +90,21 @@ app.use("/api/sb/portal", require("./routes/sb-portal"));
 app.use("/api/sb/sitemap", require("./routes/sb-sitemap"));
 app.use("/sitemap.xml", (req, res) => res.redirect("/api/sb/sitemap"));
 
+// 프론트엔드 정적 파일 서빙 (프로덕션)
+const frontendDist = path.resolve(__dirname, "..", "frontend", "dist").replace(/\\/g, "/");
+const fs = require("fs");
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  // SPA 폴백 — API가 아닌 모든 GET 요청에 index.html 반환 (Express 5 호환)
+  app.use((req, res, next) => {
+    if (req.method !== "GET" || req.path.startsWith("/api/") || req.path.startsWith("/uploads/") || req.path.startsWith("/data/")) return next();
+    // 정적 파일 요청이면 스킵 (확장자가 있는 경우)
+    if (path.extname(req.path)) return next();
+    res.sendFile(path.join(frontendDist, "index.html"));
+  });
+  console.log("[Static] 프론트엔드 정적 파일 서빙:", frontendDist);
+}
+
 // 글로벌 에러 핸들러
 app.use((err, req, res, next) => {
   console.error("[Error]", err.message || err);
