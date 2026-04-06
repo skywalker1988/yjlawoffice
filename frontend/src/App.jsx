@@ -39,15 +39,29 @@ import ConsultationPage from "./pages/ConsultationPage";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminDocuments from "./pages/admin/AdminDocuments";
-import AdminTags from "./pages/admin/AdminTags";
-import AdminHistory from "./pages/admin/AdminHistory";
+
 import EditorPage from "./pages/editor/EditorPage";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminHeroVideos from "./pages/admin/AdminHeroVideos";
 import AdminLawyers from "./pages/admin/AdminLawyers";
+import AdminClients from "./pages/admin/AdminClients";
+import AdminMessages from "./pages/admin/AdminMessages";
+import AdminSiteManager from "./pages/admin/AdminSiteManager";
+import AdminMedia from "./pages/admin/AdminMedia";
+import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminSettings from "./pages/admin/AdminSettings";
+import AdminReviews from "./pages/admin/AdminReviews";
+import AdminBookings from "./pages/admin/AdminBookings";
+import AdminCases from "./pages/admin/AdminCases";
 import BlogPage from "./pages/BlogPage";
 import BlogDetailPage from "./pages/BlogDetailPage";
 import CasesPage from "./pages/CasesPage";
+import ReviewsPage from "./pages/ReviewsPage";
+import PortalLayout from "./pages/portal/PortalLayout";
+import PortalLogin from "./pages/portal/PortalLogin";
+import PortalRegister from "./pages/portal/PortalRegister";
+import PortalDashboard from "./pages/portal/PortalDashboard";
+import PortalCaseDetail from "./pages/portal/PortalCaseDetail";
 
 function AdminArea() {
   const [auth, setAuth] = useState(!!sessionStorage.getItem("admin_token"));
@@ -65,10 +79,18 @@ function AdminArea() {
       <Routes>
         <Route index element={<AdminDashboard />} />
         <Route path="documents" element={<AdminDocuments />} />
-        <Route path="tags" element={<AdminTags />} />
-        <Route path="history" element={<AdminHistory />} />
+
         <Route path="hero-videos" element={<AdminHeroVideos />} />
         <Route path="lawyers" element={<AdminLawyers />} />
+        <Route path="clients" element={<AdminClients />} />
+        <Route path="messages" element={<AdminMessages />} />
+        <Route path="site-manager" element={<AdminSiteManager />} />
+        <Route path="media" element={<AdminMedia />} />
+        <Route path="analytics" element={<AdminAnalytics />} />
+        <Route path="settings" element={<AdminSettings />} />
+        <Route path="reviews" element={<AdminReviews />} />
+        <Route path="bookings" element={<AdminBookings />} />
+        <Route path="cases" element={<AdminCases />} />
         <Route path="editor" element={<EditorPage />} />
         <Route path="editor/:id" element={<EditorPage />} />
       </Routes>
@@ -89,6 +111,14 @@ export default function App() {
           <Route path="/blog" element={<ErrorBoundary><BlogPage /></ErrorBoundary>} />
           <Route path="/blog/:slug" element={<ErrorBoundary><BlogDetailPage /></ErrorBoundary>} />
           <Route path="/cases" element={<ErrorBoundary><CasesPage /></ErrorBoundary>} />
+          <Route path="/reviews" element={<ErrorBoundary><ReviewsPage /></ErrorBoundary>} />
+        </Route>
+
+        <Route path="/portal" element={<PortalLayout />}>
+          <Route path="login" element={<PortalLogin />} />
+          <Route path="register" element={<PortalRegister />} />
+          <Route path="dashboard" element={<PortalDashboard />} />
+          <Route path="cases/:id" element={<PortalCaseDetail />} />
         </Route>
 
         <Route path="/editor" element={<ErrorBoundary><EditorPage /></ErrorBoundary>} />

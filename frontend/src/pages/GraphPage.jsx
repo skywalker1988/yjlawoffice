@@ -8,8 +8,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { getTypeLabel, getTypeColor, TYPE_CONFIG, ALL_DOCUMENT_TYPES } from "../utils/document-types";
-import { CATEGORY_LABELS_KR } from "../utils/constants";
-import CURATED_INSIGHTS from "../utils/history-insights";
+
 import { api } from "../utils/api";
 
 /** 그래프 물리 시뮬레이션 파라미터 */
@@ -44,6 +43,13 @@ function parseMeta(doc) {
     return {};
   }
 }
+
+/** 카테고리 코드 → 한국어 라벨 매핑 */
+const CATEGORY_LABELS_KR = {
+  politics: "정치", war: "전쟁", culture: "문화", science: "과학",
+  economy: "경제", religion: "종교", philosophy: "철학", art: "예술",
+  law: "법률", society: "사회", diplomacy: "외교", technology: "기술",
+};
 
 function getEra(year) {
   if (year < -500) return "기원전";
@@ -126,18 +132,15 @@ export default function GraphPage() {
     // Parse metadata for all docs
     const metas = filtered.map(d => parseMeta(d));
 
-    // Build meaningful edges — hybrid: metadata + tags + keywords
-    const EXCLUDED_TAGS = new Set(["세계사", "World History"]);
+    // Build meaningful edges — hybrid: metadata + keywords
     const edges = [];
     for (let i = 0; i < filtered.length; i++) {
       const mi = metas[i];
-      const tagsI = (filtered[i].tags || []).map(t => typeof t === "string" ? t : t.name).filter(t => !EXCLUDED_TAGS.has(t));
       const titleI = filtered[i].title.toLowerCase();
       const typeI = filtered[i].documentType;
 
       for (let j = i + 1; j < filtered.length; j++) {
         const mj = metas[j];
-        const tagsJ = (filtered[j].tags || []).map(t => typeof t === "string" ? t : t.name).filter(t => !EXCLUDED_TAGS.has(t));
         const titleJ = filtered[j].title.toLowerCase();
         const typeJ = filtered[j].documentType;
 
@@ -161,20 +164,12 @@ export default function GraphPage() {
 
           if (mi.category && mi.category === mj.category && yearDiff < GRAPH_CONFIG.SAME_CATEGORY_YEAR_THRESHOLD && mi.region === mj.region) {
             weight += 2;
-            reasons.push(`같은 분류 (${CATEGORY_LABELS_KR[mi.category] || mi.category}), ${mi.region}에서 ${yearDiff}년 차이`);
+            reasons.push(`같은 분류 (${mi.category}), ${mi.region}에서 ${yearDiff}년 차이`);
           }
         }
 
-        // --- B. Tag-based connection (works for all document types) ---
-        const sharedTags = tagsI.filter(t => tagsJ.includes(t));
-        if (sharedTags.length >= 2) {
-          weight += sharedTags.length;
-          reasons.push(`공통 태그: ${sharedTags.join(", ")}`);
-        }
-
-        // --- C. News ↔ History: keyword match in title ---
+        // --- B. News ↔ History: keyword match in title ---
         if ((typeI === "news" || typeJ === "news") && (typeI !== typeJ || typeI === "news")) {
-          // Check if news title contains country/region/keyword from history event
           const newsTitle = typeI === "news" ? titleI : titleJ;
           const otherMeta = typeI === "news" ? mj : mi;
           const otherTitle = typeI === "news" ? titleJ : titleI;
@@ -184,7 +179,6 @@ export default function GraphPage() {
             reasons.push(`뉴스에서 "${otherMeta.country}" 언급 — 역사적 맥락 연결`);
           }
 
-          // Keyword overlap in titles
           const wordsA = new Set(newsTitle.replace(/[[\]세계사]/g, "").split(/\s+/).filter(w => w.length >= 2));
           const wordsB = new Set(otherTitle.replace(/[[\]세계사]/g, "").split(/\s+/).filter(w => w.length >= 2));
           const commonWords = [...wordsA].filter(w => wordsB.has(w));
@@ -194,8 +188,8 @@ export default function GraphPage() {
           }
         }
 
-        // --- D. Same document type (non-note) ---
-        if (typeI === typeJ && typeI !== "note" && sharedTags.length >= 1) {
+        // --- C. Same document type (non-note) ---
+        if (typeI === typeJ && typeI !== "note") {
           weight += 1;
           reasons.push(`같은 문서 유형 (${getTypeLabel(typeI)})`);
         }
@@ -516,60 +510,10 @@ export default function GraphPage() {
     const sameCountry = selConns.filter(c => c.country && c.country === selNode.country);
     const crossRegion = selConns.filter(c => c.region && c.region !== selNode.region);
     const cats = [...new Set(selConns.map(c => c.category).filter(Boolean))];
-    const catKrs = cats.map(c => CATEGORY_LABELS_KR[c] || c);
+    const catKrs = cats;
 
-    // ===== 1. Curated insights (from history-insights.js) =====
-    const curated = CURATED_INSIGHTS[selNode.title];
-    if (curated) {
-      // International significance
-      if (curated.international) {
-        insights.push({ title: "국제적 의의", icon: "🌐", text: curated.international });
-      }
-
-      // Multi-perspective analysis
-      if (curated.perspectives) {
-        for (const p of curated.perspectives) {
-          insights.push({ title: p.viewpoint, icon: p.viewpoint.includes("법") ? "⚖️" : p.viewpoint.includes("경제") ? "📊" : p.viewpoint.includes("철학") ? "💭" : p.viewpoint.includes("사회") ? "👥" : "📌", text: p.text });
-        }
-      }
-
-      // Parallel events in other countries
-      if (curated.parallels) {
-        for (const p of curated.parallels) {
-          // Check if this parallel event exists in our connected nodes
-          const found = selConns.find(c => c.title === p.event);
-          insights.push({
-            title: `비교 사례: ${p.country}`,
-            icon: "🔄",
-            text: p.text + (found ? ` (연결 강도: ${found.pct}%)` : ""),
-          });
-        }
-      }
-    }
-
-    // ===== 2. News ↔ History connection insights =====
-    const selDocObj = docs.find(d => d.id === selectedNodeId);
-    const selType = selDocObj?.documentType;
-    const historyConns = selConns.filter(c => c.type === "note");
-    const newsConns = selConns.filter(c => c.type === "news");
-
-    if (selType === "news" && historyConns.length > 0) {
-      const examples = historyConns.slice(0, 3).map(c => `"${c.title}"(${c.year < 0 ? "BC" + Math.abs(c.year) : c.year || ""})`).join(", ");
-      insights.push({
-        title: "현재 뉴스의 역사적 맥락", icon: "📰",
-        text: `이 뉴스 기사는 ${historyConns.length}개의 역사적 사건과 연결됩니다: ${examples}. 현재 사건을 역사적 맥락에서 이해하면 그 원인과 향후 전개 방향에 대한 더 깊은 통찰을 얻을 수 있습니다.`
-      });
-    }
-
-    if (selType === "note" && newsConns.length > 0) {
-      insights.push({
-        title: "현대적 반향", icon: "📰",
-        text: `이 역사적 사건과 관련된 ${newsConns.length}개의 최근 뉴스가 있습니다. 과거의 사건이 현재에도 여전히 영향을 미치고 있음을 보여줍니다.`
-      });
-    }
-
-    // ===== 3. Auto-generated insights (for events without curated data) =====
-    if (!curated || insights.length < 3) {
+    // ===== Auto-generated insights =====
+    {
       // Causal chain
       const strongest = selConns[0];
       if (strongest && strongest.w >= 5 && strongest.country === selNode.country) {

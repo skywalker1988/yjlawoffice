@@ -33,7 +33,6 @@ export const EMPTY_DOC = {
   summary: "",
   status: "draft",
   importance: 3,
-  tagIds: [],
 };
 
 /* ── 글꼴 목록 (한글 → 영문 순, 총 25종 이상) ── */

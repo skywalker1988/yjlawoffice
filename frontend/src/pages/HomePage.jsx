@@ -1,14 +1,15 @@
 /** HomePage — 윤정 법률사무소 메인 랜딩 페이지 */
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { Users, Clock, ShieldCheck } from "lucide-react";
 import useReveal from "../hooks/useReveal";
+import { useSiteSettingsPage } from "../hooks/useSiteSettings";
 import { api } from "../utils/api";
 
 const STATS = [
-  { value: "15+", label: "년 이상 실무 경험", icon: "⚖️" },
-  { value: "1:1", label: "사건 맞춤 커뮤니케이션", icon: "🤝" },
-  { value: "24H", label: "신속한 초기 응답", icon: "⏱️" },
-  { value: "100%", label: "기밀 보장 원칙", icon: "🔒" },
+  { value: "1:1", label: "사건 맞춤 커뮤니케이션", icon: Users },
+  { value: "24H", label: "신속한 초기 응답", icon: Clock },
+  { value: "100%", label: "기밀 보장 원칙", icon: ShieldCheck },
 ];
 
 const HIGHLIGHTS = [
@@ -17,9 +18,18 @@ const HIGHLIGHTS = [
   { title: "풍부한 사건 수행 경험", desc: "민사·형사·가사·행정·조세 등 다양한 분야에서 실무 경험을 축적했습니다." },
 ];
 
+const HOME_DEFAULTS = {
+  hero: { heading: "윤정 법률사무소", subheading: "YOUNJEONG LAW OFFICE", tagline: "의뢰인의 사건을 비즈니스처럼 정교하게 관리합니다.\n첫 상담부터 판결 이후까지, 리스크를 줄이고 최선의 결론을 만들기 위해 함께합니다.", ctaPrimary: "상담 신청", ctaPrimaryLink: "/consultation", ctaSecondary: "업무분야 보기", ctaSecondaryLink: "/practice" },
+  stats: { items: [{ value: "1:1", label: "사건 맞춤 커뮤니케이션" }, { value: "24H", label: "신속한 초기 응답" }, { value: "100%", label: "기밀 보장 원칙" }] },
+  approach: { heading: "명확한 전략, 빠른 실행, 책임 있는 결과", description: "윤정 법률사무소는 사건을 단순 처리하지 않습니다. 분쟁의 원인과 증거, 상대의 전략을 정밀 분석하여 의뢰인에게 가장 실익이 큰 선택지를 제시합니다." },
+  highlights: { items: [{ title: "맞춤형 전략 수립", desc: "사건의 쟁점을 빠르게 분석해 의뢰인에게 최적화된 대응 전략을 제시합니다." }, { title: "신뢰 중심 커뮤니케이션", desc: "진행 상황을 투명하게 공유하고 의사결정의 모든 과정에 의뢰인을 참여시킵니다." }, { title: "풍부한 사건 수행 경험", desc: "민사·형사·가사·행정·조세 등 다양한 분야에서 실무 경험을 축적했습니다." }] },
+  cta: { message: "법률 문제로 고민이 있으신가요?", buttonText: "상담 예약하기 →", buttonLink: "/consultation" },
+};
+
 export default function HomePage() {
   const [heroVideo, setHeroVideo] = useState("/videos/manhattan-panoramic.mp4");
   const ref = useReveal();
+  const { settings } = useSiteSettingsPage("home", HOME_DEFAULTS);
 
   useEffect(() => {
     const cached = localStorage.getItem("activeHeroVideo");
@@ -64,32 +74,34 @@ export default function HomePage() {
             className="font-serif reveal"
             style={{ fontSize: "clamp(2.5rem, 6vw, 4.5rem)", fontWeight: 300, letterSpacing: "0.2em", color: "#fff", marginBottom: 14, lineHeight: 1.2 }}
           >
-            윤정 법률사무소
+            {settings.hero.heading}
           </h1>
           <p className="font-en reveal" style={{ fontSize: "0.85rem", letterSpacing: "0.3em", color: "rgba(255,255,255,0.4)", marginBottom: 44, fontWeight: 400 }}>
-            YOUNJEONG LAW OFFICE
+            {settings.hero.subheading}
           </p>
           <p className="font-serif-kr reveal" style={{ fontSize: "1.1rem", color: "rgba(255,255,255,0.6)", lineHeight: 1.9, marginBottom: 52, fontWeight: 300 }}>
-            진실된 마음으로 의뢰인의 목소리에 귀를 기울이며,{"\n"}최선의 법률적 해법을 제시합니다
+            {settings.hero.tagline.split("\n").map((line, i) => (
+              <span key={i}>{i > 0 && "\n"}{line}</span>
+            ))}
           </p>
 
           <div className="flex gap-4 justify-center flex-wrap reveal">
             <Link
-              to="/consultation"
+              to={settings.hero.ctaPrimaryLink}
               className="view-more"
               style={{ color: "#fff", borderColor: "rgba(255,255,255,0.3)", padding: "14px 36px", fontSize: 14, letterSpacing: "0.1em" }}
             >
-              상담 신청
+              {settings.hero.ctaPrimary}
               <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </Link>
             <Link
-              to="/practice"
+              to={settings.hero.ctaSecondaryLink}
               className="view-more"
               style={{ color: "rgba(255,255,255,0.6)", borderColor: "rgba(255,255,255,0.15)", padding: "14px 36px", fontSize: 14, letterSpacing: "0.1em" }}
             >
-              업무분야 보기
+              {settings.hero.ctaSecondary}
             </Link>
           </div>
         </div>
@@ -111,30 +123,32 @@ export default function HomePage() {
       {/* ==================== 핵심 지표 ==================== */}
       <section className="section" style={{ background: "#fff" }}>
         <div className="container">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-5 stagger" style={{ marginBottom: 72 }}>
-            {STATS.map((s) => (
-              <div key={s.label} className="reveal text-center" style={{ padding: "28px 20px", background: "#f9f9f8", border: "1px solid rgba(0,0,0,0.06)" }}>
-                <p style={{ fontSize: 28, marginBottom: 8 }}>{s.icon}</p>
-                <p className="font-en" style={{ fontSize: "clamp(1.8rem, 3vw, 2.4rem)", fontWeight: 300, color: "var(--accent-gold)" }}>{s.value}</p>
-                <p style={{ fontSize: 13, color: "#999", marginTop: 4, fontWeight: 300 }}>{s.label}</p>
-              </div>
-            ))}
+          <div className="grid grid-cols-3 gap-5 stagger" style={{ marginBottom: 72 }}>
+            {settings.stats.items.map((s, i) => {
+              const Icon = STATS[i]?.icon;
+              return (
+                <div key={s.label} className="reveal text-center" style={{ padding: "28px 20px", background: "#f9f9f8", border: "1px solid rgba(0,0,0,0.06)" }}>
+                  {Icon && <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}><Icon size={26} strokeWidth={1.3} color="#b08d57" /></div>}
+                  <p className="font-en" style={{ fontSize: "clamp(1.8rem, 3vw, 2.4rem)", fontWeight: 300, color: "var(--accent-gold)" }}>{s.value}</p>
+                  <p style={{ fontSize: 13, color: "#999", marginTop: 4, fontWeight: 300 }}>{s.label}</p>
+                </div>
+              );
+            })}
           </div>
 
           {/* 윤정의 접근 방식 */}
           <div className="reveal text-center" style={{ marginBottom: 48 }}>
             <p className="font-en" style={{ fontSize: 11, letterSpacing: "0.25em", color: "var(--accent-gold)", marginBottom: 14 }}>OUR APPROACH</p>
             <h2 className="font-serif" style={{ fontSize: "clamp(1.5rem, 3vw, 2rem)", fontWeight: 300, color: "#1a1a1a", marginBottom: 16 }}>
-              명확한 전략, 빠른 실행, 책임 있는 결과
+              {settings.approach.heading}
             </h2>
             <p style={{ fontSize: 15, color: "#666", fontWeight: 300, maxWidth: 600, margin: "0 auto", lineHeight: 1.9 }}>
-              윤정 법률사무소는 사건을 단순 처리하지 않습니다. 분쟁의 원인과 증거, 상대의 전략을 정밀 분석하여
-              의뢰인에게 가장 실익이 큰 선택지를 제시합니다.
+              {settings.approach.description}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 stagger" style={{ marginBottom: 48 }}>
-            {HIGHLIGHTS.map((h, i) => (
+            {settings.highlights.items.map((h, i) => (
               <div key={i} className="reveal" style={{ padding: "32px 28px", border: "1px solid rgba(0,0,0,0.06)", background: "#fafaf9" }}>
                 <h3 style={{ fontSize: 17, fontWeight: 500, color: "#1a1a1a", marginBottom: 12 }}>{h.title}</h3>
                 <p style={{ fontSize: 14, color: "#666", lineHeight: 1.8, fontWeight: 300 }}>{h.desc}</p>
@@ -145,14 +159,14 @@ export default function HomePage() {
           {/* CTA */}
           <div className="reveal text-center" style={{ padding: "48px 0" }}>
             <p style={{ fontSize: 18, color: "#1a1a1a", fontWeight: 300, marginBottom: 24 }}>
-              법률 문제로 고민이 있으신가요?
+              {settings.cta.message}
             </p>
             <Link
-              to="/consultation"
+              to={settings.cta.buttonLink}
               className="inline-block font-en transition-all duration-300 hover:border-[var(--accent-gold)] hover:text-[var(--accent-gold)]"
               style={{ border: "1px solid rgba(0,0,0,0.15)", color: "#1a1a1a", padding: "14px 44px", fontSize: 14, letterSpacing: "0.15em", textDecoration: "none" }}
             >
-              상담 예약하기 →
+              {settings.cta.buttonText}
             </Link>
           </div>
         </div>

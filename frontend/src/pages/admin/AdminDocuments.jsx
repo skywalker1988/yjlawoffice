@@ -15,6 +15,7 @@ import { STATUS_OPTIONS } from "../../utils/constants";
 const GOV = {
   accent: "#4f46e5",
   accentLight: "#6366f1",
+  accentBg: "rgba(79,70,229,0.07)",
   accentDim: "rgba(79,70,229,0.07)",
   text: "#1e293b",
   textSec: "#475569",
@@ -30,7 +31,7 @@ const EMPTY_FORM = {
   title: "", documentType: "note", subtitle: "", author: "",
   source: "", publishedDate: "", contentMarkdown: "",
   summary: "", status: "inbox", importance: 3,
-  tagIds: [], categoryIds: [],
+  categoryIds: [],
 };
 
 /** 프리미엄 페이지 헤더 */
@@ -131,13 +132,11 @@ export default function AdminDocuments() {
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [saving, setSaving] = useState(false);
 
-  const [allTags, setAllTags] = useState([]);
   const [allCategories, setAllCategories] = useState([]);
   const [deleteId, setDeleteId] = useState(null);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    api.get("/tags").then((json) => setAllTags(Array.isArray(json.data) ? json.data : [])).catch(() => {});
     api.get("/categories").then((json) => setAllCategories(Array.isArray(json.data) ? json.data : [])).catch(() => {});
   }, []);
 
@@ -165,15 +164,6 @@ export default function AdminDocuments() {
 
   const updateForm = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
-  const toggleTag = (tagId) => {
-    setForm((prev) => ({
-      ...prev,
-      tagIds: prev.tagIds.includes(tagId)
-        ? prev.tagIds.filter((id) => id !== tagId)
-        : [...prev.tagIds, tagId],
-    }));
-  };
-
   const toggleCategory = (catId) => {
     setForm((prev) => ({
       ...prev,
@@ -198,7 +188,6 @@ export default function AdminDocuments() {
       summary: doc.summary || "",
       status: doc.status || "inbox",
       importance: doc.importance || 3,
-      tagIds: (doc.tags || []).map((t) => (typeof t === "object" ? t.id : t)).filter(Boolean),
       categoryIds: (doc.categories || []).map((c) => (typeof c === "object" ? c.id : c)).filter(Boolean),
     });
     setShowForm(true);
@@ -355,26 +344,6 @@ export default function AdminDocuments() {
               <Textarea value={form.contentMarkdown} onChange={(e) => updateForm("contentMarkdown", e.target.value)} placeholder="본문 내용 (Markdown 지원)" rows={8} style={{ borderRadius: 2 }} />
             </div>
 
-            {allTags.length > 0 && (
-              <div>
-                <FieldLabel>태그 지정</FieldLabel>
-                <div className="flex flex-wrap gap-2" style={{ marginTop: 4 }}>
-                  {allTags.map((tag) => (
-                    <label key={tag.id} className="flex items-center gap-1 cursor-pointer" style={{
-                      fontSize: 11, padding: "4px 10px", borderRadius: 2,
-                      border: `1px solid ${form.tagIds.includes(tag.id) ? (tag.color || GOV.accent) : GOV.border}`,
-                      background: form.tagIds.includes(tag.id) ? (tag.color || GOV.accent) : "transparent",
-                      color: form.tagIds.includes(tag.id) ? "#fff" : GOV.textSec,
-                      fontWeight: form.tagIds.includes(tag.id) ? 600 : 400,
-                    }}>
-                      <input type="checkbox" checked={form.tagIds.includes(tag.id)} onChange={() => toggleTag(tag.id)} style={{ display: "none" }} />
-                      {tag.name}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {allCategories.length > 0 && (
               <div>
                 <FieldLabel>카테고리 지정</FieldLabel>
@@ -406,7 +375,7 @@ export default function AdminDocuments() {
               </button>
               <button onClick={handleSave} disabled={saving || !form.title.trim()} style={{
                 padding: "8px 24px", fontSize: 12, fontWeight: 600,
-                background: GOV.accent, color: GOV.accent, border: "none",
+                background: GOV.accent, color: "#ffffff", border: "none",
                 borderRadius: 2, cursor: "pointer",
                 opacity: saving || !form.title.trim() ? 0.5 : 1,
               }}>

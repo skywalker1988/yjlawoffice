@@ -1,5 +1,6 @@
 /** 변호사 소개 페이지 — 변호사 카드 그리드 + 상세 모달 */
 import { useState, useEffect, useRef } from "react";
+import { Scale, MailIcon, PhoneIcon } from "lucide-react";
 import { api } from "../utils/api";
 
 /** JSON 문자열 → 배열 파싱 (education, career, specialties 필드) */
@@ -83,7 +84,7 @@ export default function LawyersPage() {
         <div className="container" style={{ maxWidth: 1040 }}>
           {lawyers.length === 0 ? (
             <div className="text-center reveal" style={{ padding: "80px 0", color: "#bbb" }}>
-              <p style={{ fontSize: 48, marginBottom: 16 }}>⚖️</p>
+              <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}><Scale size={40} strokeWidth={1} color="#ccc" /></div>
               <p style={{ fontSize: 16, fontWeight: 300 }}>변호사 정보가 준비 중입니다</p>
               <p style={{ fontSize: 13, marginTop: 8 }}>관리자 페이지에서 변호사를 등록해주세요</p>
             </div>
@@ -103,14 +104,17 @@ export default function LawyersPage() {
                 >
                   {/* 사진 */}
                   <div style={{
-                    width: "100%", height: 300,
-                    background: lawyer.photoUrl
-                      ? `url(${lawyer.photoUrl}) center/cover no-repeat`
-                      : "linear-gradient(135deg, #0f1923, #1a2332)",
-                    position: "relative",
+                    width: "100%", aspectRatio: "3/4",
+                    position: "relative", overflow: "hidden",
+                    background: "#e8e6e3",
                   }}>
-                    {!lawyer.photoUrl && (
-                      <div style={{ fontSize: 64, color: "rgba(255,255,255,0.15)", position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>⚖️</div>
+                    {lawyer.photoUrl ? (
+                      <img src={lawyer.photoUrl} alt={lawyer.name}
+                        style={{ width: "88%", height: "88%", objectFit: "cover", objectPosition: "center top", display: "block", margin: "auto", marginTop: "6%" }} />
+                    ) : (
+                      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}>
+                        <Scale size={48} strokeWidth={0.8} color="rgba(255,255,255,0.15)" />
+                      </div>
                     )}
                     <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 80, background: "linear-gradient(transparent, rgba(0,0,0,0.4))" }} />
                   </div>
@@ -169,13 +173,16 @@ export default function LawyersPage() {
             }}>×</button>
 
             <div style={{
-              width: "100%", height: 300,
-              background: selectedLawyer.photoUrl
-                ? `url(${selectedLawyer.photoUrl}) center top/cover no-repeat`
-                : "linear-gradient(135deg, #0f1923, #1a2332)",
+              width: "100%", aspectRatio: "4/3", overflow: "hidden", position: "relative",
+              background: "#e8e6e3",
               display: "flex", alignItems: "center", justifyContent: "center",
             }}>
-              {!selectedLawyer.photoUrl && <span style={{ fontSize: 80, color: "rgba(255,255,255,0.1)" }}>⚖️</span>}
+              {selectedLawyer.photoUrl ? (
+                <img src={selectedLawyer.photoUrl} alt={selectedLawyer.name}
+                  style={{ maxWidth: "85%", maxHeight: "90%", objectFit: "contain", display: "block" }} />
+              ) : (
+                <Scale size={64} strokeWidth={0.6} color="rgba(255,255,255,0.1)" />
+              )}
             </div>
 
             <div style={{ padding: "32px 36px 40px" }}>
@@ -229,8 +236,8 @@ export default function LawyersPage() {
               {(selectedLawyer.email || selectedLawyer.phone) && (
                 <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: 20, marginTop: 8 }}>
                   <div className="flex gap-6 flex-wrap">
-                    {selectedLawyer.email && <a href={`mailto:${selectedLawyer.email}`} style={{ fontSize: 13, color: "#888", textDecoration: "none" }}>📧 {selectedLawyer.email}</a>}
-                    {selectedLawyer.phone && <a href={`tel:${selectedLawyer.phone}`} style={{ fontSize: 13, color: "#888", textDecoration: "none" }}>📞 {selectedLawyer.phone}</a>}
+                    {selectedLawyer.email && <a href={`mailto:${selectedLawyer.email}`} className="flex items-center gap-2" style={{ fontSize: 13, color: "#888", textDecoration: "none" }}><MailIcon size={14} strokeWidth={1.3} /> {selectedLawyer.email}</a>}
+                    {selectedLawyer.phone && <a href={`tel:${selectedLawyer.phone}`} className="flex items-center gap-2" style={{ fontSize: 13, color: "#888", textDecoration: "none" }}><PhoneIcon size={14} strokeWidth={1.3} /> {selectedLawyer.phone}</a>}
                   </div>
                 </div>
               )}

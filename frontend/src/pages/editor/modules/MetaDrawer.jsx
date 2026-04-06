@@ -1,11 +1,11 @@
 /**
  * MetaDrawer — 문서 속성 편집 서랍 패널
  * - 에디터 우측에 슬라이드 오버레이로 표시
- * - 부제, 저자, 출처, 날짜, 유형, 상태, 중요도, 태그 편집
+ * - 부제, 저자, 출처, 날짜, 유형, 상태, 중요도 편집
  */
 import { DOC_TYPES } from "./constants";
 
-export function MetaDrawer({ doc, setDoc, tags, open, onClose }) {
+export function MetaDrawer({ doc, setDoc, open, onClose }) {
   if (!open) return null;
 
   const field = (label, key, type) => (
@@ -28,13 +28,6 @@ export function MetaDrawer({ doc, setDoc, tags, open, onClose }) {
       )}
     </div>
   );
-
-  const toggleTag = (id) => {
-    setDoc((d) => {
-      const ids = d.tagIds || [];
-      return { ...d, tagIds: ids.includes(id) ? ids.filter((t) => t !== id) : [...ids, id] };
-    });
-  };
 
   return (
     <div style={{
@@ -74,25 +67,6 @@ export function MetaDrawer({ doc, setDoc, tags, open, onClose }) {
           style={{ width: 60, padding: "6px 8px", border: "1px solid #ddd", borderRadius: 3, fontSize: 13 }}
         />
       </div>
-      {tags.length > 0 && (
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ display: "block", fontSize: 11, color: "#888", marginBottom: 4 }}>태그</label>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-            {tags.map((t) => {
-              const active = (doc.tagIds || []).includes(t.id);
-              return (
-                <button key={t.id} type="button" onClick={() => toggleTag(t.id)}
-                  style={{
-                    padding: "3px 8px", fontSize: 11, borderRadius: 3,
-                    border: "1px solid " + (active ? "#3b82f6" : "#ddd"),
-                    background: active ? "#3b82f6" : "#fff",
-                    color: active ? "#fff" : "#555", cursor: "pointer",
-                  }}>{t.name}</button>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

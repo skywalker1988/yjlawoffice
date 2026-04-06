@@ -346,16 +346,6 @@ function analyzeMarkdown(rawContent, filename = "") {
     }
   }
 
-  // Extract tags from frontmatter if present
-  let suggestedTags = [];
-  if (frontmatter.tags) {
-    suggestedTags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [frontmatter.tags];
-  } else if (frontmatter["태그"]) {
-    suggestedTags = Array.isArray(frontmatter["태그"]) ? frontmatter["태그"] : [frontmatter["태그"]];
-  }
-  // Add keyword-based tag suggestions
-  suggestedTags = [...new Set([...suggestedTags, ...keywords.slice(0, 5)])];
-
   // Extract categories from frontmatter
   let suggestedCategories = [];
   if (frontmatter.categories) {
@@ -383,7 +373,6 @@ function analyzeMarkdown(rawContent, filename = "") {
     contentMarkdown: rawContent,
     contentPlain: plainText,
     keywords,
-    suggestedTags,
     suggestedCategories,
     structure,
     extraMetadata,

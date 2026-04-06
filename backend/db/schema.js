@@ -48,26 +48,6 @@ const documents = sqliteTable("documents", {
 });
 
 // =============================================
-// tags — 자유 태그
-// =============================================
-const tags = sqliteTable("tags", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  name: text("name").notNull().unique(),
-  color: text("color").default("#6366f1"),
-  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
-});
-
-// =============================================
-// document_tags — 문서-태그 N:N
-// =============================================
-const documentTags = sqliteTable("document_tags", {
-  documentId: text("document_id").notNull().references(() => documents.id, { onDelete: "cascade" }),
-  tagId: text("tag_id").notNull().references(() => tags.id, { onDelete: "cascade" }),
-}, (table) => [
-  primaryKey({ columns: [table.documentId, table.tagId] }),
-]);
-
-// =============================================
 // categories — 계층형 카테고리
 // =============================================
 const categories = sqliteTable("categories", {
@@ -142,39 +122,6 @@ const highlights = sqliteTable("highlights", {
   createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
 });
 
-// =============================================
-// history_events — 세계사 이벤트
-// =============================================
-const HISTORY_CATEGORIES = [
-  "politics",    // 정치
-  "war",         // 전쟁
-  "economy",     // 경제
-  "culture",     // 문화
-  "science",     // 과학
-  "law",         // 법률
-  "society",     // 사회
-  "diplomacy",   // 외교
-];
-
-const historyEvents = sqliteTable("history_events", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  title: text("title").notNull(),
-  description: text("description"),
-  year: integer("year").notNull(),
-  month: integer("month"),
-  day: integer("day"),
-  endYear: integer("end_year"),
-  category: text("category").notNull().default("politics"),
-  region: text("region"),              // 동아시아, 유럽, 중동, 미주 등
-  country: text("country"),
-  importance: integer("importance").notNull().default(3), // 1-5
-  latitude: real("latitude"),
-  longitude: real("longitude"),
-  source: text("source"),
-  relatedDocumentId: text("related_document_id").references(() => documents.id, { onDelete: "set null" }),
-  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
-  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
-});
 
 // =============================================
 // hero_videos — 히어로 배경 영상 관리
@@ -297,23 +244,311 @@ const caseResults = sqliteTable("case_results", {
   updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
 });
 
+// =============================================
+// clients — 고객 DB (상담 신청 시 자동 등록)
+// =============================================
+const CLIENT_SOURCES = ["consultation", "referral", "manual", "other"];
+
+const clients = sqliteTable("clients", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  phone: text("phone").notNull(),
+  email: text("email"),
+  category: text("category"),
+  memo: text("memo"),
+  source: text("source").notNull().default("manual"),
+  consultationId: text("consultation_id"),
+  isActive: integer("is_active").notNull().default(1),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+});
+
+// =============================================
+// message_templates — 메시지 템플릿 (SMS/이메일)
+// =============================================
+const MESSAGE_CHANNELS = ["sms", "email"];
+
+const messageTemplates = sqliteTable("message_templates", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  channel: text("channel").notNull().default("sms"),
+  subject: text("subject"),
+  content: text("content").notNull(),
+  isActive: integer("is_active").notNull().default(1),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+});
+
+// =============================================
+// message_logs — 메시지 발송 이력
+// =============================================
+const MESSAGE_STATUSES = ["pending", "sent", "failed"];
+
+const messageLogs = sqliteTable("message_logs", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  channel: text("channel").notNull(),
+  recipientName: text("recipient_name"),
+  recipientContact: text("recipient_contact").notNull(),
+  consultationId: text("consultation_id"),
+  templateId: text("template_id"),
+  subject: text("subject"),
+  content: text("content").notNull(),
+  status: text("status").notNull().default("pending"),
+  errorMessage: text("error_message"),
+  sentAt: text("sent_at"),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+});
+
+// =============================================
+// site_settings — 홈페이지 콘텐츠 설정 (JSON)
+// =============================================
+const siteSettings = sqliteTable("site_settings", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  page: text("page").notNull(),
+  section: text("section").notNull(),
+  content: text("content").notNull(),
+  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+});
+
+// =============================================
+// site_settings_history — 설정 변경 이력
+// =============================================
+const siteSettingsHistory = sqliteTable("site_settings_history", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  page: text("page").notNull(),
+  section: text("section").notNull(),
+  content: text("content").notNull(),
+  previousContent: text("previous_content"),
+  changedBy: text("changed_by").default("admin"),
+  changedAt: text("changed_at").notNull().default(sql`(datetime('now'))`),
+});
+
+// =============================================
+// announcements — 공지/배너/팝업
+// =============================================
+const ANNOUNCEMENT_TYPES = ["banner", "popup", "notice"];
+const ANNOUNCEMENT_POSITIONS = ["top", "bottom", "center"];
+
+const announcements = sqliteTable("announcements", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  type: text("type").notNull().default("banner"),
+  title: text("title").notNull(),
+  content: text("content"),
+  linkUrl: text("link_url"),
+  bgColor: text("bg_color").default("#b08d57"),
+  textColor: text("text_color").default("#ffffff"),
+  isActive: integer("is_active").notNull().default(1),
+  startDate: text("start_date"),
+  endDate: text("end_date"),
+  position: text("position").default("top"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+});
+
+// =============================================
+// scheduled_changes — 예약 발행
+// =============================================
+const SCHEDULE_STATUSES = ["pending", "applied", "cancelled"];
+
+const scheduledChanges = sqliteTable("scheduled_changes", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  page: text("page").notNull(),
+  section: text("section").notNull(),
+  content: text("content").notNull(),
+  scheduledAt: text("scheduled_at").notNull(),
+  status: text("status").notNull().default("pending"),
+  createdBy: text("created_by").default("admin"),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+});
+
+// =============================================
+// media_files — 미디어 파일 관리
+// =============================================
+const mediaFiles = sqliteTable("media_files", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  filename: text("filename").notNull(),
+  originalName: text("original_name").notNull(),
+  mimeType: text("mime_type").notNull(),
+  size: integer("size").notNull(),
+  url: text("url").notNull(),
+  alt: text("alt"),
+  folder: text("folder").default("general"),
+  uploadedBy: text("uploaded_by").default("admin"),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+});
+
+// =============================================
+// admin_users — 관리자 계정
+// =============================================
+const ADMIN_ROLES = ["admin", "editor", "viewer"];
+
+const adminUsers = sqliteTable("admin_users", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  username: text("username").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  name: text("name").notNull(),
+  role: text("role").notNull().default("editor"),
+  email: text("email"),
+  isActive: integer("is_active").notNull().default(1),
+  totpSecret: text("totp_secret"),
+  lastLoginAt: text("last_login_at"),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+});
+
+// =============================================
+// page_views — 페이지 방문 로그
+// =============================================
+const pageViews = sqliteTable("page_views", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  page: text("page"),
+  path: text("path").notNull(),
+  referrer: text("referrer"),
+  userAgent: text("user_agent"),
+  ip: text("ip"),
+  sessionId: text("session_id"),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+});
+
+// =============================================
+// portal_users — 의뢰인 포털 계정
+// =============================================
+const portalUsers = sqliteTable("portal_users", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  clientId: text("client_id"),
+  email: text("email").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  isActive: integer("is_active").notNull().default(1),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+});
+
+// =============================================
+// case_files — 사건 관리
+// =============================================
+const CASE_STATUSES = ["접수", "진행", "완료"];
+
+const caseFilesTable = sqliteTable("case_files", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  clientId: text("client_id").notNull(),
+  title: text("title").notNull(),
+  status: text("status").notNull().default("접수"),
+  lawyerId: text("lawyer_id"),
+  description: text("description"),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+});
+
+const caseDocuments = sqliteTable("case_documents", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  caseFileId: text("case_file_id").notNull(),
+  filename: text("filename").notNull(),
+  url: text("url").notNull(),
+  uploadedBy: text("uploaded_by").default("admin"),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+});
+
+const caseMessages = sqliteTable("case_messages", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  caseFileId: text("case_file_id").notNull(),
+  senderId: text("sender_id"),
+  senderType: text("sender_type").notNull().default("lawyer"),
+  content: text("content").notNull(),
+  isRead: integer("is_read").notNull().default(0),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+});
+
+// =============================================
+// booking — 상담 예약 시스템
+// =============================================
+const bookingSlots = sqliteTable("booking_slots", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  lawyerId: text("lawyer_id"),
+  date: text("date").notNull(),
+  startTime: text("start_time").notNull(),
+  endTime: text("end_time").notNull(),
+  isAvailable: integer("is_available").notNull().default(1),
+  consultationId: text("consultation_id"),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+});
+
+const bookingSettings = sqliteTable("booking_settings", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  lawyerId: text("lawyer_id"),
+  dayOfWeek: integer("day_of_week").notNull(),
+  startTime: text("start_time").notNull().default("09:00"),
+  endTime: text("end_time").notNull().default("18:00"),
+  slotDuration: integer("slot_duration").notNull().default(60),
+  isActive: integer("is_active").notNull().default(1),
+});
+
+// =============================================
+// chatbot — 챗봇 Q&A
+// =============================================
+const chatbotQa = sqliteTable("chatbot_qa", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  category: text("category").default("일반"),
+  question: text("question").notNull(),
+  answer: text("answer").notNull(),
+  keywords: text("keywords"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isActive: integer("is_active").notNull().default(1),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+});
+
+const chatSessions = sqliteTable("chat_sessions", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  sessionId: text("session_id").notNull(),
+  messages: text("messages"),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+});
+
+// =============================================
+// reviews — 의뢰인 후기
+// =============================================
+const reviews = sqliteTable("reviews", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  clientName: text("client_name").notNull(),
+  rating: integer("rating").notNull().default(5),
+  content: text("content").notNull(),
+  category: text("category"),
+  isPublished: integer("is_published").notNull().default(0),
+  isAnonymous: integer("is_anonymous").notNull().default(0),
+  createdAt: text("created_at").notNull().default(sql`(datetime('now'))`),
+  updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
+});
+
+// =============================================
+// newsletter_subscribers — 뉴스레터 구독
+// =============================================
+const newsletterSubscribers = sqliteTable("newsletter_subscribers", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  email: text("email").notNull(),
+  name: text("name"),
+  isActive: integer("is_active").notNull().default(1),
+  unsubscribeToken: text("unsubscribe_token").$defaultFn(() => crypto.randomUUID()),
+  subscribedAt: text("subscribed_at").notNull().default(sql`(datetime('now'))`),
+  unsubscribedAt: text("unsubscribed_at"),
+});
+
 module.exports = {
   DOCUMENT_TYPES,
   DOCUMENT_STATUSES,
   FILE_TYPES,
   RELATION_TYPES,
-  HISTORY_CATEGORIES,
+
   HERO_VIDEO_CATEGORIES,
   documents,
-  tags,
-  documentTags,
   categories,
   documentCategories,
   collections,
   documentCollections,
   documentRelations,
   highlights,
-  historyEvents,
+
   heroVideos,
   LAWYER_POSITIONS,
   lawyers,
@@ -324,4 +559,32 @@ module.exports = {
   blogPosts,
   CASE_CATEGORIES,
   caseResults,
+  CLIENT_SOURCES,
+  clients,
+  MESSAGE_CHANNELS,
+  MESSAGE_STATUSES,
+  messageTemplates,
+  messageLogs,
+  siteSettings,
+  siteSettingsHistory,
+  ANNOUNCEMENT_TYPES,
+  ANNOUNCEMENT_POSITIONS,
+  announcements,
+  SCHEDULE_STATUSES,
+  scheduledChanges,
+  mediaFiles,
+  ADMIN_ROLES,
+  adminUsers,
+  pageViews,
+  portalUsers,
+  CASE_STATUSES,
+  caseFilesTable,
+  caseDocuments,
+  caseMessages,
+  bookingSlots,
+  bookingSettings,
+  chatbotQa,
+  chatSessions,
+  reviews,
+  newsletterSubscribers,
 };

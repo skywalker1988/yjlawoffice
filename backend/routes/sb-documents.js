@@ -10,8 +10,6 @@ const crypto = require("crypto");
 const { db, searchFTSWithSnippet } = require("../db");
 const {
   documents,
-  tags,
-  documentTags,
   documentCategories,
   categories,
   collections,
@@ -91,44 +89,8 @@ router.get("/", async (req, res) => {
       .limit(limit)
       .offset(offset);
 
-    // Fetch tags for each document
-    const docIds = rows.map((r) => r.id);
-    const tagsByDoc = {};
-
-    if (docIds.length > 0) {
-      const tagRows = await db
-        .select({
-          documentId: documentTags.documentId,
-          tagId: tags.id,
-          tagName: tags.name,
-          tagColor: tags.color,
-        })
-        .from(documentTags)
-        .innerJoin(tags, eq(documentTags.tagId, tags.id))
-        .where(
-          sql`${documentTags.documentId} IN (${sql.join(
-            docIds.map((id) => sql`${id}`),
-            sql`, `
-          )})`
-        );
-
-      for (const row of tagRows) {
-        if (!tagsByDoc[row.documentId]) tagsByDoc[row.documentId] = [];
-        tagsByDoc[row.documentId].push({
-          id: row.tagId,
-          name: row.tagName,
-          color: row.tagColor,
-        });
-      }
-    }
-
-    const data = rows.map((doc) => ({
-      ...doc,
-      tags: tagsByDoc[doc.id] ?? [],
-    }));
-
     res.json({
-      data,
+      data: rows,
       error: null,
       meta: { total: totalResult.total, page, limit, totalPages: Math.ceil(totalResult.total / limit) },
     });
@@ -160,7 +122,7 @@ router.post("/", async (req, res) => {
     const {
       title, documentType, subtitle, author, source, publishedDate,
       contentMarkdown, contentPlain, summary, status: docStatus,
-      importance, filePath, fileType, metadata, tagIds, categoryIds,
+      importance, filePath, fileType, metadata, categoryIds,
     } = req.body;
 
     if (!title || !documentType) {
@@ -200,12 +162,6 @@ router.post("/", async (req, res) => {
         metadata: typeof metadata === "object" ? JSON.stringify(metadata) : (metadata ?? null),
       })
       .returning();
-
-    if (tagIds && Array.isArray(tagIds) && tagIds.length > 0) {
-      await db.insert(documentTags).values(
-        tagIds.map((tagId) => ({ documentId: inserted.id, tagId }))
-      );
-    }
 
     if (categoryIds && Array.isArray(categoryIds) && categoryIds.length > 0) {
       await db.insert(documentCategories).values(
@@ -377,48 +333,6 @@ router.post("/upload-markdown", upload.single("file"), async (req, res) => {
       })
       .returning();
 
-    // Auto-create tags from suggestions
-    const createdTagIds = [];
-    if (analysis.suggestedTags && analysis.suggestedTags.length > 0) {
-      for (const tagName of analysis.suggestedTags.slice(0, 8)) {
-        try {
-          // 기존 태그 확인
-          const [existing] = await db
-            .select()
-            .from(tags)
-            .where(eq(tags.name, tagName));
-
-          if (existing) {
-            createdTagIds.push(existing.id);
-          } else {
-            // 새 태그 생성 (동시 요청 시 UNIQUE 제약 위반 가능)
-            const colors = ["#3b82f6", "#ef4444", "#f59e0b", "#10b981", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16"];
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            const [newTag] = await db
-              .insert(tags)
-              .values({ name: tagName, color })
-              .returning();
-            createdTagIds.push(newTag.id);
-          }
-        } catch (tagErr) {
-          console.warn(`[Tag Create] "${tagName}" 태그 생성 중 오류 발생, 기존 태그 재조회:`, tagErr.message);
-          // UNIQUE 제약 위반 시 기존 태그 재조회
-          const [existing] = await db
-            .select()
-            .from(tags)
-            .where(eq(tags.name, tagName));
-          if (existing) createdTagIds.push(existing.id);
-        }
-      }
-
-      // Link tags to document
-      if (createdTagIds.length > 0) {
-        await db.insert(documentTags).values(
-          createdTagIds.map((tagId) => ({ documentId: inserted.id, tagId }))
-        );
-      }
-    }
-
     // Auto-link categories from suggestions
     if (analysis.suggestedCategories && analysis.suggestedCategories.length > 0) {
       for (const catName of analysis.suggestedCategories) {
@@ -436,20 +350,12 @@ router.post("/upload-markdown", upload.single("file"), async (req, res) => {
       }
     }
 
-    // Fetch created document with tags
-    const docTags = await db
-      .select({ id: tags.id, name: tags.name, color: tags.color })
-      .from(documentTags)
-      .innerJoin(tags, eq(documentTags.tagId, tags.id))
-      .where(eq(documentTags.documentId, inserted.id));
-
     res.json({
       data: {
-        document: { ...inserted, tags: docTags },
+        document: inserted,
         analysis: {
           documentType: analysis.documentType,
           keywords: analysis.keywords,
-          suggestedTags: analysis.suggestedTags,
           suggestedCategories: analysis.suggestedCategories,
           structure: analysis.structure,
           frontmatter: analysis.frontmatter,
@@ -502,12 +408,6 @@ router.get("/:id", async (req, res) => {
       return res.status(404).json({ data: null, error: "Document not found", meta: null });
     }
 
-    const docTags = await db
-      .select({ id: tags.id, name: tags.name, color: tags.color })
-      .from(documentTags)
-      .innerJoin(tags, eq(documentTags.tagId, tags.id))
-      .where(eq(documentTags.documentId, id));
-
     const docCategories = await db
       .select({ id: categories.id, name: categories.name, slug: categories.slug, color: categories.color, icon: categories.icon })
       .from(documentCategories)
@@ -533,7 +433,6 @@ router.get("/:id", async (req, res) => {
     res.json({
       data: {
         ...doc,
-        tags: docTags,
         categories: docCategories,
         collections: docCollections,
         highlights: docHighlights,
@@ -558,7 +457,7 @@ router.patch("/:id", async (req, res) => {
       return res.status(404).json({ data: null, error: "Document not found", meta: null });
     }
 
-    const { tagIds, categoryIds, ...fields } = req.body;
+    const { categoryIds, ...fields } = req.body;
 
     const updateData = {};
     const allowedFields = [
@@ -584,15 +483,6 @@ router.patch("/:id", async (req, res) => {
       .set(updateData)
       .where(eq(documents.id, id))
       .returning();
-
-    if (tagIds && Array.isArray(tagIds)) {
-      await db.delete(documentTags).where(eq(documentTags.documentId, id));
-      if (tagIds.length > 0) {
-        await db.insert(documentTags).values(
-          tagIds.map((tagId) => ({ documentId: id, tagId }))
-        );
-      }
-    }
 
     if (categoryIds && Array.isArray(categoryIds)) {
       await db.delete(documentCategories).where(eq(documentCategories.documentId, id));

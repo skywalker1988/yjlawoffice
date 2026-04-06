@@ -9,4 +9,15 @@ export default defineConfig({
       '/api/sb': 'http://localhost:5000',
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-utils': ['lucide-react', 'marked', 'dompurify'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 600,
+  },
 })

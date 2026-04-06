@@ -1922,64 +1922,6 @@ export default function DocumentDetailPage() {
                   )}
                 </div>
 
-                {/* ── 태그 관리 카드 ── */}
-                <div style={{ background: "#fff", borderRadius: 6, border: "1px solid #eee", padding: 12, marginBottom: 12 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <p style={{ fontSize: 10, fontWeight: 600, color: "#333", margin: 0 }}>태그</p>
-                    <span style={{ fontSize: 9, color: "#999" }}>{doc.tags?.length || 0}개</span>
-                  </div>
-
-                  {/* 기존 태그 — 삭제 가능 */}
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 8 }}>
-                    {(doc.tags || []).map((tag, i) => (
-                      <span key={i} style={{
-                        display: "inline-flex", alignItems: "center", gap: 3,
-                        padding: "3px 8px", borderRadius: 12, fontSize: 10,
-                        background: (tag.color || "#6b7280") + "18",
-                        color: tag.color || "#6b7280", border: `1px solid ${tag.color || "#6b7280"}40`,
-                        fontWeight: 500,
-                      }}>
-                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: tag.color || "#6b7280" }} />
-                        {typeof tag === "string" ? tag : tag.name}
-                        <button onClick={() => {
-                          api.patch(`/documents/${id}`, { tagIds: doc.tags.filter(t => (t.id || t) !== (tag.id || tag)).map(t => t.id || t) })
-                          .then(() => {
-                            setDoc(prev => ({ ...prev, tags: prev.tags.filter(t => (t.id || t) !== (tag.id || tag)) }));
-                            toast("태그 제거됨");
-                          });
-                        }}
-                          style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: 10, color: tag.color || "#999", padding: 0, lineHeight: 1 }}>✕</button>
-                      </span>
-                    ))}
-                    {(!doc.tags || doc.tags.length === 0) && <span style={{ fontSize: 10, color: "#ccc", fontStyle: "italic" }}>태그 없음</span>}
-                  </div>
-
-                  {/* 태그 추가 입력 */}
-                  <div style={{ display: "flex", gap: 4 }}>
-                    <input id="tag-input" placeholder="새 태그 입력 후 Enter..."
-                      onKeyDown={e => {
-                        if (e.key === "Enter" && e.target.value.trim()) {
-                          const tagName = e.target.value.trim();
-                          // 태그 생성 후 문서에 추가
-                          api.post("/tags", { name: tagName, color: ["#3b82f6","#ef4444","#f59e0b","#10b981","#8b5cf6","#ec4899","#06b6d4"][Math.floor(Math.random()*7)] })
-                          .then(data => {
-                            const newTag = data.data || data;
-                            if (newTag?.id) {
-                              const currentTagIds = (doc.tags || []).map(t => t.id).filter(Boolean);
-                              api.patch(`/documents/${id}`, { tagIds: [...currentTagIds, newTag.id] })
-                              .then(() => {
-                                setDoc(prev => ({ ...prev, tags: [...(prev.tags || []), newTag] }));
-                                toast(`태그 "${tagName}" 추가됨`);
-                              });
-                            }
-                          }).catch(() => toast("태그 추가 실패"));
-                          e.target.value = "";
-                        }
-                      }}
-                      style={{ flex: 1, height: 28, border: "1px solid #ddd", borderRadius: 4, padding: "0 8px", fontSize: 10, background: "#fafafa" }} />
-                  </div>
-                </div>
-
                 {/* ── 카테고리 카드 ── */}
                 {doc.categories?.length > 0 && (
                   <div style={{ background: "#fff", borderRadius: 6, border: "1px solid #eee", padding: 12, marginBottom: 12 }}>

@@ -136,7 +136,7 @@ export default function AdminLawyers() {
             </div>
             <div>
               <label style={labelStyle}>전화번호</label>
-              <input style={fieldStyle} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="02-535-0461" />
+              <input style={fieldStyle} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="02-594-5583" />
             </div>
             <div>
               <label style={labelStyle}>정렬 순서</label>
@@ -233,7 +233,7 @@ export default function AdminLawyers() {
                   <span style={{ fontSize: 15, fontWeight: 600, color: "#1a1a1a" }}>{lawyer.name}</span>
                   {lawyer.nameEn && <span style={{ fontSize: 11, color: "#bbb" }}>{lawyer.nameEn}</span>}
                 </div>
-                <span style={{ fontSize: 12, color: "var(--accent-gold)" }}>{lawyer.position}</span>
+                <span style={{ fontSize: 12, color: "#b08d57" }}>{lawyer.position}</span>
                 {!lawyer.isActive && <span style={{ fontSize: 10, color: "#c00", marginLeft: 8 }}>(비공개)</span>}
               </div>
 

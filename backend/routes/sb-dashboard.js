@@ -5,8 +5,6 @@ const { Router } = require("express");
 const { db } = require("../db");
 const {
   documents,
-  tags,
-  documentTags,
   categories,
   documentCategories,
 } = require("../db/schema");
@@ -43,61 +41,12 @@ router.get("/", async (req, res) => {
       .from(documents)
       .where(gte(documents.createdAt, sevenDaysAgo));
 
-    const recentDocs = await db
+    const recentDocuments = await db
       .select()
       .from(documents)
       .where(sql`${documents.status} != 'archived'`)
       .orderBy(desc(documents.createdAt))
       .limit(5);
-
-    // Fetch tags for recent documents
-    const recentIds = recentDocs.map((d) => d.id);
-    const recentTagsByDoc = {};
-
-    if (recentIds.length > 0) {
-      const tagRows = await db
-        .select({
-          documentId: documentTags.documentId,
-          tagId: tags.id,
-          tagName: tags.name,
-          tagColor: tags.color,
-        })
-        .from(documentTags)
-        .innerJoin(tags, eq(documentTags.tagId, tags.id))
-        .where(
-          sql`${documentTags.documentId} IN (${sql.join(
-            recentIds.map((id) => sql`${id}`),
-            sql`, `
-          )})`
-        );
-
-      for (const row of tagRows) {
-        if (!recentTagsByDoc[row.documentId]) recentTagsByDoc[row.documentId] = [];
-        recentTagsByDoc[row.documentId].push({
-          id: row.tagId,
-          name: row.tagName,
-          color: row.tagColor,
-        });
-      }
-    }
-
-    const recentDocuments = recentDocs.map((doc) => ({
-      ...doc,
-      tags: recentTagsByDoc[doc.id] ?? [],
-    }));
-
-    const topTags = await db
-      .select({
-        id: tags.id,
-        name: tags.name,
-        color: tags.color,
-        count: count(documentTags.documentId),
-      })
-      .from(tags)
-      .leftJoin(documentTags, eq(tags.id, documentTags.tagId))
-      .groupBy(tags.id)
-      .orderBy(desc(count(documentTags.documentId)))
-      .limit(20);
 
     const byCategory = await db
       .select({
@@ -117,7 +66,6 @@ router.get("/", async (req, res) => {
         byStatus,
         thisWeek: thisWeekResult.count,
         recentDocuments,
-        topTags,
         byCategory,
       },
       error: null,

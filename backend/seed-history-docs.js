@@ -1,5 +1,5 @@
 const { db } = require("./db");
-const { documents, historyEvents, tags, documentTags } = require("./db/schema");
+const { documents, historyEvents } = require("./db/schema");
 const { eq } = require("drizzle-orm");
 
 // 카테고리 → 문서 유형 매핑
@@ -1951,26 +1951,7 @@ The EEC was a historic experiment in pursuing peace through economic integration
 };
 
 async function seed() {
-  // 1. 태그 생성 (세계사, 각 카테고리)
-  console.log("Creating tags...");
-  const tagNames = ["세계사", "정치사", "전쟁사", "경제사", "문화사", "과학사", "법제사", "사회사", "외교사", "한국사"];
-  const tagMap = {};
-  for (const name of tagNames) {
-    const existing = await db.select().from(tags).where(eq(tags.name, name));
-    if (existing.length > 0) {
-      tagMap[name] = existing[0].id;
-    } else {
-      const [inserted] = await db.insert(tags).values({ name, color: "#6366f1" }).returning();
-      tagMap[name] = inserted.id;
-    }
-  }
-
-  const categoryToTag = {
-    politics: "정치사", war: "전쟁사", economy: "경제사", culture: "문화사",
-    science: "과학사", law: "법제사", society: "사회사", diplomacy: "외교사",
-  };
-
-  // 2. 모든 history_events 가져오기
+  // 모든 history_events 가져오기
   const allEvents = await db.select().from(historyEvents);
   console.log(`Processing ${allEvents.length} history events...`);
 
@@ -2014,16 +1995,6 @@ async function seed() {
         endYear: event.endYear,
       }),
     }).returning();
-
-    // 태그 연결
-    const tagIds = [tagMap["세계사"]];
-    const catTag = categoryToTag[event.category];
-    if (catTag && tagMap[catTag]) tagIds.push(tagMap[catTag]);
-    if (event.country === "한국" && tagMap["한국사"]) tagIds.push(tagMap["한국사"]);
-
-    for (const tagId of tagIds) {
-      await db.insert(documentTags).values({ documentId: doc.id, tagId }).catch(() => {});
-    }
 
     // history_events에 relatedDocumentId 연결
     await db.update(historyEvents)

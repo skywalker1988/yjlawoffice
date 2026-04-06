@@ -211,18 +211,6 @@ export default function VaultPage() {
                 </div>
               )}
 
-              {/* Tags */}
-              {uploadResult.document?.tags?.length > 0 && (
-                <div style={{ marginBottom: 16 }}>
-                  <p style={{ fontSize: 10, color: "#888", marginBottom: 6 }}>자동 생성된 태그</p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                    {uploadResult.document.tags.map((tag, i) => (
-                      <span key={i} style={{ padding: "2px 8px", borderRadius: 12, fontSize: 10, background: tag.color, color: "#fff" }}>{tag.name}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Structure features */}
               <div style={{ marginBottom: 16 }}>
                 <p style={{ fontSize: 10, color: "#888", marginBottom: 6 }}>문서 특성</p>
@@ -419,27 +407,11 @@ export default function VaultPage() {
                       : ""}
                   </span>
                 </div>
-                {(doc.author || doc.tags?.length > 0) && (
+                {doc.author && (
                   <div className="flex gap-2 mt-1 items-center flex-wrap">
-                    {doc.author && (
-                      <span style={{ fontSize: 12, color: "#999" }}>
-                        {parseAuthor(doc.author)}
-                      </span>
-                    )}
-                    {doc.tags?.slice(0, 5).map((tag, i) => (
-                      <span
-                        key={tag.id || tag.name || i}
-                        style={{
-                          fontSize: 10,
-                          color: "#aaa",
-                          border: "1px solid rgba(0,0,0,0.08)",
-                          padding: "0px 6px",
-                          borderRadius: 2,
-                        }}
-                      >
-                        {typeof tag === "string" ? tag : tag.name}
-                      </span>
-                    ))}
+                    <span style={{ fontSize: 12, color: "#999" }}>
+                      {parseAuthor(doc.author)}
+                    </span>
                   </div>
                 )}
               </Link>
@@ -520,24 +492,6 @@ export default function VaultPage() {
                       : ""}
                   </span>
                 </div>
-                {doc.tags?.length > 0 && (
-                  <div className="flex gap-1 mt-3 flex-wrap">
-                    {doc.tags.slice(0, 3).map((tag, i) => (
-                      <span
-                        key={tag.id || tag.name || i}
-                        style={{
-                          fontSize: 10,
-                          color: "#aaa",
-                          border: "1px solid rgba(0,0,0,0.08)",
-                          padding: "1px 6px",
-                          borderRadius: 2,
-                        }}
-                      >
-                        {typeof tag === "string" ? tag : tag.name}
-                      </span>
-                    ))}
-                  </div>
-                )}
               </Link>
             ))}
           </div>

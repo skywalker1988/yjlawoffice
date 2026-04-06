@@ -79,7 +79,7 @@ export default function EditorPage() {
   const [doc, setDoc] = useState({ ...EMPTY_DOC });
   const [docId, setDocId] = useState(null);
   const [documents, setDocuments] = useState([]);
-  const [tags, setTags] = useState([]);
+
   const [saveStatus, setSaveStatus] = useState("");
   const [viewMode, setViewMode] = useState("edit");
   const [metaOpen, setMetaOpen] = useState(false);
@@ -247,12 +247,9 @@ export default function EditorPage() {
     };
   }, [editor]);
 
-  /* ──── load doc list + tags on mount ──── */
+  /* ──── load doc list on mount ──── */
   useEffect(() => {
-    Promise.all([
-      api.get("/documents?limit=200").then((j) => setDocuments(j.data || [])).catch(() => {}),
-      api.get("/tags").then((j) => setTags(j.data || [])).catch(() => {}),
-    ]).catch(() => {});
+    api.get("/documents?limit=200").then((j) => setDocuments(j.data || [])).catch(() => {});
   }, []);
 
   /* ──── 자동 저장 복원: 에디터 준비 후 로컬 백업이 있으면 자동 복원 ──── */
@@ -284,7 +281,6 @@ export default function EditorPage() {
           summary: d.summary || "",
           status: d.status || "draft",
           importance: d.importance ?? 3,
-          tagIds: (d.tags || []).map((t) => t.id),
         });
         if (editor) {
           let html = d.contentHtml || "";
@@ -325,7 +321,6 @@ export default function EditorPage() {
         summary: doc.summary,
         status: doc.status,
         importance: doc.importance,
-        tagIds: doc.tagIds,
       };
       try {
         if (docId) {
@@ -499,6 +494,7 @@ export default function EditorPage() {
 
   useEffect(() => {
     if (!editor) return;
+    /* 페이지네이션은 현재 비활성 — 안정화 후 활성화 예정 */
     return;
 
     /**
@@ -1836,7 +1832,7 @@ export default function EditorPage() {
             style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.15)", zIndex: 999 }}
           />
         )}
-        <MetaDrawer doc={doc} setDoc={setDoc} tags={tags} open={metaOpen} onClose={() => setMetaOpen(false)} />
+        <MetaDrawer doc={doc} setDoc={setDoc} open={metaOpen} onClose={() => setMetaOpen(false)} />
       </div>
     </div>
   );

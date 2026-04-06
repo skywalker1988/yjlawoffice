@@ -273,44 +273,6 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        {/* 인기 태그 */}
-        <div style={{
-          background: T.cardBg, border: `1px solid ${T.border}`,
-          borderRadius: 12, padding: "28px 30px",
-          boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
-        }}>
-          <SectionHeader title="주요 태그" />
-          {data.topTags?.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {data.topTags.map((tag, i) => (
-                <span key={i} style={{
-                  display: "inline-flex", alignItems: "center", gap: 5,
-                  padding: "6px 14px", fontSize: 12,
-                  fontWeight: 500, letterSpacing: "0.02em",
-                  background: tag.color ? `${tag.color}0d` : "#f3f5f8",
-                  color: tag.color || T.text,
-                  border: `1px solid ${tag.color ? `${tag.color}20` : T.border}`,
-                  borderRadius: 20,
-                  transition: "all 0.2s",
-                  cursor: "default",
-                }}
-                onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.06)"; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
-                >
-                  {tag.name || tag}
-                  {tag._count?.documents != null && (
-                    <span style={{ fontSize: 10, opacity: 0.5 }}>
-                      ({tag._count.documents})
-                    </span>
-                  )}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p style={{ fontSize: 13, color: T.textMuted, padding: "24px 0" }}>태그가 없습니다.</p>
-          )}
-        </div>
-
         {/* 상태별 분포 */}
         <div style={{
           background: T.cardBg, border: `1px solid ${T.border}`,
