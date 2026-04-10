@@ -10,6 +10,7 @@
  */
 import { Node, mergeAttributes } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
+import { FLASH_DURATION_MS } from "../../../utils/timing";
 
 const footnotePluginKey = new PluginKey("footnote");
 
@@ -108,7 +109,7 @@ export const FootnoteReference = Node.create({
         if (fnEl) {
           fnEl.scrollIntoView({ behavior: "smooth", block: "center" });
           fnEl.classList.add("footnote-item-flash");
-          setTimeout(() => fnEl.classList.remove("footnote-item-flash"), 2000);
+          setTimeout(() => fnEl.classList.remove("footnote-item-flash"), FLASH_DURATION_MS);
         }
       });
 

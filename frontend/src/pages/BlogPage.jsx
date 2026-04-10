@@ -82,10 +82,10 @@ export default function BlogPage() {
           >
             법률 칼럼
           </h1>
-          <p className="font-en reveal" style={{ fontSize: 13, letterSpacing: "0.3em", color: "rgba(255,255,255,0.4)", marginBottom: 24 }}>
+          <p className="font-en reveal" style={{ fontSize: 13, letterSpacing: "0.3em", color: "var(--white-40)", marginBottom: 24 }}>
             LEGAL COLUMN &amp; BLOG
           </p>
-          <p className="reveal" style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", fontWeight: 300, lineHeight: 1.9 }}>
+          <p className="reveal" style={{ fontSize: 15, color: "var(--white-60)", fontWeight: 300, lineHeight: 1.9 }}>
             법률 이슈와 판례 분석, 실무 가이드를 제공합니다.
           </p>
         </div>
@@ -107,7 +107,7 @@ export default function BlogPage() {
                   borderColor: selectedCategory === cat.key ? "var(--accent-gold)" : "rgba(0,0,0,0.12)",
                   borderRadius: 24,
                   background: selectedCategory === cat.key ? "var(--accent-gold)" : "transparent",
-                  color: selectedCategory === cat.key ? "#fff" : "#666",
+                  color: selectedCategory === cat.key ? "#fff" : "var(--gray-500)",
                   cursor: "pointer",
                   transition: "all 0.3s",
                   letterSpacing: "0.05em",
@@ -120,11 +120,11 @@ export default function BlogPage() {
 
           {/* ==================== 게시글 목록 ==================== */}
           {loading ? (
-            <div className="text-center" style={{ padding: "80px 0", color: "#999" }}>
+            <div className="text-center" style={{ padding: "80px 0", color: "var(--text-muted)" }}>
               불러오는 중...
             </div>
           ) : posts.length === 0 ? (
-            <div className="text-center reveal" style={{ padding: "80px 0", color: "#999" }}>
+            <div className="text-center reveal" style={{ padding: "80px 0", color: "var(--text-muted)" }}>
               <p style={{ fontSize: 15 }}>등록된 칼럼이 없습니다.</p>
             </div>
           ) : (
@@ -138,7 +138,7 @@ export default function BlogPage() {
                 >
                   <article
                     style={{
-                      border: "1px solid rgba(0,0,0,0.08)",
+                      border: "1px solid var(--border-color)",
                       borderRadius: 4,
                       overflow: "hidden",
                       transition: "all 0.3s",
@@ -181,7 +181,7 @@ export default function BlogPage() {
                         style={{
                           fontSize: 17,
                           fontWeight: 600,
-                          color: "#1a1a1a",
+                          color: "var(--text-primary)",
                           lineHeight: 1.5,
                           marginBottom: 8,
                           display: "-webkit-box",
@@ -234,7 +234,7 @@ export default function BlogPage() {
                     borderColor: p === meta.page ? "var(--accent-gold)" : "rgba(0,0,0,0.1)",
                     borderRadius: 4,
                     background: p === meta.page ? "var(--accent-gold)" : "transparent",
-                    color: p === meta.page ? "#fff" : "#666",
+                    color: p === meta.page ? "#fff" : "var(--gray-500)",
                     cursor: "pointer",
                     transition: "all 0.3s",
                   }}

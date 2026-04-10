@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { api } from "../utils/api";
 
-const T = { accent: "#b08d57", text: "#1e293b", textSec: "#475569", textMuted: "#94a3b8" };
+const T = { accent: "var(--accent-gold)", text: "var(--text-primary)", textSec: "var(--text-secondary)", textMuted: "var(--text-muted)" };
 
 const QUICK_REPLIES = ["상담 비용", "상담 예약", "업무분야", "찾아오시는 길"];
 const SESSION_KEY = "chatbot_session_id";

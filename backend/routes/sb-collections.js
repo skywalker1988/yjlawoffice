@@ -5,6 +5,7 @@ const { Router } = require("express");
 const { db } = require("../db");
 const { collections, documentCollections, documents } = require("../db/schema");
 const { eq, count } = require("drizzle-orm");
+const { adminAuth } = require("../lib/auth");
 
 const router = Router();
 
@@ -29,12 +30,13 @@ router.get("/", async (req, res) => {
 
     res.json({ data: rows, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
-// POST /api/sb/collections
-router.post("/", async (req, res) => {
+// POST /api/sb/collections (관리자만)
+router.post("/", adminAuth, async (req, res) => {
   try {
     const { name, description, color, icon } = req.body;
     if (!name) {
@@ -53,7 +55,8 @@ router.post("/", async (req, res) => {
 
     res.json({ data: inserted, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -64,7 +67,7 @@ router.get("/:id", async (req, res) => {
 
     const [collection] = await db.select().from(collections).where(eq(collections.id, id));
     if (!collection) {
-      return res.status(404).json({ data: null, error: "Collection not found", meta: null });
+      return res.status(404).json({ data: null, error: "컬렉션을 찾을 수 없습니다", meta: null });
     }
 
     const docs = await db
@@ -83,18 +86,19 @@ router.get("/:id", async (req, res) => {
 
     res.json({ data: { ...collection, documents: docs }, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
-// PATCH /api/sb/collections/:id
-router.patch("/:id", async (req, res) => {
+// PATCH /api/sb/collections/:id (관리자만)
+router.patch("/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
     const [existing] = await db.select().from(collections).where(eq(collections.id, id));
     if (!existing) {
-      return res.status(404).json({ data: null, error: "Collection not found", meta: null });
+      return res.status(404).json({ data: null, error: "컬렉션을 찾을 수 없습니다", meta: null });
     }
 
     const updateData = {};
@@ -112,24 +116,26 @@ router.patch("/:id", async (req, res) => {
 
     res.json({ data: updated, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
-// DELETE /api/sb/collections/:id
-router.delete("/:id", async (req, res) => {
+// DELETE /api/sb/collections/:id (관리자만)
+router.delete("/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
     const [existing] = await db.select().from(collections).where(eq(collections.id, id));
     if (!existing) {
-      return res.status(404).json({ data: null, error: "Collection not found", meta: null });
+      return res.status(404).json({ data: null, error: "컬렉션을 찾을 수 없습니다", meta: null });
     }
 
     await db.delete(collections).where(eq(collections.id, id));
     res.json({ data: { deleted: true }, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 

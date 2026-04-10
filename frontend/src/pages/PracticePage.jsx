@@ -115,7 +115,7 @@ export default function PracticePage() {
           >
             {settings.hero.heading}
           </h1>
-          <p className="font-en reveal" style={{ fontSize: 13, letterSpacing: "0.3em", color: "rgba(255,255,255,0.4)" }}>
+          <p className="font-en reveal" style={{ fontSize: 13, letterSpacing: "0.3em", color: "var(--white-40)" }}>
             {settings.hero.subheading}
           </p>
         </div>
@@ -125,7 +125,7 @@ export default function PracticePage() {
       <section className="section" style={{ background: "#fff" }}>
         <div className="container" style={{ maxWidth: 960 }}>
           <div className="text-center reveal" style={{ marginBottom: 64 }}>
-            <p style={{ fontSize: 15, color: "#666", lineHeight: 2, fontWeight: 300, maxWidth: 600, margin: "0 auto" }}>
+            <p style={{ fontSize: 15, color: "var(--gray-500)", lineHeight: 2, fontWeight: 300, maxWidth: 600, margin: "0 auto" }}>
               {settings.intro.description}
             </p>
           </div>
@@ -139,19 +139,19 @@ export default function PracticePage() {
                   className="reveal group"
                   style={{
                     padding: "40px 32px",
-                    border: "1px solid rgba(0,0,0,0.06)",
+                    border: "1px solid var(--border-subtle)",
                     background: "#fafaf9",
                     transition: "all 0.3s",
                   }}
                 >
                   <div className="flex items-center gap-4" style={{ marginBottom: 16 }}>
-                    {Icon && <Icon size={32} strokeWidth={1.3} color="#b08d57" />}
+                    {Icon && <Icon size={32} strokeWidth={1.3} color="var(--accent-gold)" />}
                     <div>
-                      <h3 style={{ fontSize: 20, fontWeight: 500, color: "#1a1a1a" }}>{p.title}</h3>
-                      <p className="font-en" style={{ fontSize: 10, letterSpacing: "0.2em", color: "#bbb" }}>{p.subtitle}</p>
+                      <h3 style={{ fontSize: 20, fontWeight: 500, color: "var(--text-primary)" }}>{p.title}</h3>
+                      <p className="font-en" style={{ fontSize: 10, letterSpacing: "0.2em", color: "var(--gray-200)" }}>{p.subtitle}</p>
                     </div>
                   </div>
-                  <p style={{ fontSize: 14, color: "#666", lineHeight: 1.9, fontWeight: 300, marginBottom: 20 }}>
+                  <p style={{ fontSize: 14, color: "var(--gray-500)", lineHeight: 1.9, fontWeight: 300, marginBottom: 20 }}>
                     {p.desc}
                   </p>
                   <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
@@ -162,7 +162,7 @@ export default function PracticePage() {
                           fontSize: 13,
                           color: "#888",
                           padding: "6px 0",
-                          borderTop: j === 0 ? "1px solid rgba(0,0,0,0.06)" : "none",
+                          borderTop: j === 0 ? "1px solid var(--border-subtle)" : "none",
                           borderBottom: "1px solid rgba(0,0,0,0.04)",
                           display: "flex",
                           alignItems: "center",
@@ -181,7 +181,7 @@ export default function PracticePage() {
 
           {/* CTA */}
           <div className="text-center reveal" style={{ marginTop: 80 }}>
-            <p style={{ fontSize: 15, color: "#666", marginBottom: 24, fontWeight: 300 }}>
+            <p style={{ fontSize: 15, color: "var(--gray-500)", marginBottom: 24, fontWeight: 300 }}>
               {settings.cta.message}
             </p>
             <Link
@@ -189,7 +189,7 @@ export default function PracticePage() {
               className="inline-block font-en transition-all duration-300 hover:border-[var(--accent-gold)] hover:text-[var(--accent-gold)]"
               style={{
                 border: "1px solid rgba(0,0,0,0.15)",
-                color: "#1a1a1a",
+                color: "var(--text-primary)",
                 padding: "14px 40px",
                 fontSize: 13,
                 letterSpacing: "0.15em",

@@ -11,10 +11,20 @@ export const TYPE_CONFIG = {
 
 export const ALL_DOCUMENT_TYPES = Object.keys(TYPE_CONFIG);
 
+/**
+ * 문서 유형 코드를 한국어 라벨로 변환한다.
+ * @param {string} type - 문서 유형 코드 (예: "statute", "case_law")
+ * @returns {string} 한국어 라벨 (예: "법령", "판례") 또는 코드 그대로
+ */
 export function getTypeLabel(type) {
   return TYPE_CONFIG[type]?.label ?? type;
 }
 
+/**
+ * 문서 유형 코드에 대응하는 색상을 반환한다.
+ * @param {string} type - 문서 유형 코드
+ * @returns {string} hex 색상 코드
+ */
 export function getTypeColor(type) {
   return TYPE_CONFIG[type]?.color ?? "#95a5a6";
 }

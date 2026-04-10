@@ -5,6 +5,7 @@ const { Router } = require("express");
 const { db } = require("../db");
 const { bookingSlots, bookingSettings, lawyers } = require("../db/schema");
 const { eq, and, desc, sql, gte, lte } = require("drizzle-orm");
+const { adminAuth } = require("../lib/auth");
 
 const router = Router();
 
@@ -30,9 +31,9 @@ function timeToMinutes(time) {
  * @returns {string} "09:00" 형식
  */
 function minutesToTime(minutes) {
-  const h = String(Math.floor(minutes / 60)).padStart(2, "0");
-  const m = String(minutes % 60).padStart(2, "0");
-  return `${h}:${m}`;
+  const hours = String(Math.floor(minutes / 60)).padStart(2, "0");
+  const mins = String(minutes % 60).padStart(2, "0");
+  return `${hours}:${mins}`;
 }
 
 /**
@@ -69,7 +70,8 @@ router.get("/available", async (req, res) => {
     const rows = await query.orderBy(bookingSlots.startTime);
     res.json({ data: rows, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -108,7 +110,8 @@ router.get("/available-week", async (req, res) => {
 
     res.json({ data: rows, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -140,7 +143,8 @@ router.post("/book", async (req, res) => {
 
     res.json({ data: updated, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -168,19 +172,21 @@ router.post("/cancel/:id", async (req, res) => {
 
     res.json({ data: updated, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 /**
  * GET /api/sb/bookings/settings — 예약 설정 목록 (관리자)
  */
-router.get("/settings", async (req, res) => {
+router.get("/settings", adminAuth, async (req, res) => {
   try {
     const rows = await db.select().from(bookingSettings);
     res.json({ data: rows, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -188,7 +194,7 @@ router.get("/settings", async (req, res) => {
  * POST /api/sb/bookings/settings — 예약 설정 생성/수정 (관리자)
  * - body: { lawyerId, dayOfWeek, startTime, endTime, slotDuration }
  */
-router.post("/settings", async (req, res) => {
+router.post("/settings", adminAuth, async (req, res) => {
   try {
     const { lawyerId, dayOfWeek, startTime, endTime, slotDuration } = req.body;
 
@@ -206,7 +212,8 @@ router.post("/settings", async (req, res) => {
 
     res.json({ data: inserted, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -215,7 +222,7 @@ router.post("/settings", async (req, res) => {
  * - body: { startDate, endDate, lawyerId }
  * - 설정(bookingSettings)을 기반으로 각 날짜에 슬롯 생성
  */
-router.post("/generate-slots", async (req, res) => {
+router.post("/generate-slots", adminAuth, async (req, res) => {
   try {
     const { startDate, endDate, lawyerId } = req.body;
 
@@ -274,7 +281,8 @@ router.post("/generate-slots", async (req, res) => {
 
     res.json({ data: { created: createdCount }, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -308,7 +316,8 @@ router.get("/", async (req, res) => {
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 

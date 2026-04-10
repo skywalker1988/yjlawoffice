@@ -31,9 +31,19 @@ export default function Layout() {
 
   useEffect(() => { setMenuOpen(false); window.scrollTo(0, 0); }, [pathname]);
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 60);
-    window.addEventListener("scroll", fn);
-    return () => window.removeEventListener("scroll", fn);
+    let rafId = null;
+    const fn = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 60);
+        rafId = null;
+      });
+    };
+    window.addEventListener("scroll", fn, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", fn);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   const heroTop = isHome && !scrolled && !menuOpen;
@@ -48,19 +58,20 @@ export default function Layout() {
         className="fixed top-0 left-0 right-0 z-50 transition-all duration-500"
         style={{
           background: heroTop ? "transparent" : "rgba(255,255,255,0.95)",
-          borderBottom: heroTop ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(0,0,0,0.08)",
+          borderBottom: heroTop ? "1px solid var(--white-15)" : "1px solid var(--border-color)",
           backdropFilter: heroTop ? "none" : "blur(16px)",
         }}
       >
         {/* Utility bar */}
-        <div style={{ borderBottom: heroTop ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.04)" }}>
+        <div style={{ borderBottom: heroTop ? "1px solid var(--white-08)" : "1px solid var(--border-subtle)" }}>
           <div className="container flex items-center justify-between" style={{ height: 30 }}>
             <div className="flex gap-4" style={{ fontSize: 10 }}>
-              <span className="font-en" style={{ letterSpacing: "0.1em", color: heroTop ? "rgba(255,255,255,0.7)" : "#999" }}>YOUNJEONG LAW OFFICE</span>
+              <span className="font-en" style={{ letterSpacing: "0.1em", color: heroTop ? "var(--white-60)" : "var(--text-muted)" }}>YOUNJEONG LAW OFFICE</span>
             </div>
-            <div className="hidden md:flex gap-6 items-center" style={{ fontSize: 10, color: heroTop ? "rgba(255,255,255,0.4)" : "#999" }}>
+            <div className="hidden md:flex gap-6 items-center" style={{ fontSize: 10, color: heroTop ? "var(--white-40)" : "var(--text-muted)" }}>
               <button onClick={() => setLanguage(lang === "ko" ? "en" : "ko")}
-                style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", fontSize: 10, letterSpacing: "0.1em", padding: 0 }}>
+                style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", fontSize: 10, letterSpacing: "0.1em", padding: 0 }}
+                aria-label="언어 전환 (한국어/English)">
                 한/EN
               </button>
               <Link to="/admin" className="hover:opacity-70 transition-opacity">ADMIN</Link>
@@ -76,7 +87,7 @@ export default function Layout() {
               {[0, 8, 16].map((top, i) => (
                 <span key={i} style={{
                   position: "absolute", left: 0, width: i === 1 ? 18 : 26, height: 1.5,
-                  background: (heroTop || menuOpen) ? "#fff" : "#1a1a1a",
+                  background: (heroTop || menuOpen) ? "#fff" : "var(--text-primary)",
                   top: menuOpen ? 8 : top,
                   transition: "all 0.3s",
                   transform: menuOpen ? (i === 0 ? "rotate(45deg)" : i === 2 ? "rotate(-45deg)" : "none") : "none",
@@ -86,7 +97,7 @@ export default function Layout() {
             </button>
 
             {/* Desktop nav */}
-            <nav className="hidden lg:flex items-center gap-8 flex-shrink-0">
+            <nav className="hidden lg:flex items-center gap-8 flex-shrink-0" aria-label="주요 메뉴">
               {settings.nav.items.map((item) => (
                 <NavLink
                   key={item.to}
@@ -94,8 +105,8 @@ export default function Layout() {
                   className="nav-text transition-colors duration-300"
                   style={({ isActive }) => ({
                     color: isActive
-                      ? (heroTop ? "#fff" : "#1a1a1a")
-                      : (heroTop ? "rgba(255,255,255,0.6)" : "#999"),
+                      ? (heroTop ? "#fff" : "var(--text-primary)")
+                      : (heroTop ? "rgba(255,255,255,0.6)" : "var(--text-muted)"),
                   })}
                 >
                   {item.label}
@@ -110,22 +121,22 @@ export default function Layout() {
 
       {/* ==================== FULLSCREEN MENU ==================== */}
       {menuOpen && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center" style={{ background: "rgba(15,25,35,0.97)", backdropFilter: "blur(24px)" }}>
-          <nav className="text-center">
+        <div className="fixed inset-0 z-40 flex items-center justify-center" role="dialog" aria-modal="true" aria-label="전체 메뉴" style={{ background: "rgba(15,25,35,0.97)", backdropFilter: "blur(24px)" }}>
+          <nav className="text-center" aria-label="전체 메뉴 네비게이션">
             <NavLink to="/" end onClick={() => setMenuOpen(false)}
               className="block font-serif transition-colors duration-300 hover:text-[var(--accent-gold)]"
-              style={{ fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 300, letterSpacing: "0.1em", lineHeight: 2.2, color: "rgba(255,255,255,0.5)" }}>
+              style={{ fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 300, letterSpacing: "0.1em", lineHeight: 2.2, color: "var(--white-40)" }}>
               HOME
             </NavLink>
             {settings.nav.items.map((item) => (
               <NavLink key={item.to} to={item.to} onClick={() => setMenuOpen(false)}
                 className="block font-serif transition-colors duration-300 hover:text-[var(--accent-gold)]"
-                style={{ fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 300, letterSpacing: "0.1em", lineHeight: 2.2, color: "rgba(255,255,255,0.5)" }}>
+                style={{ fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 300, letterSpacing: "0.1em", lineHeight: 2.2, color: "var(--white-40)" }}>
                 {item.label}
               </NavLink>
             ))}
             <div style={{ paddingTop: 48 }}>
-              <Link to="/admin" onClick={() => setMenuOpen(false)} className="view-more" style={{ color: "var(--accent-gold)", borderColor: "rgba(255,255,255,0.15)" }}>관리자 페이지</Link>
+              <Link to="/admin" onClick={() => setMenuOpen(false)} className="view-more" style={{ color: "var(--accent-gold)", borderColor: "var(--white-15)" }}>관리자 페이지</Link>
             </div>
           </nav>
         </div>
@@ -135,12 +146,12 @@ export default function Layout() {
       <main className="flex-1"><Outlet /></main>
 
       {/* ==================== FOOTER ==================== */}
-      <footer style={{ background: "#0f1923", borderTop: "none" }}>
+      <footer style={{ background: "var(--bg-dark)", borderTop: "none" }} aria-label="사이트 하단 정보">
         <div className="container" style={{ paddingTop: 72, paddingBottom: 40 }}>
           <div className="grid grid-cols-1 md:grid-cols-12 gap-12" style={{ marginBottom: 48 }}>
             <div className="md:col-span-5">
-              <p className="font-serif" style={{ fontSize: 22, color: "#b08d57", letterSpacing: "0.14em", marginBottom: 24 }}>{settings.footer.companyName}</p>
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 2.2 }}>
+              <p className="font-serif" style={{ fontSize: 22, color: "var(--accent-gold)", letterSpacing: "0.14em", marginBottom: 24 }}>{settings.footer.companyName}</p>
+              <div style={{ fontSize: 13, color: "var(--white-40)", lineHeight: 2.2 }}>
                 {settings.footer.tagline.split("\n").map((line, i) => (
                   <p key={i}>{line}</p>
                 ))}
@@ -151,33 +162,33 @@ export default function Layout() {
               </div>
             </div>
             <div className="md:col-span-3">
-              <p className="font-en" style={{ fontSize: 10, color: "#b08d57", letterSpacing: "0.2em", marginBottom: 20 }}>MENU</p>
+              <p className="font-en" style={{ fontSize: 10, color: "var(--accent-gold)", letterSpacing: "0.2em", marginBottom: 20 }}>MENU</p>
               <div className="space-y-3" style={{ fontSize: 13 }}>
                 {settings.nav.items.map((item) => (
-                  <Link key={item.to} to={item.to} className="block transition-colors duration-300 hover:text-[#b08d57]" style={{ color: "rgba(255,255,255,0.4)", textDecoration: "none" }}>{item.label}</Link>
+                  <Link key={item.to} to={item.to} className="block transition-colors duration-300 hover:text-[var(--accent-gold)]" style={{ color: "var(--white-40)", textDecoration: "none" }}>{item.label}</Link>
                 ))}
               </div>
             </div>
             <div className="md:col-span-4">
-              <p className="font-en" style={{ fontSize: 10, color: "#b08d57", letterSpacing: "0.2em", marginBottom: 20 }}>CONTACT</p>
-              <div style={{ fontSize: 13, color: "rgba(255,255,255,0.4)", lineHeight: 2.2 }}>
+              <p className="font-en" style={{ fontSize: 10, color: "var(--accent-gold)", letterSpacing: "0.2em", marginBottom: 20 }}>CONTACT</p>
+              <div style={{ fontSize: 13, color: "var(--white-40)", lineHeight: 2.2 }}>
                 <p>{settings.footer.hours}</p>
                 <p>{settings.footer.note}</p>
               </div>
               <Link to="/consultation"
-                className="inline-block font-en transition-all duration-300 hover:border-[#b08d57] hover:text-[#b08d57]"
-                style={{ border: "1px solid rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.5)", padding: "12px 32px", fontSize: 12, letterSpacing: "0.15em", textDecoration: "none", marginTop: 20 }}>
+                className="inline-block font-en transition-all duration-300 hover:border-[var(--accent-gold)] hover:text-[var(--accent-gold)]"
+                style={{ border: "1px solid var(--white-15)", color: "var(--white-40)", padding: "12px 32px", fontSize: 12, letterSpacing: "0.15em", textDecoration: "none", marginTop: 20 }}>
                 상담 예약
               </Link>
             </div>
           </div>
           {/* 뉴스레터 구독 */}
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 24, paddingBottom: 24 }}>
+          <div style={{ borderTop: "1px solid var(--white-08)", paddingTop: 24, paddingBottom: 24 }}>
             <NewsletterForm />
           </div>
 
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 24 }} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <p style={{ fontSize: 10, color: "rgba(255,255,255,0.2)" }}>{settings.footer.copyright}</p>
+          <div style={{ borderTop: "1px solid var(--white-08)", paddingTop: 24 }} className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <p style={{ fontSize: 10, color: "var(--white-20)" }}>{settings.footer.copyright}</p>
           </div>
         </div>
       </footer>

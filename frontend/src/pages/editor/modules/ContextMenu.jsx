@@ -1,19 +1,19 @@
 /**
- * Right-click Context Menu - MS Word style
+ * ContextMenu — MS Word 스타일 우클릭 컨텍스트 메뉴
+ * 설정 기반(config-driven) 렌더링으로 메뉴 항목을 contextMenuItems.js에서 가져와 표시
  */
 import { useState, useEffect, useRef } from "react";
+import { Reply, Check, Trash2 } from "lucide-react";
 import {
-  Scissors, Copy, ClipboardPaste, Bold, Italic, Underline,
-  Link2, Type, AlignLeft, AlignCenter, AlignRight, AlignJustify,
-  List, ListOrdered, Table2, Image as ImageIcon, Trash2,
-  RotateCcw, RotateCw, Paintbrush,
-  Heading1, Heading2, Heading3, Minus, Indent, Outdent,
-  MessageSquare, Reply, Check,
-} from "lucide-react";
-import { createComment } from "./comment-store";
+  UNDO_REDO_ITEMS, CLIPBOARD_ITEMS, FORMAT_ITEMS,
+  ALIGNMENT_ITEMS, STYLE_ITEMS, LIST_ITEMS, INDENT_ITEMS,
+  INSERT_ITEMS, COMMENT_ITEM, TABLE_ITEMS, DIALOG_ITEMS,
+  CLEAR_FORMAT_ITEM, SUBMENU_ICONS,
+} from "./contextMenuItems.jsx";
 
 const ICON_SIZE = 14;
 
+/* ── 메뉴 아이템 렌더링 ── */
 function MenuItem({ icon, label, shortcut, onClick, danger, disabled, dividerAfter }) {
   return (
     <>
@@ -44,12 +44,12 @@ function MenuItem({ icon, label, shortcut, onClick, danger, disabled, dividerAft
   );
 }
 
+/* ── 하위메뉴 ── */
 function SubMenu({ icon, label, children }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
 
   return (
-    <div ref={ref} style={{ position: "relative" }}
+    <div style={{ position: "relative" }}
       onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
       <button
         type="button" className="ctx-menu-item"
@@ -81,6 +81,127 @@ function SubMenu({ icon, label, children }) {
   );
 }
 
+/* ── 설정 배열 기반 메뉴 항목 렌더링 ── */
+function renderItems(items, handlers, disabledState, activeState) {
+  return items.map((item, i) => {
+    if (item.dividerOnly) {
+      return <div key={i} style={{ height: 1, background: "#e5e5e5", margin: "3px 0" }} />;
+    }
+    const disabled = item.disabledKey ? disabledState[item.disabledKey] : false;
+    const label = (item.activeKey && activeState[item.activeKey] && item.labelIfActive)
+      ? item.labelIfActive : item.label;
+    return (
+      <MenuItem
+        key={item.action}
+        icon={item.icon}
+        label={label}
+        shortcut={item.shortcut}
+        danger={item.danger}
+        disabled={disabled}
+        dividerAfter={item.dividerAfter}
+        onClick={() => handlers[item.action]?.()}
+      />
+    );
+  });
+}
+
+/* ── 에디터 액션 핸들러 생성 ── */
+function buildActionHandlers(editor, close, callbacks) {
+  const exec = (fn) => { fn(); close(); };
+  const chain = () => editor.chain().focus();
+
+  return {
+    // 실행취소/다시실행
+    undo: () => exec(() => chain().undo().run()),
+    redo: () => exec(() => chain().redo().run()),
+
+    // 클립보드
+    cut: () => exec(() => {
+      const { from, to } = editor.state.selection;
+      const text = editor.state.doc.textBetween(from, to, "\n");
+      navigator.clipboard.writeText(text).then(() => {
+        chain().deleteSelection().run();
+      }).catch(() => document.execCommand("cut"));
+    }),
+    copy: () => exec(() => {
+      const { from, to } = editor.state.selection;
+      const text = editor.state.doc.textBetween(from, to, "\n");
+      navigator.clipboard.writeText(text).catch(() => document.execCommand("copy"));
+    }),
+    paste: () => exec(() => {
+      navigator.clipboard.readText().then(t => {
+        chain().insertContent(t).run();
+      }).catch(() => {});
+    }),
+    pastePlain: () => exec(() => {
+      navigator.clipboard.readText().then(t => {
+        chain().insertContent({ type: "text", text: t }).run();
+      }).catch(() => {});
+    }),
+
+    // 서식
+    bold: () => exec(() => chain().toggleBold().run()),
+    italic: () => exec(() => chain().toggleItalic().run()),
+    underline: () => exec(() => chain().toggleUnderline().run()),
+
+    // 정렬
+    alignLeft: () => exec(() => chain().setTextAlign("left").run()),
+    alignCenter: () => exec(() => chain().setTextAlign("center").run()),
+    alignRight: () => exec(() => chain().setTextAlign("right").run()),
+    alignJustify: () => exec(() => chain().setTextAlign("justify").run()),
+
+    // 스타일
+    paragraph: () => exec(() => chain().setParagraph().run()),
+    heading1: () => exec(() => chain().toggleHeading({ level: 1 }).run()),
+    heading2: () => exec(() => chain().toggleHeading({ level: 2 }).run()),
+    heading3: () => exec(() => chain().toggleHeading({ level: 3 }).run()),
+
+    // 목록
+    bulletList: () => exec(() => chain().toggleBulletList().run()),
+    orderedList: () => exec(() => chain().toggleOrderedList().run()),
+
+    // 들여쓰기
+    indent: () => exec(() => chain().increaseIndent().run()),
+    outdent: () => exec(() => chain().decreaseIndent().run()),
+
+    // 삽입
+    hyperlink: () => exec(() => callbacks.onOpenHyperlinkDialog?.()),
+    insertImage: () => exec(() => {
+      const input = document.createElement("input");
+      input.type = "file"; input.accept = "image/*";
+      input.onchange = (ev) => {
+        const file = ev.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => editor.chain().focus().setImage({ src: reader.result }).run();
+        reader.readAsDataURL(file);
+      };
+      input.click();
+    }),
+
+    // 메모
+    insertComment: () => exec(() => callbacks.onInsertComment?.()),
+
+    // 표 조작
+    addRowBefore: () => exec(() => chain().addRowBefore().run()),
+    addRowAfter: () => exec(() => chain().addRowAfter().run()),
+    addColumnBefore: () => exec(() => chain().addColumnBefore().run()),
+    addColumnAfter: () => exec(() => chain().addColumnAfter().run()),
+    deleteRow: () => exec(() => chain().deleteRow().run()),
+    deleteColumn: () => exec(() => chain().deleteColumn().run()),
+    mergeCells: () => exec(() => chain().mergeCells().run()),
+    splitCell: () => exec(() => chain().splitCell().run()),
+    deleteTable: () => exec(() => chain().deleteTable().run()),
+
+    // 대화상자
+    fontDialog: () => exec(() => callbacks.onOpenFontDialog?.()),
+    paragraphDialog: () => exec(() => callbacks.onOpenParagraphDialog?.()),
+
+    // 서식 지우기
+    clearFormat: () => exec(() => chain().clearNodes().unsetAllMarks().run()),
+  };
+}
+
 export function ContextMenu({ editor, onOpenFontDialog, onOpenParagraphDialog, onOpenHyperlinkDialog, onOpenTableDialog, onInsertComment, commentStore, commentDispatch, commentAuthor }) {
   const [visible, setVisible] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -90,7 +211,6 @@ export function ContextMenu({ editor, onOpenFontDialog, onOpenParagraphDialog, o
     if (!editor) return;
 
     const handleContextMenu = (e) => {
-      // Only handle right-click inside the editor
       if (!editor.view.dom.contains(e.target)) return;
       e.preventDefault();
       e.stopPropagation();
@@ -126,9 +246,21 @@ export function ContextMenu({ editor, onOpenFontDialog, onOpenParagraphDialog, o
   const hasSelection = !editor.state.selection.empty;
   const isTable = editor.isActive("table");
   const isLink = editor.isActive("link");
-  const isImage = editor.isActive("image");
 
-  const exec = (fn) => { fn(); close(); };
+  const disabledState = {
+    cannotUndo: !editor.can().undo(),
+    cannotRedo: !editor.can().redo(),
+    noSelection: !hasSelection,
+  };
+
+  const activeState = { isLink };
+
+  const callbacks = { onOpenFontDialog, onOpenParagraphDialog, onOpenHyperlinkDialog, onInsertComment };
+  const handlers = buildActionHandlers(editor, close, callbacks);
+
+  /* 커서 위치의 메모 마크 확인 */
+  const $from = editor.state.selection.$from;
+  const commentMark = $from.marks().find(m => m.type.name === "comment");
 
   return (
     <div ref={menuRef} style={{
@@ -137,180 +269,77 @@ export function ContextMenu({ editor, onOpenFontDialog, onOpenParagraphDialog, o
       boxShadow: "0 6px 24px rgba(0,0,0,0.15)", minWidth: 200,
       padding: "4px 0", animation: "ctxIn 0.1s ease-out",
     }}>
-      {/* Undo / Redo */}
-      <MenuItem icon={<RotateCcw size={ICON_SIZE} />} label="실행 취소" shortcut="Ctrl+Z"
-        onClick={() => exec(() => editor.chain().focus().undo().run())}
-        disabled={!editor.can().undo()} />
-      <MenuItem icon={<RotateCw size={ICON_SIZE} />} label="다시 실행" shortcut="Ctrl+Y"
-        onClick={() => exec(() => editor.chain().focus().redo().run())}
-        disabled={!editor.can().redo()} dividerAfter />
+      {renderItems(UNDO_REDO_ITEMS, handlers, disabledState, activeState)}
+      {renderItems(CLIPBOARD_ITEMS, handlers, disabledState, activeState)}
 
-      {/* Cut / Copy / Paste */}
-      <MenuItem icon={<Scissors size={ICON_SIZE} />} label="잘라내기" shortcut="Ctrl+X"
-        onClick={() => exec(() => {
-          const { from, to } = editor.state.selection;
-          const text = editor.state.doc.textBetween(from, to, "\n");
-          navigator.clipboard.writeText(text).then(() => {
-            editor.chain().focus().deleteSelection().run();
-          }).catch(() => document.execCommand("cut"));
-        })}
-        disabled={!hasSelection} />
-      <MenuItem icon={<Copy size={ICON_SIZE} />} label="복사" shortcut="Ctrl+C"
-        onClick={() => exec(() => {
-          const { from, to } = editor.state.selection;
-          const text = editor.state.doc.textBetween(from, to, "\n");
-          navigator.clipboard.writeText(text).catch(() => document.execCommand("copy"));
-        })}
-        disabled={!hasSelection} />
-      <MenuItem icon={<ClipboardPaste size={ICON_SIZE} />} label="붙여넣기" shortcut="Ctrl+V"
-        onClick={() => exec(() => {
-          navigator.clipboard.readText().then(t => {
-            editor.chain().focus().insertContent(t).run();
-          }).catch(() => {});
-        })} />
-      <MenuItem icon={<ClipboardPaste size={ICON_SIZE} />} label="서식 없이 붙여넣기" shortcut="Ctrl+Shift+V"
-        onClick={() => exec(() => {
-          navigator.clipboard.readText().then(t => {
-            // Insert as plain text (no formatting)
-            editor.chain().focus().insertContent({ type: "text", text: t }).run();
-          }).catch(() => {});
-        })} dividerAfter />
+      {hasSelection && renderItems(FORMAT_ITEMS, handlers, disabledState, activeState)}
 
-      {/* Formatting */}
-      {hasSelection && (
-        <>
-          <MenuItem icon={<Bold size={ICON_SIZE} />} label="굵게" shortcut="Ctrl+B"
-            onClick={() => exec(() => editor.chain().focus().toggleBold().run())} />
-          <MenuItem icon={<Italic size={ICON_SIZE} />} label="기울임" shortcut="Ctrl+I"
-            onClick={() => exec(() => editor.chain().focus().toggleItalic().run())} />
-          <MenuItem icon={<Underline size={ICON_SIZE} />} label="밑줄" shortcut="Ctrl+U"
-            onClick={() => exec(() => editor.chain().focus().toggleUnderline().run())} dividerAfter />
-        </>
-      )}
-
-      {/* Alignment submenu */}
-      <SubMenu icon={<AlignLeft size={ICON_SIZE} />} label="단락 정렬">
-        <MenuItem icon={<AlignLeft size={ICON_SIZE} />} label="왼쪽 맞춤"
-          onClick={() => exec(() => editor.chain().focus().setTextAlign("left").run())} />
-        <MenuItem icon={<AlignCenter size={ICON_SIZE} />} label="가운데 맞춤"
-          onClick={() => exec(() => editor.chain().focus().setTextAlign("center").run())} />
-        <MenuItem icon={<AlignRight size={ICON_SIZE} />} label="오른쪽 맞춤"
-          onClick={() => exec(() => editor.chain().focus().setTextAlign("right").run())} />
-        <MenuItem icon={<AlignJustify size={ICON_SIZE} />} label="양쪽 맞춤"
-          onClick={() => exec(() => editor.chain().focus().setTextAlign("justify").run())} />
+      <SubMenu icon={SUBMENU_ICONS.alignment} label="단락 정렬">
+        {renderItems(ALIGNMENT_ITEMS, handlers, disabledState, activeState)}
       </SubMenu>
 
-      {/* Heading submenu */}
-      <SubMenu icon={<Type size={ICON_SIZE} />} label="스타일">
-        <MenuItem icon={<Type size={ICON_SIZE} />} label="본문"
-          onClick={() => exec(() => editor.chain().focus().setParagraph().run())} />
-        <MenuItem icon={<Heading1 size={ICON_SIZE} />} label="제목 1"
-          onClick={() => exec(() => editor.chain().focus().toggleHeading({ level: 1 }).run())} />
-        <MenuItem icon={<Heading2 size={ICON_SIZE} />} label="제목 2"
-          onClick={() => exec(() => editor.chain().focus().toggleHeading({ level: 2 }).run())} />
-        <MenuItem icon={<Heading3 size={ICON_SIZE} />} label="제목 3"
-          onClick={() => exec(() => editor.chain().focus().toggleHeading({ level: 3 }).run())} />
+      <SubMenu icon={SUBMENU_ICONS.style} label="스타일">
+        {renderItems(STYLE_ITEMS, handlers, disabledState, activeState)}
       </SubMenu>
 
-      {/* Lists */}
-      <SubMenu icon={<List size={ICON_SIZE} />} label="목록">
-        <MenuItem icon={<List size={ICON_SIZE} />} label="글머리 기호"
-          onClick={() => exec(() => editor.chain().focus().toggleBulletList().run())} />
-        <MenuItem icon={<ListOrdered size={ICON_SIZE} />} label="번호 매기기"
-          onClick={() => exec(() => editor.chain().focus().toggleOrderedList().run())} />
+      <SubMenu icon={SUBMENU_ICONS.list} label="목록">
+        {renderItems(LIST_ITEMS, handlers, disabledState, activeState)}
       </SubMenu>
 
       <div style={{ height: 1, background: "#e5e5e5", margin: "3px 0" }} />
 
-      {/* Indent */}
-      <MenuItem icon={<Indent size={ICON_SIZE} />} label="들여쓰기" shortcut="Tab"
-        onClick={() => exec(() => editor.chain().focus().increaseIndent().run())} />
-      <MenuItem icon={<Outdent size={ICON_SIZE} />} label="내어쓰기" shortcut="Shift+Tab"
-        onClick={() => exec(() => editor.chain().focus().decreaseIndent().run())} dividerAfter />
+      {renderItems(INDENT_ITEMS, handlers, disabledState, activeState)}
+      {renderItems(INSERT_ITEMS, handlers, disabledState, activeState)}
 
-      {/* Link */}
-      <MenuItem icon={<Link2 size={ICON_SIZE} />} label={isLink ? "링크 편집..." : "하이퍼링크..."} shortcut="Ctrl+K"
-        onClick={() => exec(() => onOpenHyperlinkDialog?.())} />
-
-      {/* Image insert */}
-      <MenuItem icon={<ImageIcon size={ICON_SIZE} />} label="그림 삽입..."
-        onClick={() => exec(() => {
-          const input = document.createElement("input");
-          input.type = "file"; input.accept = "image/*";
-          input.onchange = (ev) => {
-            const file = ev.target.files?.[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = () => editor.chain().focus().setImage({ src: reader.result }).run();
-            reader.readAsDataURL(file);
-          };
-          input.click();
-        })} dividerAfter />
-
-      {/* Comment items */}
-      <MenuItem icon={<MessageSquare size={ICON_SIZE} />} label="새 메모" shortcut="Ctrl+Alt+M"
-        onClick={() => exec(() => onInsertComment?.())} />
-      {(() => {
-        // Check if cursor is on a comment mark
-        const $from = editor.state.selection.$from;
-        const commentMark = $from.marks().find(m => m.type.name === "comment");
-        if (commentMark && commentStore && commentDispatch) {
-          const cid = commentMark.attrs.commentId;
-          const comment = commentStore.comments[cid];
-          return (
-            <>
-              <MenuItem icon={<Reply size={ICON_SIZE} />} label="메모에 답글 달기"
-                onClick={() => exec(() => {
-                  commentDispatch({ type: "SET_ACTIVE", id: cid });
-                  commentDispatch({ type: "SET_PANEL_VISIBLE", visible: true });
-                  if (commentStore.markupMode !== "all") commentDispatch({ type: "SET_MARKUP_MODE", mode: "all" });
-                })} />
-              <MenuItem icon={<Check size={ICON_SIZE} />} label="메모 해결"
-                onClick={() => exec(() => commentDispatch({ type: "RESOLVE_COMMENT", id: cid, author: commentAuthor }))}
-                disabled={comment?.resolved} />
-              <MenuItem icon={<Trash2 size={ICON_SIZE} />} label="메모 삭제" danger
-                onClick={() => exec(() => {
-                  editor.commands.unsetComment(cid);
-                  commentDispatch({ type: "DELETE_COMMENT", id: cid });
-                })} />
-            </>
-          );
-        }
-        return null;
+      {/* 메모 항목 */}
+      <MenuItem
+        icon={COMMENT_ITEM.icon} label={COMMENT_ITEM.label} shortcut={COMMENT_ITEM.shortcut}
+        onClick={() => handlers[COMMENT_ITEM.action]?.()}
+      />
+      {commentMark && commentStore && commentDispatch && (() => {
+        const cid = commentMark.attrs.commentId;
+        const comment = commentStore.comments[cid];
+        return (
+          <>
+            <MenuItem icon={<Reply size={ICON_SIZE} />} label="메모에 답글 달기"
+              onClick={() => {
+                commentDispatch({ type: "SET_ACTIVE", id: cid });
+                commentDispatch({ type: "SET_PANEL_VISIBLE", visible: true });
+                if (commentStore.markupMode !== "all") commentDispatch({ type: "SET_MARKUP_MODE", mode: "all" });
+                close();
+              }} />
+            <MenuItem icon={<Check size={ICON_SIZE} />} label="메모 해결"
+              onClick={() => { commentDispatch({ type: "RESOLVE_COMMENT", id: cid, author: commentAuthor }); close(); }}
+              disabled={comment?.resolved} />
+            <MenuItem icon={<Trash2 size={ICON_SIZE} />} label="메모 삭제" danger
+              onClick={() => {
+                editor.commands.unsetComment(cid);
+                commentDispatch({ type: "DELETE_COMMENT", id: cid });
+                close();
+              }} />
+          </>
+        );
       })()}
       <div style={{ height: 1, background: "#e5e5e5", margin: "3px 0" }} />
 
-      {/* Table operations */}
+      {/* 표 조작 */}
       {isTable && (
         <>
-          <SubMenu icon={<Table2 size={ICON_SIZE} />} label="표 조작">
-            <MenuItem label="행 추가 (위)" onClick={() => exec(() => editor.chain().focus().addRowBefore().run())} />
-            <MenuItem label="행 추가 (아래)" onClick={() => exec(() => editor.chain().focus().addRowAfter().run())} />
-            <MenuItem label="열 추가 (왼쪽)" onClick={() => exec(() => editor.chain().focus().addColumnBefore().run())} />
-            <MenuItem label="열 추가 (오른쪽)" onClick={() => exec(() => editor.chain().focus().addColumnAfter().run())} />
-            <div style={{ height: 1, background: "#e5e5e5", margin: "3px 0" }} />
-            <MenuItem label="행 삭제" onClick={() => exec(() => editor.chain().focus().deleteRow().run())} />
-            <MenuItem label="열 삭제" onClick={() => exec(() => editor.chain().focus().deleteColumn().run())} />
-            <MenuItem label="셀 병합" onClick={() => exec(() => editor.chain().focus().mergeCells().run())} />
-            <MenuItem label="셀 분할" onClick={() => exec(() => editor.chain().focus().splitCell().run())} />
-            <div style={{ height: 1, background: "#e5e5e5", margin: "3px 0" }} />
-            <MenuItem label="표 삭제" danger onClick={() => exec(() => editor.chain().focus().deleteTable().run())} />
+          <SubMenu icon={SUBMENU_ICONS.table} label="표 조작">
+            {renderItems(TABLE_ITEMS, handlers, disabledState, activeState)}
           </SubMenu>
           <div style={{ height: 1, background: "#e5e5e5", margin: "3px 0" }} />
         </>
       )}
 
-      {/* Dialogs */}
-      <MenuItem icon={<Type size={ICON_SIZE} />} label="글꼴..." shortcut="Ctrl+D"
-        onClick={() => exec(() => onOpenFontDialog?.())} />
-      <MenuItem icon={<Minus size={ICON_SIZE} />} label="단락..."
-        onClick={() => exec(() => onOpenParagraphDialog?.())} />
+      {renderItems(DIALOG_ITEMS, handlers, disabledState, activeState)}
 
-      {/* Select All */}
       <div style={{ height: 1, background: "#e5e5e5", margin: "3px 0" }} />
-      <MenuItem icon={<Paintbrush size={ICON_SIZE} />} label="서식 지우기"
-        onClick={() => exec(() => editor.chain().focus().clearNodes().unsetAllMarks().run())}
-        disabled={!hasSelection} />
+      <MenuItem
+        icon={CLEAR_FORMAT_ITEM.icon} label={CLEAR_FORMAT_ITEM.label}
+        disabled={!hasSelection}
+        onClick={() => handlers[CLEAR_FORMAT_ITEM.action]?.()}
+      />
     </div>
   );
 }

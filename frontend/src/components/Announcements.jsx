@@ -42,7 +42,7 @@ export default function Announcements() {
       {/* 배너 (상단 바) */}
       {banners.filter((b) => !dismissedBanners.has(b.id)).map((b) => (
         <div key={b.id} style={{
-          background: b.bgColor || "#b08d57",
+          background: b.bgColor || "var(--accent-gold)",
           color: b.textColor || "#fff",
           padding: "10px 20px",
           fontSize: 13,
@@ -89,11 +89,11 @@ export default function Announcements() {
             <button onClick={dismissPopup} style={{
               position: "absolute", right: 16, top: 16,
               background: "none", border: "none", fontSize: 20,
-              cursor: "pointer", color: "#999", padding: 4,
+              cursor: "pointer", color: "var(--text-muted)", padding: 4,
             }}>
               ✕
             </button>
-            <h3 style={{ fontSize: 18, fontWeight: 600, color: "#1a1a1a", marginBottom: 12 }}>
+            <h3 style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)", marginBottom: 12 }}>
               {popup.title}
             </h3>
             {popup.content && (
@@ -104,7 +104,7 @@ export default function Announcements() {
             {popup.linkUrl && (
               <a href={popup.linkUrl} style={{
                 display: "inline-block", padding: "10px 24px",
-                background: popup.bgColor || "#b08d57", color: popup.textColor || "#fff",
+                background: popup.bgColor || "var(--accent-gold)", color: popup.textColor || "#fff",
                 borderRadius: 6, textDecoration: "none", fontSize: 14, fontWeight: 500,
               }}>
                 자세히 보기

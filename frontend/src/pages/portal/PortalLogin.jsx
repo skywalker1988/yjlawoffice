@@ -1,18 +1,8 @@
-/** 포털 로그인 — 의뢰인 이메일/비밀번호 로그인 */
+/** 포털 로그인 -- 의뢰인 이메일/비밀번호 로그인 */
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-
-const T = { accent: "#b08d57", text: "#1e293b", textSec: "#475569", border: "#e5e8ed" };
-const fieldStyle = { width: "100%", padding: "12px 14px", fontSize: 14, border: "1px solid #d0d0d0", borderRadius: 6, background: "#fff", fontFamily: "inherit", outline: "none", boxSizing: "border-box" };
-
-const portalFetch = async (method, path, body) => {
-  const opts = { method, headers: { "Content-Type": "application/json", "x-portal-token": sessionStorage.getItem("portal_token") || "" } };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(`/api/sb/portal${path}`, opts);
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || "요청 실패");
-  return json;
-};
+import { portalApi } from "../../utils/portalApi";
+import { T, fieldStyle } from "./portalStyles";
 
 export default function PortalLogin() {
   const navigate = useNavigate();
@@ -28,7 +18,7 @@ export default function PortalLogin() {
     setLoading(true);
 
     try {
-      const json = await portalFetch("POST", "/login", form);
+      const json = await portalApi.post("/login", form);
       sessionStorage.setItem("portal_token", json.data?.token || json.token || "");
       navigate("/portal", { replace: true });
     } catch (err) {
@@ -60,7 +50,7 @@ export default function PortalLogin() {
         {/* 폼 */}
         <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 16 }}>
-            <label style={{ fontSize: 12, fontWeight: 600, color: "#444", display: "block", marginBottom: 6 }}>이메일</label>
+            <label style={{ fontSize: 12, fontWeight: 600, color: T.textSec, display: "block", marginBottom: 6 }}>이메일</label>
             <input
               type="email"
               style={fieldStyle}
@@ -72,7 +62,7 @@ export default function PortalLogin() {
           </div>
 
           <div style={{ marginBottom: 24 }}>
-            <label style={{ fontSize: 12, fontWeight: 600, color: "#444", display: "block", marginBottom: 6 }}>비밀번호</label>
+            <label style={{ fontSize: 12, fontWeight: 600, color: T.textSec, display: "block", marginBottom: 6 }}>비밀번호</label>
             <input
               type="password"
               style={fieldStyle}

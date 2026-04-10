@@ -9,6 +9,7 @@ const { messageTemplates, messageLogs, consultations } = require("../db/schema")
 const { eq, desc, sql, and } = require("drizzle-orm");
 const { sendSMS } = require("../lib/sms-service");
 const { sendEmail } = require("../lib/email-service");
+const { adminAuth } = require("../lib/auth");
 
 const router = Router();
 
@@ -38,7 +39,7 @@ function replacePlaceholders(text, data) {
 // =============================================
 
 /** GET /templates — 템플릿 목록 */
-router.get("/templates", async (req, res) => {
+router.get("/templates", adminAuth, async (req, res) => {
   try {
     const { channel } = req.query;
     let query = db.select().from(messageTemplates);
@@ -48,12 +49,13 @@ router.get("/templates", async (req, res) => {
     const rows = await query.orderBy(messageTemplates.sortOrder);
     res.json({ data: rows, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 /** POST /templates — 템플릿 생성 */
-router.post("/templates", async (req, res) => {
+router.post("/templates", adminAuth, async (req, res) => {
   try {
     const { name, channel, subject, content, isActive, sortOrder } = req.body;
     if (!name?.trim() || !content?.trim()) {
@@ -74,12 +76,13 @@ router.post("/templates", async (req, res) => {
 
     res.json({ data: inserted, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 /** PATCH /templates/:id — 템플릿 수정 */
-router.patch("/templates/:id", async (req, res) => {
+router.patch("/templates/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     if (!UUID_REGEX.test(id)) {
@@ -107,12 +110,13 @@ router.patch("/templates/:id", async (req, res) => {
 
     res.json({ data: updated, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 /** DELETE /templates/:id — 템플릿 삭제 */
-router.delete("/templates/:id", async (req, res) => {
+router.delete("/templates/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     if (!UUID_REGEX.test(id)) {
@@ -127,7 +131,8 @@ router.delete("/templates/:id", async (req, res) => {
     await db.delete(messageTemplates).where(eq(messageTemplates.id, id));
     res.json({ data: { deleted: true }, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -139,7 +144,7 @@ router.delete("/templates/:id", async (req, res) => {
  * POST /send — 메시지 발송
  * body: { channel, recipients: [{ name, contact, consultationId?, category? }], templateId?, subject?, content }
  */
-router.post("/send", async (req, res) => {
+router.post("/send", adminAuth, async (req, res) => {
   try {
     const { channel, recipients, templateId, subject, content } = req.body;
 
@@ -209,7 +214,8 @@ router.post("/send", async (req, res) => {
       meta: null,
     });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -218,7 +224,7 @@ router.post("/send", async (req, res) => {
 // =============================================
 
 /** GET /logs — 발송 이력 목록 (페이지네이션) */
-router.get("/logs", async (req, res) => {
+router.get("/logs", adminAuth, async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
@@ -248,12 +254,13 @@ router.get("/logs", async (req, res) => {
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 /** DELETE /logs/:id — 이력 삭제 */
-router.delete("/logs/:id", async (req, res) => {
+router.delete("/logs/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     if (!UUID_REGEX.test(id)) {
@@ -268,7 +275,8 @@ router.delete("/logs/:id", async (req, res) => {
     await db.delete(messageLogs).where(eq(messageLogs.id, id));
     res.json({ data: { deleted: true }, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 

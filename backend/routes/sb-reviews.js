@@ -5,6 +5,7 @@ const { Router } = require("express");
 const { db } = require("../db");
 const { reviews } = require("../db/schema");
 const { eq, desc, sql } = require("drizzle-orm");
+const { adminAuth } = require("../lib/auth");
 
 const router = Router();
 
@@ -41,7 +42,8 @@ router.get("/", async (req, res) => {
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -60,7 +62,8 @@ router.get("/top", async (req, res) => {
 
     res.json({ data: rows, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -68,7 +71,7 @@ router.get("/top", async (req, res) => {
  * POST /api/sb/reviews — 후기 생성 (관리자)
  * - clientName, rating(1-5), content 필수
  */
-router.post("/", async (req, res) => {
+router.post("/", adminAuth, async (req, res) => {
   try {
     const { clientName, rating, content, category, isAnonymous, isPublished } = req.body;
 
@@ -95,14 +98,15 @@ router.post("/", async (req, res) => {
 
     res.json({ data: inserted, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 /**
  * PATCH /api/sb/reviews/:id — 후기 수정 (관리자)
  */
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     if (!UUID_REGEX.test(id)) {
@@ -127,14 +131,15 @@ router.patch("/:id", async (req, res) => {
     const [updated] = await db.update(reviews).set(updateData).where(eq(reviews.id, id)).returning();
     res.json({ data: updated, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 /**
  * DELETE /api/sb/reviews/:id — 후기 삭제 (관리자)
  */
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     if (!UUID_REGEX.test(id)) {
@@ -149,7 +154,8 @@ router.delete("/:id", async (req, res) => {
     await db.delete(reviews).where(eq(reviews.id, id));
     res.json({ data: { deleted: true }, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 

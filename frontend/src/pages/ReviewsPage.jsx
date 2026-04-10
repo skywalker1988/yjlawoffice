@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import useReveal from "../hooks/useReveal";
 import { api } from "../utils/api";
 
-const T = { accent: "#b08d57", accentDim: "rgba(176,141,87,0.08)", text: "#1e293b", textSec: "#475569", textMuted: "#94a3b8", border: "#e5e8ed", card: "#ffffff" };
+const T = { accent: "var(--accent-gold)", accentDim: "rgba(176,141,87,0.08)", text: "var(--text-primary)", textSec: "var(--text-secondary)", textMuted: "var(--text-muted)", border: "var(--gray-100)", card: "#ffffff" };
 
 const CATEGORIES = [
   { value: "", label: "전체" },
@@ -23,7 +23,7 @@ function Stars({ rating, size = 18, color = T.accent }) {
   return (
     <span style={{ display: "inline-flex", gap: 2 }}>
       {[1, 2, 3, 4, 5].map((i) => (
-        <span key={i} style={{ fontSize: size, color: i <= rating ? color : "#ddd", lineHeight: 1 }}>
+        <span key={i} style={{ fontSize: size, color: i <= rating ? color : "var(--gray-100)", lineHeight: 1 }}>
           {i <= rating ? "\u2605" : "\u2606"}
         </span>
       ))}
@@ -95,7 +95,7 @@ export default function ReviewsPage() {
             의뢰인 후기
           </h1>
           <div style={{ width: 48, height: 1, background: T.accent, margin: "0 auto 24px" }} />
-          <p style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", maxWidth: 500, margin: "0 auto" }}>
+          <p style={{ fontSize: 15, color: "var(--white-60)", maxWidth: 500, margin: "0 auto" }}>
             윤정 법률사무소를 경험하신 의뢰인의 생생한 후기입니다
           </p>
         </div>

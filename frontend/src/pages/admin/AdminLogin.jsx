@@ -1,5 +1,6 @@
 /** 관리자 로그인 — 스플릿 스크린 레이아웃 (좌: 배경영상 히어로, 우: 인증 폼) */
 import { useState, useEffect } from "react";
+import { api } from "../../utils/api";
 import "./AdminLogin.css";
 
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -9,6 +10,7 @@ const MAX_ATTEMPTS = 5;
 const LOCK_DURATION_SEC = 15 * 60;
 
 export default function AdminLogin({ onLogin }) {
+  const [username, setUsername] = useState("");
   const [pw, setPw] = useState("");
   const [err, setErr] = useState("");
   const [tab, setTab] = useState("admin");
@@ -16,6 +18,7 @@ export default function AdminLogin({ onLogin }) {
   const [attempts, setAttempts] = useState(0);
   const [locked, setLocked] = useState(false);
   const [lockRemain, setLockRemain] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   const [heroVideo, setHeroVideo] = useState("/videos/manhattan-panoramic.mp4");
 
@@ -67,12 +70,17 @@ export default function AdminLogin({ onLogin }) {
   const mm = String(clock.getMinutes()).padStart(2, "0");
   const dateStr = `${DAY_NAMES[clock.getDay()]}, ${MONTH_NAMES[clock.getMonth()]} ${clock.getDate()}, ${clock.getFullYear()}`;
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    if (locked) return;
-    if (pw === "1234") {
+    if (locked || loading) return;
+    setLoading(true);
+    setErr("");
+    try {
+      const res = await api.post("/admin-users/login", { username: username.trim() || "admin", password: pw });
+      // 서버에서 발급한 토큰을 저장
+      sessionStorage.setItem("admin_token", res.data.token);
       onLogin();
-    } else {
+    } catch (error) {
       const next = attempts + 1;
       setAttempts(next);
       if (next >= MAX_ATTEMPTS) {
@@ -80,8 +88,10 @@ export default function AdminLogin({ onLogin }) {
         setLockRemain(LOCK_DURATION_SEC);
         setErr("로그인 시도가 너무 많습니다. 15분 후 다시 시도해주세요.");
       } else {
-        setErr("비밀번호가 틀렸습니다.");
+        setErr(error.message || "아이디 또는 비밀번호가 올바르지 않습니다.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -155,14 +165,27 @@ export default function AdminLogin({ onLogin }) {
 
           {/* 인증 폼 */}
           <form onSubmit={submit}>
-            <div className="admin-login__pw-label">PASSWORD</div>
+            <label htmlFor="admin-username" className="admin-login__pw-label">USERNAME</label>
             <input
+              id="admin-username"
+              type="text"
+              className={`admin-login__input ${hasError ? "admin-login__input--error" : ""}`}
+              value={username}
+              onChange={(e) => { setUsername(e.target.value); setErr(""); }}
+              disabled={locked}
+              autoFocus
+              placeholder="admin"
+              autoComplete="username"
+            />
+            <label htmlFor="admin-password" className="admin-login__pw-label" style={{ marginTop: 16 }}>PASSWORD</label>
+            <input
+              id="admin-password"
               type="password"
               className={`admin-login__input ${hasError ? "admin-login__input--error" : ""}`}
               value={pw}
               onChange={(e) => { setPw(e.target.value); setErr(""); }}
               disabled={locked}
-              autoFocus
+              autoComplete="current-password"
             />
 
             {err && (
@@ -173,8 +196,8 @@ export default function AdminLogin({ onLogin }) {
               </div>
             )}
 
-            <button type="submit" className="admin-login__btn" disabled={locked}>
-              AUTHENTICATE
+            <button type="submit" className="admin-login__btn" disabled={locked || loading}>
+              {loading ? "인증 중..." : "AUTHENTICATE"}
             </button>
           </form>
 

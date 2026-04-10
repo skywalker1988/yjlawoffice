@@ -45,7 +45,7 @@ export default function SearchPage() {
         .then((data) => {
           setResults(Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : []);
         })
-        .catch(err => { console.error("[SearchPage] 검색 실패:", err); setResults([]); })
+        .catch(() => { setResults([]); })
         .finally(() => setLoading(false));
     },
     [typeFilter]
@@ -124,7 +124,7 @@ export default function SearchPage() {
               borderRadius: 20,
               border: `1px solid ${!typeFilter ? "var(--accent-gold)" : "rgba(0,0,0,0.1)"}`,
               background: !typeFilter ? "var(--accent-gold)" : "transparent",
-              color: !typeFilter ? "#fff" : "#666",
+              color: !typeFilter ? "#fff" : "var(--gray-500)",
               cursor: "pointer",
             }}
           >
@@ -143,7 +143,7 @@ export default function SearchPage() {
                 }`,
                 background:
                   typeFilter === type ? getTypeColor(type) : "transparent",
-                color: typeFilter === type ? "#fff" : "#666",
+                color: typeFilter === type ? "#fff" : "var(--gray-500)",
                 cursor: "pointer",
               }}
             >
@@ -154,21 +154,21 @@ export default function SearchPage() {
 
         {/* Loading */}
         {loading && (
-          <p style={{ color: "#999", padding: 20, textAlign: "center" }}>
+          <p style={{ color: "var(--text-muted)", padding: 20, textAlign: "center" }}>
             검색 중...
           </p>
         )}
 
         {/* Results */}
         {!loading && query.trim() && filteredResults.length === 0 && (
-          <p style={{ color: "#999", padding: 40, textAlign: "center" }}>
+          <p style={{ color: "var(--text-muted)", padding: 40, textAlign: "center" }}>
             검색 결과가 없습니다.
           </p>
         )}
 
         {!loading && filteredResults.length > 0 && (
           <div>
-            <p style={{ fontSize: 13, color: "#999", marginBottom: 16 }}>
+            <p style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 16 }}>
               {filteredResults.length}건의 결과
             </p>
             {filteredResults.map((doc) => (

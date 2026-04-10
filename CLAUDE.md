@@ -110,7 +110,7 @@ yjlaw/
 /history            → HistoryPage (세계사 연표+지도)
 /editor             → EditorPage (Word 에디터, 독립 전체화면)
 /editor/:id         → EditorPage (기존 문서 편집)
-/admin/*            → 관리자 영역 (비밀번호: 1234)
+/admin/*            → 관리자 영역 (백엔드 인증, .env 참조)
   /admin            → AdminDashboard
   /admin/documents  → AdminDocuments
   /admin/tags       → AdminTags

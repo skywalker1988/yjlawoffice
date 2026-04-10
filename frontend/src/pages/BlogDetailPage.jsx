@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { marked } from "marked";
+import DOMPurify from "dompurify";
 import { api } from "../utils/api";
 import useReveal from "../hooks/useReveal";
 
@@ -59,8 +60,8 @@ export default function BlogDetailPage() {
     );
   }
 
-  /** 마크다운 콘텐츠를 HTML로 변환 */
-  const contentHtml = marked.parse(post.content || "", { breaks: true });
+  /** 마크다운 콘텐츠를 HTML로 변환 (XSS 방지를 위해 DOMPurify 적용) */
+  const contentHtml = DOMPurify.sanitize(marked.parse(post.content || "", { breaks: true }));
 
   return (
     <div ref={ref}>

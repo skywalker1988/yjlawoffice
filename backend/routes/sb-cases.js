@@ -5,6 +5,7 @@ const { Router } = require("express");
 const { db } = require("../db");
 const { caseResults } = require("../db/schema");
 const { eq, desc, asc, and, count } = require("drizzle-orm");
+const { adminAuth } = require("../lib/auth");
 
 const router = Router();
 
@@ -25,7 +26,12 @@ router.get("/", async (req, res) => {
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit ?? "20")));
     const offset = (page - 1) * limit;
     const category = req.query.category || null;
-    const includeUnpublished = req.query.all === "true";
+    // 미공개 사건 포함은 인증된 관리자만 가능
+    const auth = req.get("Authorization") || "";
+    const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+    const { getSession } = require("../lib/auth");
+    const session = token ? getSession(token) : null;
+    const includeUnpublished = req.query.all === "true" && !!session;
 
     const conditions = [];
     if (!includeUnpublished) {
@@ -56,12 +62,13 @@ router.get("/", async (req, res) => {
       meta: { total: totalResult.total, page, limit, totalPages: Math.ceil(totalResult.total / limit) },
     });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 // POST /api/sb/cases — 사례 생성
-router.post("/", async (req, res) => {
+router.post("/", adminAuth, async (req, res) => {
   try {
     const { title, category, result, summary, detail, isPublished, sortOrder } = req.body;
 
@@ -84,12 +91,13 @@ router.post("/", async (req, res) => {
 
     res.json({ data: inserted, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 // PATCH /api/sb/cases/:id — 사례 수정
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     if (!validateId(id, res)) return;
@@ -117,12 +125,13 @@ router.patch("/:id", async (req, res) => {
 
     res.json({ data: updated, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 // DELETE /api/sb/cases/:id — 사례 삭제
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     if (!validateId(id, res)) return;
@@ -135,7 +144,8 @@ router.delete("/:id", async (req, res) => {
     await db.delete(caseResults).where(eq(caseResults.id, id));
     res.json({ data: { deleted: true }, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 

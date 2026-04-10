@@ -11,6 +11,7 @@ const { Router } = require("express");
 const { db } = require("../db");
 const { announcements } = require("../db/schema");
 const { eq, and, or, sql, desc, asc, lte, gte, isNull } = require("drizzle-orm");
+const { adminAuth } = require("../lib/auth");
 
 const router = Router();
 
@@ -38,7 +39,7 @@ router.get("/active", async (req, res) => {
     res.json({ data: rows, error: null, meta: { total: rows.length } });
   } catch (err) {
     console.error("[announcements] 활성 목록 조회 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -62,7 +63,7 @@ router.get("/", async (req, res) => {
     res.json({ data: rows, error: null, meta: { total: rows.length } });
   } catch (err) {
     console.error("[announcements] 목록 조회 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -82,12 +83,12 @@ router.get("/:id", async (req, res) => {
     res.json({ data: row, error: null, meta: null });
   } catch (err) {
     console.error("[announcements] 조회 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 // ─── POST / — 공지 생성 ───
-router.post("/", async (req, res) => {
+router.post("/", adminAuth, async (req, res) => {
   try {
     const { type, title, content, linkUrl, bgColor, textColor, isActive, startDate, endDate, position, sortOrder } = req.body;
 
@@ -117,12 +118,12 @@ router.post("/", async (req, res) => {
     res.json({ data: inserted, error: null, meta: null });
   } catch (err) {
     console.error("[announcements] 생성 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 // ─── PATCH /:id — 공지 수정 ───
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     if (!UUID_REGEX.test(id)) {
@@ -158,12 +159,12 @@ router.patch("/:id", async (req, res) => {
     res.json({ data: updated, error: null, meta: null });
   } catch (err) {
     console.error("[announcements] 수정 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 // ─── DELETE /:id — 공지 삭제 ───
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     if (!UUID_REGEX.test(id)) {
@@ -179,7 +180,7 @@ router.delete("/:id", async (req, res) => {
     res.json({ data: { deleted: true }, error: null, meta: null });
   } catch (err) {
     console.error("[announcements] 삭제 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 

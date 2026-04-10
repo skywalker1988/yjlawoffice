@@ -3,164 +3,23 @@
  * 펜, 형광펜, 지우개, 올가미 선택 등 잉크 입력 도구와
  * 잉크→텍스트/도형/수식 변환, 그리기 캔버스 삽입 기능 제공
  */
-import { useState, useCallback, useRef, useEffect } from "react";
+import { memo, useState, useCallback } from "react";
 import {
-  Pen, Pencil, Highlighter, Eraser, Lasso,
+  Highlighter, Eraser, Lasso,
   Type, Shapes, Sigma, Frame,
   Undo2, Redo2, ChevronDown,
 } from "lucide-react";
 import {
   RibbonBtn, RibbonBtnLarge, GroupSep, RibbonGroup, DropdownButton, ColorGrid,
 } from "./RibbonParts";
-
-/* ── 상수 ── */
-const ICON_SIZE = 12;
-const ICON_SIZE_LARGE = 18;
-
-/** 펜 도구 종류 정의 */
-const PEN_TOOLS = [
-  { id: "fine", label: "가는 펜", width: 1, icon: Pencil },
-  { id: "medium", label: "중간 펜", width: 3, icon: Pen },
-  { id: "thick", label: "굵은 펜", width: 6, icon: Pen },
-];
-
-/** 형광펜 도구 종류 정의 */
-const HIGHLIGHTER_TOOLS = [
-  { id: "highlight-thin", label: "가는 형광펜", width: 8, opacity: 0.4 },
-  { id: "highlight-thick", label: "굵은 형광펜", width: 16, opacity: 0.4 },
-];
-
-/** 기본 펜 색상 팔레트 */
-const PEN_COLORS = [
-  "#000000", "#FF0000", "#0000FF", "#008000", "#FF8C00",
-  "#800080", "#A52A2A", "#4169E1", "#2E8B57", "#DC143C",
-];
-
-/** 형광펜 기본 색상 팔레트 */
-const HIGHLIGHTER_COLORS = [
-  "#FFFF00", "#00FF00", "#00FFFF", "#FF69B4", "#FFA500",
-  "#87CEEB", "#DDA0DD", "#98FB98", "#FFB6C1", "#FFDAB9",
-];
-
-/** 최대 보관할 최근 사용 색상 수 */
-const MAX_RECENT_COLORS = 10;
-
-/* ── SVG 경로 생성 헬퍼 ── */
-
-/**
- * 포인트 배열을 SVG path d 문자열로 변환
- * @param {Array<{x:number, y:number}>} points - 좌표 배열
- * @returns {string} SVG path d 속성 문자열
- */
-function buildPathData(points) {
-  if (points.length === 0) return "";
-  if (points.length === 1) {
-    return `M ${points[0].x} ${points[0].y} L ${points[0].x} ${points[0].y}`;
-  }
-  let d = `M ${points[0].x} ${points[0].y}`;
-  for (let i = 1; i < points.length; i++) {
-    d += ` L ${points[i].x} ${points[i].y}`;
-  }
-  return d;
-}
-
-/* ================================================================
- *  드로잉 상태 관리 훅
- * ================================================================ */
-
-/**
- * 드로잉 캔버스의 스트로크 상태를 관리하는 커스텀 훅
- * - 스트로크 배열, 실행취소/다시실행 스택 관리
- * - 현재 진행 중인 스트로크 추적
- */
-function useDrawingState() {
-  const [strokes, setStrokes] = useState([]);
-  const [redoStack, setRedoStack] = useState([]);
-  const [currentStroke, setCurrentStroke] = useState(null);
-
-  /** 새 스트로크 시작 */
-  const startStroke = useCallback((strokeConfig) => {
-    setCurrentStroke({ ...strokeConfig, points: [] });
-  }, []);
-
-  /** 현재 스트로크에 포인트 추가 */
-  const addPoint = useCallback((point) => {
-    setCurrentStroke((prev) => {
-      if (!prev) return null;
-      return { ...prev, points: [...prev.points, point] };
-    });
-  }, []);
-
-  /** 현재 스트로크 완료 후 스트로크 목록에 추가 */
-  const finishStroke = useCallback(() => {
-    setCurrentStroke((prev) => {
-      if (!prev || prev.points.length === 0) return null;
-      setStrokes((s) => [...s, prev]);
-      setRedoStack([]);
-      return null;
-    });
-  }, []);
-
-  /** 마지막 스트로크 실행취소 */
-  const undo = useCallback(() => {
-    setStrokes((prev) => {
-      if (prev.length === 0) return prev;
-      const last = prev[prev.length - 1];
-      setRedoStack((r) => [...r, last]);
-      return prev.slice(0, -1);
-    });
-  }, []);
-
-  /** 실행취소한 스트로크 다시실행 */
-  const redo = useCallback(() => {
-    setRedoStack((prev) => {
-      if (prev.length === 0) return prev;
-      const last = prev[prev.length - 1];
-      setStrokes((s) => [...s, last]);
-      return prev.slice(0, -1);
-    });
-  }, []);
-
-  /** 지우개: 특정 좌표 근처의 스트로크 제거 */
-  const eraseAt = useCallback((x, y, radius = 10) => {
-    setStrokes((prev) => {
-      const remaining = prev.filter((stroke) => {
-        return !stroke.points.some(
-          (p) => Math.abs(p.x - x) < radius && Math.abs(p.y - y) < radius
-        );
-      });
-      if (remaining.length < prev.length) {
-        setRedoStack([]);
-      }
-      return remaining;
-    });
-  }, []);
-
-  /** 모든 스트로크를 SVG 문자열로 직렬화 */
-  const toSvgString = useCallback((width, height) => {
-    const paths = strokes.map((s) => {
-      const d = buildPathData(s.points);
-      const opacity = s.opacity != null ? s.opacity : 1;
-      return `<path d="${d}" stroke="${s.color}" stroke-width="${s.width}" fill="none" opacity="${opacity}" stroke-linecap="round" stroke-linejoin="round"/>`;
-    }).join("\n  ");
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">\n  ${paths}\n</svg>`;
-  }, [strokes]);
-
-  return {
-    strokes,
-    currentStroke,
-    redoStack,
-    startStroke,
-    addPoint,
-    finishStroke,
-    undo,
-    redo,
-    eraseAt,
-    toSvgString,
-    canUndo: strokes.length > 0,
-    canRedo: redoStack.length > 0,
-  };
-}
+import {
+  ICON_SIZE, ICON_SIZE_LARGE,
+  PEN_TOOLS, HIGHLIGHTER_TOOLS,
+  PEN_COLORS, HIGHLIGHTER_COLORS,
+  MAX_RECENT_COLORS,
+} from "./drawConstants";
+import { DrawingOverlay, useDrawingState } from "./DrawCanvas";
+import { showEditorAlert } from "./editorToast";
 
 /* ================================================================
  *  서브 컴포넌트
@@ -230,145 +89,6 @@ function OpacitySlider({ value, onChange }) {
 }
 
 /* ================================================================
- *  SVG 드로잉 오버레이
- * ================================================================ */
-
-/**
- * 에디터 위에 표시되는 SVG 드로잉 캔버스
- * 마우스/터치 이벤트를 캡처하여 자유곡선을 그림
- */
-function DrawingOverlay({
-  activeTool,
-  penColor,
-  penWidth,
-  highlighterOpacity,
-  drawingState,
-}) {
-  const svgRef = useRef(null);
-  const isDrawingRef = useRef(false);
-
-  /** SVG 요소 기준 좌표 계산 */
-  const getPoint = useCallback((e) => {
-    const svg = svgRef.current;
-    if (!svg) return { x: 0, y: 0 };
-    const rect = svg.getBoundingClientRect();
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    return { x: clientX - rect.left, y: clientY - rect.top };
-  }, []);
-
-  /** 그리기 도구의 스트로크 설정값 반환 */
-  const getStrokeConfig = useCallback(() => {
-    const isHighlighter = activeTool?.startsWith("highlight");
-    return {
-      color: penColor,
-      width: penWidth,
-      opacity: isHighlighter ? highlighterOpacity : 1,
-      tool: activeTool,
-    };
-  }, [activeTool, penColor, penWidth, highlighterOpacity]);
-
-  /** 포인터 다운: 스트로크 시작 또는 지우개 처리 */
-  const handlePointerDown = useCallback((e) => {
-    e.preventDefault();
-    if (!activeTool) return;
-
-    if (activeTool === "eraser") {
-      const pt = getPoint(e);
-      drawingState.eraseAt(pt.x, pt.y);
-      isDrawingRef.current = true;
-      return;
-    }
-
-    if (activeTool === "lasso") return;
-
-    isDrawingRef.current = true;
-    const pt = getPoint(e);
-    drawingState.startStroke(getStrokeConfig());
-    drawingState.addPoint(pt);
-  }, [activeTool, getPoint, getStrokeConfig, drawingState]);
-
-  /** 포인터 이동: 포인트 추가 또는 지우개 이동 */
-  const handlePointerMove = useCallback((e) => {
-    if (!isDrawingRef.current) return;
-    e.preventDefault();
-    const pt = getPoint(e);
-
-    if (activeTool === "eraser") {
-      drawingState.eraseAt(pt.x, pt.y);
-      return;
-    }
-
-    drawingState.addPoint(pt);
-  }, [activeTool, getPoint, drawingState]);
-
-  /** 포인터 업: 스트로크 완료 */
-  const handlePointerUp = useCallback(() => {
-    if (!isDrawingRef.current) return;
-    isDrawingRef.current = false;
-
-    if (activeTool !== "eraser") {
-      drawingState.finishStroke();
-    }
-  }, [activeTool, drawingState]);
-
-  /** 지우개 커서 스타일 결정 */
-  const getCursorStyle = () => {
-    if (activeTool === "eraser") return "cell";
-    if (activeTool === "lasso") return "crosshair";
-    if (activeTool) return "crosshair";
-    return "default";
-  };
-
-  return (
-    <svg
-      ref={svgRef}
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        zIndex: 50,
-        cursor: getCursorStyle(),
-        touchAction: "none",
-      }}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerLeave={handlePointerUp}
-    >
-      {/* 완료된 스트로크 렌더링 */}
-      {drawingState.strokes.map((stroke, i) => (
-        <path
-          key={`stroke-${i}`}
-          d={buildPathData(stroke.points)}
-          stroke={stroke.color}
-          strokeWidth={stroke.width}
-          fill="none"
-          opacity={stroke.opacity != null ? stroke.opacity : 1}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      ))}
-
-      {/* 현재 진행 중인 스트로크 렌더링 */}
-      {drawingState.currentStroke && drawingState.currentStroke.points.length > 0 && (
-        <path
-          d={buildPathData(drawingState.currentStroke.points)}
-          stroke={drawingState.currentStroke.color}
-          strokeWidth={drawingState.currentStroke.width}
-          fill="none"
-          opacity={drawingState.currentStroke.opacity != null ? drawingState.currentStroke.opacity : 1}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      )}
-    </svg>
-  );
-}
-
-/* ================================================================
  *  메인 그리기 탭 컴포넌트
  * ================================================================ */
 
@@ -377,7 +97,7 @@ function DrawingOverlay({
  * @param {object} props.editor - TipTap 에디터 인스턴스
  * @param {function} props.onCanvasToggle - 드로잉 캔버스 토글 콜백 (boolean 전달)
  */
-export function DrawTab({ editor, onCanvasToggle }) {
+export const DrawTab = memo(function DrawTab({ editor, onCanvasToggle }) {
   /* ── 도구 상태 ── */
   const [activeTool, setActiveTool] = useState(null);
   const [penColor, setPenColor] = useState("#000000");
@@ -429,28 +149,28 @@ export function DrawTab({ editor, onCanvasToggle }) {
   /** 잉크를 텍스트로 변환 (알림만 표시 - 실제 OCR은 미구현) */
   const convertInkToText = useCallback(() => {
     if (drawingState.strokes.length === 0) {
-      window.alert("변환할 잉크 데이터가 없습니다.");
+      showEditorAlert("변환할 잉크 데이터가 없습니다.");
       return;
     }
-    window.alert("잉크→텍스트 변환 기능은 향후 업데이트에서 제공됩니다.");
+    showEditorAlert("잉크→텍스트 변환 기능은 향후 업데이트에서 제공됩니다.");
   }, [drawingState.strokes]);
 
   /** 잉크를 도형으로 변환 (알림만 표시) */
   const convertInkToShape = useCallback(() => {
     if (drawingState.strokes.length === 0) {
-      window.alert("변환할 잉크 데이터가 없습니다.");
+      showEditorAlert("변환할 잉크 데이터가 없습니다.");
       return;
     }
-    window.alert("잉크→도형 변환 기능은 향후 업데이트에서 제공됩니다.");
+    showEditorAlert("잉크→도형 변환 기능은 향후 업데이트에서 제공됩니다.");
   }, [drawingState.strokes]);
 
   /** 잉크를 수식으로 변환 (알림만 표시) */
   const convertInkToMath = useCallback(() => {
     if (drawingState.strokes.length === 0) {
-      window.alert("변환할 잉크 데이터가 없습니다.");
+      showEditorAlert("변환할 잉크 데이터가 없습니다.");
       return;
     }
-    window.alert("잉크→수식 변환 기능은 향후 업데이트에서 제공됩니다.");
+    showEditorAlert("잉크→수식 변환 기능은 향후 업데이트에서 제공됩니다.");
   }, [drawingState.strokes]);
 
   /** 현재 활성 도구가 형광펜인지 여부 */
@@ -652,7 +372,7 @@ export function DrawTab({ editor, onCanvasToggle }) {
       </RibbonGroup>
     </div>
   );
-}
+});
 
 /* ── 드로잉 오버레이 내보내기 (에디터에서 조건부 렌더링용) ── */
 export { DrawingOverlay, useDrawingState };

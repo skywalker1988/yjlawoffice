@@ -18,23 +18,9 @@ const { db, sqlite } = require("../db");
 const { siteSettings, siteSettingsHistory, scheduledChanges } = require("../db/schema");
 const { eq, and, desc, sql } = require("drizzle-orm");
 const crypto = require("crypto");
-const { getSession } = require("../lib/auth");
+const { getSession, adminAuth } = require("../lib/auth");
 
 const router = Router();
-
-/**
- * 관리자 인증 미들웨어 — 수정 엔드포인트에 적용
- */
-function adminAuth(req, res, next) {
-  const auth = req.get("Authorization") || "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
-  const session = token ? getSession(token) : null;
-  if (!session) {
-    return res.status(401).json({ data: null, error: "관리자 인증이 필요합니다", meta: null });
-  }
-  req.adminUser = session;
-  next();
-}
 
 /** UUID v4 형식 검증 */
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -66,9 +52,9 @@ function parseHistoryFields(row) {
   return parsed;
 }
 
-// ─── GET /history — 설정 변경 이력 목록 (페이지네이션) ───
+// ─── GET /history — 설정 변경 이력 목록 (페이지네이션, 관리자만) ───
 // 주의: /history는 /:page/:section보다 먼저 등록해야 라우트 충돌 방지
-router.get("/history", async (req, res) => {
+router.get("/history", adminAuth, async (req, res) => {
   try {
     const { page, section } = req.query;
     const limit = Math.min(200, Math.max(1, parseInt(req.query.limit) || 50));
@@ -95,12 +81,12 @@ router.get("/history", async (req, res) => {
     res.json({ data: parsed, error: null, meta: { total, limit, offset } });
   } catch (err) {
     console.error("[site-settings] 이력 목록 조회 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
-// ─── GET /history/:id — 단건 변경 이력 조회 ───
-router.get("/history/:id", async (req, res) => {
+// ─── GET /history/:id — 단건 변경 이력 조회 (관리자만) ───
+router.get("/history/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     if (!UUID_REGEX.test(id)) {
@@ -115,7 +101,7 @@ router.get("/history/:id", async (req, res) => {
     res.json({ data: parseHistoryFields(rows[0]), error: null, meta: null });
   } catch (err) {
     console.error("[site-settings] 이력 조회 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -165,7 +151,7 @@ router.post("/history/:id/restore", adminAuth, async (req, res) => {
     res.json({ data: parseContentField(rows[0]), error: null, meta: { restoredFrom: id } });
   } catch (err) {
     console.error("[site-settings] 이력 복원 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -200,7 +186,7 @@ router.post("/reset/:page/:section", adminAuth, async (req, res) => {
     res.json({ data: { reset: true, page, section }, error: null, meta: null });
   } catch (err) {
     console.error("[site-settings] 설정 초기화 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -229,12 +215,12 @@ router.post("/schedule", adminAuth, async (req, res) => {
     res.json({ data: inserted, error: null, meta: null });
   } catch (err) {
     console.error("[site-settings] 예약 등록 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
-// ─── GET /schedule — 예약 변경 목록 ───
-router.get("/schedule", async (req, res) => {
+// ─── GET /schedule — 예약 변경 목록 (관리자만) ───
+router.get("/schedule", adminAuth, async (req, res) => {
   try {
     const rows = await db
       .select()
@@ -245,7 +231,7 @@ router.get("/schedule", async (req, res) => {
     res.json({ data: rows, error: null, meta: { total: rows.length } });
   } catch (err) {
     console.error("[site-settings] 예약 목록 조회 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -271,7 +257,7 @@ router.delete("/schedule/:id", adminAuth, async (req, res) => {
     res.json({ data: updated, error: null, meta: null });
   } catch (err) {
     console.error("[site-settings] 예약 취소 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -294,7 +280,7 @@ router.get("/", async (req, res) => {
     res.json({ data: parsed, error: null, meta: { total: parsed.length } });
   } catch (err) {
     console.error("[site-settings] 목록 조회 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -315,7 +301,7 @@ router.get("/:page/:section", async (req, res) => {
     res.json({ data: parseContentField(rows[0]), error: null, meta: null });
   } catch (err) {
     console.error("[site-settings] 조회 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -364,7 +350,7 @@ router.put("/:page/:section", adminAuth, async (req, res) => {
     res.json({ data: parseContentField(rows[0]), error: null, meta: null });
   } catch (err) {
     console.error("[site-settings] upsert 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -380,7 +366,7 @@ router.delete("/:page/:section", adminAuth, async (req, res) => {
     res.json({ data: { deleted: true, page, section }, error: null, meta: null });
   } catch (err) {
     console.error("[site-settings] 삭제 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -435,7 +421,7 @@ router.post("/bulk", adminAuth, async (req, res) => {
     });
   } catch (err) {
     console.error("[site-settings] bulk upsert 실패:", err.message);
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 

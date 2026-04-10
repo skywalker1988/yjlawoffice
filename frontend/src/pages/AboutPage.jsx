@@ -69,10 +69,10 @@ export default function AboutPage() {
           >
             {settings.hero.heading}
           </h1>
-          <p className="font-en reveal" style={{ fontSize: 13, letterSpacing: "0.3em", color: "rgba(255,255,255,0.4)", marginBottom: 24 }}>
+          <p className="font-en reveal" style={{ fontSize: 13, letterSpacing: "0.3em", color: "var(--white-40)", marginBottom: 24 }}>
             {settings.hero.subheading}
           </p>
-          <p className="reveal" style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", fontWeight: 300, lineHeight: 1.9 }}>
+          <p className="reveal" style={{ fontSize: 15, color: "var(--white-60)", fontWeight: 300, lineHeight: 1.9 }}>
             {settings.hero.description.split("\n").map((line, i) => (
               <span key={i}>{i > 0 && <br />}{line}</span>
             ))}
@@ -87,12 +87,12 @@ export default function AboutPage() {
             <p className="font-en" style={{ fontSize: 11, letterSpacing: "0.25em", color: "var(--accent-gold)", marginBottom: 20 }}>
               OUR PHILOSOPHY
             </p>
-            <h2 className="font-serif" style={{ fontSize: "clamp(1.5rem, 3vw, 2.2rem)", fontWeight: 300, color: "#1a1a1a", lineHeight: 1.8, marginBottom: 24 }}>
+            <h2 className="font-serif" style={{ fontSize: "clamp(1.5rem, 3vw, 2.2rem)", fontWeight: 300, color: "var(--text-primary)", lineHeight: 1.8, marginBottom: 24 }}>
               {settings.philosophy.heading.split("\n").map((line, i) => (
                 <span key={i}>{i > 0 && <br />}{line}</span>
               ))}
             </h2>
-            <p style={{ fontSize: 15, color: "#666", lineHeight: 2, fontWeight: 300 }}>
+            <p style={{ fontSize: 15, color: "var(--gray-500)", lineHeight: 2, fontWeight: 300 }}>
               {settings.philosophy.description}
             </p>
           </div>
@@ -105,12 +105,12 @@ export default function AboutPage() {
                 <div
                   key={i}
                   className="reveal"
-                  style={{ padding: "36px 32px", border: "1px solid rgba(0,0,0,0.06)", background: "#fafaf9" }}
+                  style={{ padding: "36px 32px", border: "1px solid var(--border-subtle)", background: "#fafaf9" }}
                 >
-                  {Icon && <div style={{ marginBottom: 12 }}><Icon size={30} strokeWidth={1.3} color="#b08d57" /></div>}
-                  <h3 style={{ fontSize: 18, fontWeight: 500, color: "#1a1a1a", marginBottom: 4 }}>{v.title}</h3>
-                  <p className="font-en" style={{ fontSize: 10, letterSpacing: "0.2em", color: "#bbb", marginBottom: 16 }}>{v.subtitle}</p>
-                  <p style={{ fontSize: 14, color: "#666", lineHeight: 1.8, fontWeight: 300 }}>{v.desc}</p>
+                  {Icon && <div style={{ marginBottom: 12 }}><Icon size={30} strokeWidth={1.3} color="var(--accent-gold)" /></div>}
+                  <h3 style={{ fontSize: 18, fontWeight: 500, color: "var(--text-primary)", marginBottom: 4 }}>{v.title}</h3>
+                  <p className="font-en" style={{ fontSize: 10, letterSpacing: "0.2em", color: "var(--gray-200)", marginBottom: 16 }}>{v.subtitle}</p>
+                  <p style={{ fontSize: 14, color: "var(--gray-500)", lineHeight: 1.8, fontWeight: 300 }}>{v.desc}</p>
                 </div>
               );
             })}
@@ -119,13 +119,13 @@ export default function AboutPage() {
       </section>
 
       {/* ==================== 연혁 ==================== */}
-      <section style={{ background: "#f9f9f8", borderTop: "1px solid rgba(0,0,0,0.06)" }}>
+      <section style={{ background: "#f9f9f8", borderTop: "1px solid var(--border-subtle)" }}>
         <div className="container" style={{ paddingTop: 80, paddingBottom: 80, maxWidth: 800 }}>
           <div className="text-center reveal" style={{ marginBottom: 48 }}>
             <p className="font-en" style={{ fontSize: 11, letterSpacing: "0.25em", color: "var(--accent-gold)", marginBottom: 14 }}>
               HISTORY
             </p>
-            <h2 className="font-serif" style={{ fontSize: "clamp(1.3rem, 2.5vw, 1.8rem)", fontWeight: 300, color: "#1a1a1a" }}>
+            <h2 className="font-serif" style={{ fontSize: "clamp(1.3rem, 2.5vw, 1.8rem)", fontWeight: 300, color: "var(--text-primary)" }}>
               사무소 연혁
             </h2>
           </div>
@@ -134,7 +134,7 @@ export default function AboutPage() {
               <div
                 key={i}
                 className="reveal flex items-start gap-6"
-                style={{ padding: "20px 0", borderBottom: "1px solid rgba(0,0,0,0.06)" }}
+                style={{ padding: "20px 0", borderBottom: "1px solid var(--border-subtle)" }}
               >
                 <span className="font-en" style={{ fontSize: 18, fontWeight: 300, color: "var(--accent-gold)", minWidth: 60 }}>
                   {item.year}

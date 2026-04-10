@@ -5,6 +5,7 @@ const { Router } = require("express");
 const { db } = require("../db");
 const { chatbotQa, chatSessions } = require("../db/schema");
 const { eq, desc, sql } = require("drizzle-orm");
+const { adminAuth } = require("../lib/auth");
 
 const router = Router();
 
@@ -26,7 +27,8 @@ router.get("/qa", async (req, res) => {
     const rows = await db.select().from(chatbotQa).orderBy(chatbotQa.sortOrder);
     res.json({ data: rows, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -34,7 +36,7 @@ router.get("/qa", async (req, res) => {
  * POST /api/sb/chatbot/qa — Q&A 생성 (관리자)
  * - category, question, answer, keywords, sortOrder
  */
-router.post("/qa", async (req, res) => {
+router.post("/qa", adminAuth, async (req, res) => {
   try {
     const { category, question, answer, keywords, sortOrder } = req.body;
 
@@ -55,14 +57,15 @@ router.post("/qa", async (req, res) => {
 
     res.json({ data: inserted, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 /**
  * PATCH /api/sb/chatbot/qa/:id — Q&A 수정 (관리자)
  */
-router.patch("/qa/:id", async (req, res) => {
+router.patch("/qa/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     if (!UUID_REGEX.test(id)) {
@@ -87,14 +90,15 @@ router.patch("/qa/:id", async (req, res) => {
     const [updated] = await db.update(chatbotQa).set(updateData).where(eq(chatbotQa.id, id)).returning();
     res.json({ data: updated, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 /**
  * DELETE /api/sb/chatbot/qa/:id — Q&A 삭제 (관리자)
  */
-router.delete("/qa/:id", async (req, res) => {
+router.delete("/qa/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     if (!UUID_REGEX.test(id)) {
@@ -109,7 +113,8 @@ router.delete("/qa/:id", async (req, res) => {
     await db.delete(chatbotQa).where(eq(chatbotQa.id, id));
     res.json({ data: { deleted: true }, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -202,7 +207,8 @@ router.post("/chat", async (req, res) => {
 
     res.json({ data: { answer, matched: bestScore >= 1 }, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 

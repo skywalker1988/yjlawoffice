@@ -70,10 +70,10 @@ export default function LawyersPage() {
           >
             변호사 소개
           </h1>
-          <p className="font-en reveal" style={{ fontSize: 13, letterSpacing: "0.3em", color: "rgba(255,255,255,0.4)", marginBottom: 24 }}>
+          <p className="font-en reveal" style={{ fontSize: 13, letterSpacing: "0.3em", color: "var(--white-40)", marginBottom: 24 }}>
             OUR LAWYERS
           </p>
-          <p className="reveal" style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", fontWeight: 300, lineHeight: 1.9 }}>
+          <p className="reveal" style={{ fontSize: 15, color: "var(--white-60)", fontWeight: 300, lineHeight: 1.9 }}>
             각 분야 변호사의 실무 경험을 기반으로<br />사건 초기부터 종결까지 체계적으로 대응합니다
           </p>
         </div>
@@ -83,7 +83,7 @@ export default function LawyersPage() {
       <section className="section" style={{ background: "#fff" }}>
         <div className="container" style={{ maxWidth: 1040 }}>
           {lawyers.length === 0 ? (
-            <div className="text-center reveal" style={{ padding: "80px 0", color: "#bbb" }}>
+            <div className="text-center reveal" style={{ padding: "80px 0", color: "var(--gray-200)" }}>
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}><Scale size={40} strokeWidth={1} color="#ccc" /></div>
               <p style={{ fontSize: 16, fontWeight: 300 }}>변호사 정보가 준비 중입니다</p>
               <p style={{ fontSize: 13, marginTop: 8 }}>관리자 페이지에서 변호사를 등록해주세요</p>
@@ -97,7 +97,7 @@ export default function LawyersPage() {
                   onClick={() => setSelectedLawyer(lawyer)}
                   style={{
                     background: "#fff",
-                    border: "1px solid rgba(0,0,0,0.06)",
+                    border: "1px solid var(--border-subtle)",
                     overflow: "hidden",
                     transition: "all 0.3s",
                   }}
@@ -122,9 +122,9 @@ export default function LawyersPage() {
                   {/* 정보 */}
                   <div style={{ padding: "24px 28px 28px" }}>
                     <div className="flex items-baseline gap-3" style={{ marginBottom: 8 }}>
-                      <h3 style={{ fontSize: 22, fontWeight: 600, color: "#1a1a1a" }}>{lawyer.name}</h3>
+                      <h3 style={{ fontSize: 22, fontWeight: 600, color: "var(--text-primary)" }}>{lawyer.name}</h3>
                       {lawyer.nameEn && (
-                        <span className="font-en" style={{ fontSize: 12, color: "#bbb", fontWeight: 300 }}>{lawyer.nameEn}</span>
+                        <span className="font-en" style={{ fontSize: 12, color: "var(--gray-200)", fontWeight: 300 }}>{lawyer.nameEn}</span>
                       )}
                     </div>
                     <p style={{ fontSize: 14, color: "var(--accent-gold)", fontWeight: 500, marginBottom: 14, letterSpacing: "0.05em" }}>
@@ -133,7 +133,7 @@ export default function LawyersPage() {
                     {lawyer.specialties && (
                       <div className="flex flex-wrap gap-1" style={{ marginBottom: 14 }}>
                         {parseList(lawyer.specialties).slice(0, 4).map((s, i) => (
-                          <span key={i} style={{ fontSize: 11, color: "#888", padding: "3px 10px", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 2 }}>{s}</span>
+                          <span key={i} style={{ fontSize: 11, color: "#888", padding: "3px 10px", border: "1px solid var(--border-color)", borderRadius: 2 }}>{s}</span>
                         ))}
                       </div>
                     )}
@@ -168,7 +168,7 @@ export default function LawyersPage() {
           >
             <button onClick={() => setSelectedLawyer(null)} style={{
               position: "absolute", top: 16, right: 16, zIndex: 10,
-              width: 36, height: 36, border: "none", background: "rgba(255,255,255,0.9)",
+              width: 36, height: 36, border: "none", background: "var(--white-90)",
               fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
             }}>×</button>
 
@@ -187,18 +187,18 @@ export default function LawyersPage() {
 
             <div style={{ padding: "32px 36px 40px" }}>
               <div className="flex items-baseline gap-3" style={{ marginBottom: 4 }}>
-                <h2 style={{ fontSize: 28, fontWeight: 600, color: "#1a1a1a" }}>{selectedLawyer.name}</h2>
-                {selectedLawyer.nameEn && <span className="font-en" style={{ fontSize: 14, color: "#bbb" }}>{selectedLawyer.nameEn}</span>}
+                <h2 style={{ fontSize: 28, fontWeight: 600, color: "var(--text-primary)" }}>{selectedLawyer.name}</h2>
+                {selectedLawyer.nameEn && <span className="font-en" style={{ fontSize: 14, color: "var(--gray-200)" }}>{selectedLawyer.nameEn}</span>}
               </div>
               <p style={{ fontSize: 15, color: "var(--accent-gold)", fontWeight: 500, marginBottom: 24 }}>{selectedLawyer.position}</p>
 
               {selectedLawyer.introduction && (
-                <p style={{ fontSize: 14, color: "#555", lineHeight: 1.9, marginBottom: 28, fontWeight: 300 }}>{selectedLawyer.introduction}</p>
+                <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.9, marginBottom: 28, fontWeight: 300 }}>{selectedLawyer.introduction}</p>
               )}
 
               {selectedLawyer.education && (
                 <div style={{ marginBottom: 24 }}>
-                  <h4 style={{ fontSize: 12, color: "#999", letterSpacing: "0.15em", marginBottom: 10, fontWeight: 500 }}>학력</h4>
+                  <h4 style={{ fontSize: 12, color: "var(--text-muted)", letterSpacing: "0.15em", marginBottom: 10, fontWeight: 500 }}>학력</h4>
                   <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
                     {parseList(selectedLawyer.education).map((item, i) => (
                       <li key={i} style={{ fontSize: 14, color: "#444", padding: "5px 0", fontWeight: 300, display: "flex", alignItems: "center", gap: 8 }}>
@@ -211,7 +211,7 @@ export default function LawyersPage() {
 
               {selectedLawyer.career && (
                 <div style={{ marginBottom: 24 }}>
-                  <h4 style={{ fontSize: 12, color: "#999", letterSpacing: "0.15em", marginBottom: 10, fontWeight: 500 }}>주요 경력</h4>
+                  <h4 style={{ fontSize: 12, color: "var(--text-muted)", letterSpacing: "0.15em", marginBottom: 10, fontWeight: 500 }}>주요 경력</h4>
                   <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
                     {parseList(selectedLawyer.career).map((item, i) => (
                       <li key={i} style={{ fontSize: 14, color: "#444", padding: "5px 0", fontWeight: 300, display: "flex", alignItems: "center", gap: 8 }}>
@@ -224,17 +224,17 @@ export default function LawyersPage() {
 
               {selectedLawyer.specialties && (
                 <div style={{ marginBottom: 24 }}>
-                  <h4 style={{ fontSize: 12, color: "#999", letterSpacing: "0.15em", marginBottom: 10, fontWeight: 500 }}>전문 분야</h4>
+                  <h4 style={{ fontSize: 12, color: "var(--text-muted)", letterSpacing: "0.15em", marginBottom: 10, fontWeight: 500 }}>전문 분야</h4>
                   <div className="flex flex-wrap gap-2">
                     {parseList(selectedLawyer.specialties).map((s, i) => (
-                      <span key={i} style={{ fontSize: 13, color: "#555", padding: "6px 14px", background: "#f5f5f3", border: "1px solid rgba(0,0,0,0.06)", borderRadius: 3 }}>{s}</span>
+                      <span key={i} style={{ fontSize: 13, color: "var(--text-secondary)", padding: "6px 14px", background: "#f5f5f3", border: "1px solid var(--border-subtle)", borderRadius: 3 }}>{s}</span>
                     ))}
                   </div>
                 </div>
               )}
 
               {(selectedLawyer.email || selectedLawyer.phone) && (
-                <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: 20, marginTop: 8 }}>
+                <div style={{ borderTop: "1px solid var(--border-subtle)", paddingTop: 20, marginTop: 8 }}>
                   <div className="flex gap-6 flex-wrap">
                     {selectedLawyer.email && <a href={`mailto:${selectedLawyer.email}`} className="flex items-center gap-2" style={{ fontSize: 13, color: "#888", textDecoration: "none" }}><MailIcon size={14} strokeWidth={1.3} /> {selectedLawyer.email}</a>}
                     {selectedLawyer.phone && <a href={`tel:${selectedLawyer.phone}`} className="flex items-center gap-2" style={{ fontSize: 13, color: "#888", textDecoration: "none" }}><PhoneIcon size={14} strokeWidth={1.3} /> {selectedLawyer.phone}</a>}

@@ -304,7 +304,9 @@ export function saveCommentsToLocal(docId, comments) {
   try {
     const key = docId ? `${LS_COMMENTS}_${docId}` : LS_COMMENTS;
     localStorage.setItem(key, JSON.stringify(comments));
-  } catch { /* quota 초과 등 무시 */ }
+  } catch (e) {
+    // QuotaExceededError 발생 시 조용히 실패
+  }
 }
 
 export function loadCommentsFromLocal(docId) {

@@ -1,23 +1,10 @@
-/** 포털 사건 상세 — 서류/메시지 탭, 채팅 스레드 */
+/** 포털 사건 상세 -- 서류/메시지 탭, 채팅 스레드 */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-
-const T = { accent: "#b08d57", text: "#1e293b", textSec: "#475569", textMuted: "#94a3b8", border: "#e5e8ed", card: "#ffffff" };
-
-const STATUS_MAP = {
-  "접수": { color: "#1976d2", bg: "#e3f2fd" },
-  "진행": { color: "#b08d57", bg: "#fff8e1" },
-  "완료": { color: "#2e7d32", bg: "#e8f5e9" },
-};
-
-const portalFetch = async (method, path, body) => {
-  const opts = { method, headers: { "Content-Type": "application/json", "x-portal-token": sessionStorage.getItem("portal_token") || "" } };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(`/api/sb/portal${path}`, opts);
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || "요청 실패");
-  return json;
-};
+import { portalApi } from "../../utils/portalApi";
+import { T } from "./portalStyles";
+import { STATUS_MAP } from "./portalConstants";
+import { showToast } from "../../utils/showToast";
 
 export default function PortalCaseDetail() {
   const { id } = useParams();
@@ -39,8 +26,8 @@ export default function PortalCaseDetail() {
     setLoading(true);
     try {
       const [caseRes, msgRes] = await Promise.all([
-        portalFetch("GET", `/cases/${id}`),
-        portalFetch("GET", `/cases/${id}/messages`).catch(() => ({ data: [] })),
+        portalApi.get(`/cases/${id}`),
+        portalApi.get(`/cases/${id}/messages`).catch(() => ({ data: [] })),
       ]);
       setCaseData(caseRes.data ?? null);
       setDocuments(caseRes.data?.documents ?? []);
@@ -66,12 +53,12 @@ export default function PortalCaseDetail() {
     if (!newMessage.trim() || sending) return;
     setSending(true);
     try {
-      await portalFetch("POST", `/cases/${id}/messages`, { content: newMessage.trim(), senderType: "client" });
+      await portalApi.post(`/cases/${id}/messages`, { content: newMessage.trim(), senderType: "client" });
       setNewMessage("");
-      const res = await portalFetch("GET", `/cases/${id}/messages`);
+      const res = await portalApi.get(`/cases/${id}/messages`);
       setMessages(res.data ?? []);
     } catch (err) {
-      alert("전송 실패: " + err.message);
+      showToast("전송 실패: " + err.message);
     } finally {
       setSending(false);
     }

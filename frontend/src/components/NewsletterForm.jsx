@@ -61,7 +61,7 @@ export default function NewsletterForm() {
           fontSize: 13,
           fontWeight: 500,
           color: "#1a1a2e",
-          background: "#b08d57",
+          background: "var(--accent-gold)",
           border: "none",
           borderRadius: 4,
           cursor: status === "loading" ? "default" : "pointer",

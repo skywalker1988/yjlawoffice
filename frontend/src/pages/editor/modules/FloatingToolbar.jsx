@@ -1,7 +1,7 @@
 /**
  * Floating Toolbar - 텍스트 선택 시 미니 서식 도구 (lucide-react)
  */
-import { useState, useEffect, useRef, useCallback } from "react";
+import { memo, useState, useEffect, useRef, useCallback } from "react";
 import {
   Bold, Italic, Underline, Strikethrough,
   Highlighter, Baseline, Link2,
@@ -10,10 +10,15 @@ import {
 } from "lucide-react";
 import { RibbonBtn, DropdownButton, ColorGrid } from "./RibbonParts";
 import { HIGHLIGHT_COLORS, TEXT_COLORS, FONT_LIST, FONT_SIZES } from "./constants";
+import { showEditorAlert } from "./editorToast";
 
 const I = 13;
 
-export function FloatingToolbar({ editor, onInsertComment }) {
+/**
+ * 텍스트 선택 시 표시되는 미니 서식 도구 모음 (볼드/이탤릭/밑줄/링크/댓글).
+ * @param {{ editor: import("@tiptap/react").Editor, onInsertComment: Function }} props
+ */
+export const FloatingToolbar = memo(function FloatingToolbar({ editor, onInsertComment }) {
   const [visible, setVisible] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const toolbarRef = useRef(null);
@@ -177,7 +182,13 @@ export function FloatingToolbar({ editor, onInsertComment }) {
         const url = window.prompt("URL:", prev);
         if (url === null) return;
         if (!url) editor.chain().focus().unsetLink().run();
-        else editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+        else {
+          try {
+            const parsed = new URL(url, window.location.origin);
+            if (!["http:", "https:"].includes(parsed.protocol)) { showEditorAlert("유효하지 않은 URL입니다."); return; }
+          } catch { showEditorAlert("유효하지 않은 URL입니다."); return; }
+          editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+        }
       }} title="링크" small>
         <Link2 size={12} />
       </RibbonBtn>
@@ -189,4 +200,4 @@ export function FloatingToolbar({ editor, onInsertComment }) {
       </RibbonBtn>
     </div>
   );
-}
+});

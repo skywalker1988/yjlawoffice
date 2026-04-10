@@ -4,6 +4,7 @@ const { eq, asc } = require("drizzle-orm");
 const { db } = require("../db");
 const { lawyers } = require("../db/schema");
 const crypto = require("crypto");
+const { adminAuth } = require("../lib/auth");
 
 const router = Router();
 
@@ -40,7 +41,7 @@ router.get("/:id", async (req, res) => {
 });
 
 /** POST /api/sb/lawyers — 변호사 등록 */
-router.post("/", async (req, res) => {
+router.post("/", adminAuth, async (req, res) => {
   try {
     const id = crypto.randomUUID();
     const { name, nameEn, position, photoUrl, education, career, specialties, introduction, email, phone, sortOrder, isActive } = req.body;
@@ -70,7 +71,7 @@ router.post("/", async (req, res) => {
 });
 
 /** PATCH /api/sb/lawyers/:id — 변호사 정보 수정 */
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", adminAuth, async (req, res) => {
   try {
     const existing = db.select().from(lawyers).where(eq(lawyers.id, req.params.id)).get();
     if (!existing) return res.status(404).json({ error: "변호사를 찾을 수 없습니다" });
@@ -91,7 +92,7 @@ router.patch("/:id", async (req, res) => {
 });
 
 /** DELETE /api/sb/lawyers/:id — 변호사 삭제 */
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", adminAuth, async (req, res) => {
   try {
     const existing = db.select().from(lawyers).where(eq(lawyers.id, req.params.id)).get();
     if (!existing) return res.status(404).json({ error: "변호사를 찾을 수 없습니다" });

@@ -83,7 +83,8 @@ router.get("/", async (req, res) => {
     res.set("Content-Type", "application/xml");
     res.send(xml);
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 

@@ -6,6 +6,7 @@ const { db } = require("../db");
 const { newsletterSubscribers } = require("../db/schema");
 const { eq, desc, sql } = require("drizzle-orm");
 const { sendEmail } = require("../lib/email-service");
+const { adminAuth } = require("../lib/auth");
 
 const router = Router();
 
@@ -56,7 +57,8 @@ router.post("/subscribe", async (req, res) => {
 
     res.json({ data: inserted, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -84,7 +86,8 @@ router.get("/unsubscribe/:token", async (req, res) => {
 
     res.json({ data: { message: "수신 거부가 완료되었습니다" }, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -92,7 +95,7 @@ router.get("/unsubscribe/:token", async (req, res) => {
  * GET /api/sb/newsletter — 구독자 목록 (관리자)
  * - 쿼리: page, limit
  */
-router.get("/", async (req, res) => {
+router.get("/", adminAuth, async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20));
@@ -115,7 +118,8 @@ router.get("/", async (req, res) => {
       meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -124,7 +128,7 @@ router.get("/", async (req, res) => {
  * - body: { subject, html }
  * - 활성 구독자 전체에게 이메일 발송
  */
-router.post("/send", async (req, res) => {
+router.post("/send", adminAuth, async (req, res) => {
   try {
     const { subject, html } = req.body;
 
@@ -162,14 +166,15 @@ router.post("/send", async (req, res) => {
       meta: null,
     });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 /**
  * DELETE /api/sb/newsletter/:id — 구독자 삭제 (관리자)
  */
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
     if (!UUID_REGEX.test(id)) {
@@ -188,7 +193,8 @@ router.delete("/:id", async (req, res) => {
     await db.delete(newsletterSubscribers).where(eq(newsletterSubscribers.id, id));
     res.json({ data: { deleted: true }, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 

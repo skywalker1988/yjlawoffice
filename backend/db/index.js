@@ -3,6 +3,10 @@
  * - better-sqlite3 + Drizzle ORM 설정
  * - FTS5 전문 검색 (한국어 unicode61 토크나이저)
  * - 테이블 생성 및 FTS 동기화 트리거
+ *
+ * 주의: initTables()의 raw SQL은 db/schema.js의 Drizzle 스키마와 동기화 필요.
+ * 테이블 구조 변경 시 반드시 두 파일 모두 업데이트할 것.
+ * TODO: drizzle-kit push로 마이그레이션 자동화 전환 검토
  */
 const Database = require("better-sqlite3");
 const { drizzle } = require("drizzle-orm/better-sqlite3");
@@ -506,22 +510,32 @@ function searchFTS(query, limit = 20) {
   return stmt.all(safeQuery, limit);
 }
 
+/* ── FTS 검색 상수 ── */
+/** 개별 검색어 최대 길이 (바이트) — 비정상적으로 긴 토큰 차단 */
+const FTS_MAX_TOKEN_LENGTH = 100;
+/** 검색어 최대 개수 — DoS 방지 */
+const FTS_MAX_TOKENS = 20;
+/** 스니펫에서 제목 주변 컨텍스트 토큰 수 */
+const FTS_SNIPPET_TITLE_TOKENS = 32;
+/** 스니펫에서 본문 주변 컨텍스트 토큰 수 */
+const FTS_SNIPPET_CONTENT_TOKENS = 64;
+
 /**
  * FTS5 쿼리 문자열을 안전하게 정제
  * - 특수 문자를 제거하여 FTS5 구문 오류 방지
  * - 빈 토큰은 필터링
  */
 function sanitizeFTSQuery(query) {
-  // FTS5 특수 문자 제거 (AND, OR, NOT, 괄호, 따옴표, *, ^ 등)
   const cleaned = query
     .replace(/["""''(){}[\]*^~:]/g, " ")
     .replace(/\b(AND|OR|NOT|NEAR)\b/gi, " ")
     .trim();
-  // 각 단어를 쌍따옴표로 감싸서 안전하게 매칭
-  const MAX_TOKEN_LENGTH = 100;
-  const tokens = cleaned.split(/\s+/).filter(t => t && t.length <= MAX_TOKEN_LENGTH);
+  const tokens = cleaned
+    .split(/\s+/)
+    .filter(t => t && t.length <= FTS_MAX_TOKEN_LENGTH)
+    .slice(0, FTS_MAX_TOKENS);
   if (tokens.length === 0) return null;
-  return tokens.map(t => `"${t}"`).join(" ");
+  return tokens.map(t => `"${t.replace(/"/g, "")}"`).join(" ");
 }
 
 // FTS5 스니펫 검색
@@ -531,8 +545,8 @@ function searchFTSWithSnippet(query, limit = 20) {
 
   const stmt = sqlite.prepare(`
     SELECT d.*,
-      snippet(documents_fts, 0, '<mark>', '</mark>', '...', 32) as title_snippet,
-      snippet(documents_fts, 1, '<mark>', '</mark>', '...', 64) as content_snippet,
+      snippet(documents_fts, 0, '<mark>', '</mark>', '...', ${FTS_SNIPPET_TITLE_TOKENS}) as title_snippet,
+      snippet(documents_fts, 1, '<mark>', '</mark>', '...', ${FTS_SNIPPET_CONTENT_TOKENS}) as content_snippet,
       rank
     FROM documents_fts fts
     JOIN documents d ON d.rowid = fts.rowid

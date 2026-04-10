@@ -6,6 +6,9 @@
 import { useState, useEffect } from "react";
 import { api } from "../utils/api";
 
+/**
+ * @param {{ isOpen: boolean, onClose: Function, onSelect: (file: object) => void, accept?: "image"|"video"|"all" }} props
+ */
 export default function MediaPicker({ isOpen, onClose, onSelect, accept = "all" }) {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);

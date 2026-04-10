@@ -5,6 +5,7 @@ const { Router } = require("express");
 const { db } = require("../db");
 const { categories } = require("../db/schema");
 const { eq } = require("drizzle-orm");
+const { adminAuth } = require("../lib/auth");
 
 const router = Router();
 
@@ -14,12 +15,13 @@ router.get("/", async (req, res) => {
     const rows = await db.select().from(categories);
     res.json({ data: rows, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
-// POST /api/sb/categories
-router.post("/", async (req, res) => {
+// POST /api/sb/categories (관리자만)
+router.post("/", adminAuth, async (req, res) => {
   try {
     const { name, slug, parentId, color, icon, sortOrder } = req.body;
     if (!name || !slug) {
@@ -48,18 +50,19 @@ router.post("/", async (req, res) => {
 
     res.json({ data: inserted, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
-// PATCH /api/sb/categories/:id
-router.patch("/:id", async (req, res) => {
+// PATCH /api/sb/categories/:id (관리자만)
+router.patch("/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
     const [existing] = await db.select().from(categories).where(eq(categories.id, id));
     if (!existing) {
-      return res.status(404).json({ data: null, error: "Category not found", meta: null });
+      return res.status(404).json({ data: null, error: "카테고리를 찾을 수 없습니다", meta: null });
     }
 
     // 순환 참조 방지: 자기 자신을 부모로 설정 불가
@@ -87,24 +90,26 @@ router.patch("/:id", async (req, res) => {
 
     res.json({ data: updated, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
-// DELETE /api/sb/categories/:id
-router.delete("/:id", async (req, res) => {
+// DELETE /api/sb/categories/:id (관리자만)
+router.delete("/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
 
     const [existing] = await db.select().from(categories).where(eq(categories.id, id));
     if (!existing) {
-      return res.status(404).json({ data: null, error: "Category not found", meta: null });
+      return res.status(404).json({ data: null, error: "카테고리를 찾을 수 없습니다", meta: null });
     }
 
     await db.delete(categories).where(eq(categories.id, id));
     res.json({ data: { deleted: true }, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 

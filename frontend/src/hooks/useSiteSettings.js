@@ -116,6 +116,8 @@ export function useSiteSettingsPage(page, defaults, language = "ko") {
     if (!isPreviewMode()) return;
 
     function handleMessage(event) {
+      // 같은 출처의 메시지만 허용하여 외부 조작 방지
+      if (event.origin !== window.location.origin) return;
       if (event.data?.type === "preview-settings" && event.data.page === page) {
         setSettings(mergeWithDefaults(event.data.settings, defaults));
       }

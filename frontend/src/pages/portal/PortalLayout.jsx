@@ -1,16 +1,13 @@
-/** 포털 레이아웃 — 의뢰인 포털 헤더/네비게이션 래퍼, 인증 확인 */
-import { useEffect } from "react";
-import { Outlet, useNavigate, Link } from "react-router-dom";
-
-const T = { accent: "#b08d57", text: "#1e293b", border: "#e5e8ed" };
+/** 포털 레이아웃 -- 의뢰인 포털 헤더/네비게이션 래퍼, 인증 확인 */
+import { Outlet, Navigate, useNavigate, Link } from "react-router-dom";
+import { T } from "./portalStyles";
 
 export default function PortalLayout() {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const token = sessionStorage.getItem("portal_token");
-    if (!token) navigate("/portal/login", { replace: true });
-  }, [navigate]);
+  // 동기적 토큰 체크 — useEffect 대신 렌더 전에 차단하여 보호 콘텐츠 노출 방지
+  const token = sessionStorage.getItem("portal_token");
+  if (!token) return <Navigate to="/portal/login" replace />;
 
   const handleLogout = () => {
     sessionStorage.removeItem("portal_token");
@@ -18,7 +15,7 @@ export default function PortalLayout() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f8f8f6" }}>
+    <div style={{ minHeight: "100vh", background: "var(--bg-secondary)" }}>
       {/* ==================== 헤더 ==================== */}
       <header style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",

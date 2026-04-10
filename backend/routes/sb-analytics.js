@@ -5,6 +5,7 @@
  */
 const { Router } = require("express");
 const { sqlite } = require("../db");
+const { adminAuth } = require("../lib/auth");
 
 const router = Router();
 
@@ -30,7 +31,7 @@ function getPeriodModifier(period) {
  * - uniqueVisitors: 고유 방문자 수 (session_id 기준)
  * - viewsPerDay: 일별 조회수 배열 [{date, count}]
  */
-router.get("/overview", (req, res) => {
+router.get("/overview", adminAuth, (req, res) => {
   try {
     const modifier = getPeriodModifier(req.query.period);
 
@@ -62,14 +63,15 @@ router.get("/overview", (req, res) => {
       meta: null,
     });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 /**
  * GET /pages?period=7d&limit=10 — 상위 페이지별 조회수
  */
-router.get("/pages", (req, res) => {
+router.get("/pages", adminAuth, (req, res) => {
   try {
     const modifier = getPeriodModifier(req.query.period);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
@@ -89,14 +91,15 @@ router.get("/pages", (req, res) => {
 
     res.json({ data: rows, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 /**
  * GET /referrers?period=7d&limit=10 — 상위 리퍼러 도메인
  */
-router.get("/referrers", (req, res) => {
+router.get("/referrers", adminAuth, (req, res) => {
   try {
     const modifier = getPeriodModifier(req.query.period);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
@@ -116,7 +119,8 @@ router.get("/referrers", (req, res) => {
 
     res.json({ data: rows, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -126,7 +130,7 @@ router.get("/referrers", (req, res) => {
  * - consultations: 기간 내 상담 신청 수
  * - conversionRate: 전환율 (%)
  */
-router.get("/consultations/conversion", (req, res) => {
+router.get("/consultations/conversion", adminAuth, (req, res) => {
   try {
     const modifier = getPeriodModifier(req.query.period || "30d");
 
@@ -156,7 +160,8 @@ router.get("/consultations/conversion", (req, res) => {
       meta: null,
     });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -164,7 +169,7 @@ router.get("/consultations/conversion", (req, res) => {
  * GET /export?period=30d — CSV 내보내기
  * - Content-Type: text/csv
  */
-router.get("/export", (req, res) => {
+router.get("/export", adminAuth, (req, res) => {
   try {
     const modifier = getPeriodModifier(req.query.period || "30d");
 
@@ -196,7 +201,8 @@ router.get("/export", (req, res) => {
     res.setHeader("Content-Disposition", "attachment; filename=page-views.csv");
     res.send(csvLines.join("\n"));
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 

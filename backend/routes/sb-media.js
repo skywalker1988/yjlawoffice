@@ -11,6 +11,7 @@ const crypto = require("crypto");
 const { db } = require("../db");
 const { mediaFiles } = require("../db/schema");
 const { eq, desc, and, like, count, sql } = require("drizzle-orm");
+const { adminAuth } = require("../lib/auth");
 
 const router = Router();
 
@@ -78,7 +79,8 @@ router.get("/folders", async (req, res) => {
     const folders = rows.map((r) => r.folder);
     res.json({ data: folders, error: null, meta: null });
   } catch (err) {
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    console.error(err);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -98,7 +100,10 @@ router.get("/", async (req, res) => {
     if (type === "image") conditions.push(like(mediaFiles.mimeType, "image/%"));
     if (type === "video") conditions.push(like(mediaFiles.mimeType, "video/%"));
     if (type === "document") conditions.push(like(mediaFiles.mimeType, "application/%"));
-    if (search) conditions.push(like(mediaFiles.originalName, `%${search}%`));
+    if (search) {
+      const { escapeLike } = require("../lib/sanitize");
+      conditions.push(like(mediaFiles.originalName, `%${escapeLike(search)}%`));
+    }
 
     const where = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -126,7 +131,8 @@ router.get("/", async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    console.error(err);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -146,12 +152,13 @@ router.get("/:id", async (req, res) => {
 
     res.json({ data: row, error: null, meta: null });
   } catch (err) {
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    console.error(err);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 // POST /api/sb/media/upload — 단일 파일 업로드
-router.post("/upload", upload.single("file"), async (req, res) => {
+router.post("/upload", adminAuth, upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ data: null, error: "파일이 필요합니다", meta: null });
@@ -176,12 +183,13 @@ router.post("/upload", upload.single("file"), async (req, res) => {
 
     res.status(201).json({ data: record, error: null, meta: null });
   } catch (err) {
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    console.error(err);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 // POST /api/sb/media/upload-multiple — 다중 파일 업로드 (최대 10개)
-router.post("/upload-multiple", upload.array("files", 10), async (req, res) => {
+router.post("/upload-multiple", adminAuth, upload.array("files", 10), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ data: null, error: "파일이 필요합니다", meta: null });
@@ -212,12 +220,13 @@ router.post("/upload-multiple", upload.array("files", 10), async (req, res) => {
 
     res.status(201).json({ data: records, error: null, meta: null });
   } catch (err) {
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    console.error(err);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 // PATCH /api/sb/media/:id — 메타데이터 수정 (alt, folder)
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", adminAuth, async (req, res) => {
   try {
     if (!validateId(req.params.id, res)) return;
 
@@ -262,12 +271,13 @@ router.patch("/:id", async (req, res) => {
 
     res.json({ data: updated, error: null, meta: null });
   } catch (err) {
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    console.error(err);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 // DELETE /api/sb/media/:id — 파일 삭제 (DB + 물리적 파일)
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", adminAuth, async (req, res) => {
   try {
     if (!validateId(req.params.id, res)) return;
 
@@ -293,7 +303,8 @@ router.delete("/:id", async (req, res) => {
 
     res.json({ data: { id: req.params.id }, error: null, meta: null });
   } catch (err) {
-    res.status(500).json({ data: null, error: err.message, meta: null });
+    console.error(err);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 

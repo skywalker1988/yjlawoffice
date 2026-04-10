@@ -6,6 +6,9 @@
  */
 import { useState, useEffect, useMemo, useCallback } from "react";
 
+/**
+ * @param {{ editor: import("@tiptap/react").Editor, onClose: Function }} props
+ */
 export function NavigationPane({ editor, onClose }) {
   const [activeTab, setActiveTab] = useState("headings"); // "headings" | "pages" | "results"
   const [headings, setHeadings] = useState([]);

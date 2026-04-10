@@ -1,6 +1,10 @@
 /** useReveal — 스크롤 시 요소 페이드인 애니메이션 훅 (IntersectionObserver) */
 import { useEffect, useRef } from "react";
 
+/**
+ * 컨테이너 내 `.reveal` 클래스 요소가 뷰포트에 진입하면 `.visible`을 추가한다.
+ * @returns {React.RefObject} 컨테이너 요소에 연결할 ref
+ */
 export default function useReveal() {
   const ref = useRef();
 

@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { api } from "../utils/api";
 
-const T = { accent: "#b08d57", accentDim: "rgba(176,141,87,0.08)", text: "#1e293b", textSec: "#475569", textMuted: "#94a3b8", border: "#e5e8ed" };
+const T = { accent: "var(--accent-gold)", accentDim: "var(--accent-gold-light)", text: "var(--text-primary)", textSec: "var(--text-secondary)", textMuted: "var(--text-muted)", border: "var(--border-color)" };
 
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 const HOUR_START = 9;
@@ -10,28 +10,28 @@ const HOUR_END = 18;
 
 /** 주의 월요일 날짜 구하기 */
 function getMonday(date) {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-  return d;
+  const result = new Date(date);
+  const dayOfWeek = result.getDay();
+  const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+  result.setDate(result.getDate() + diff);
+  result.setHours(0, 0, 0, 0);
+  return result;
 }
 
 /** 날짜를 YYYY-MM-DD 형식으로 변환 */
 function formatDate(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 /** 주간 날짜 배열 (월~금) */
 function getWeekDays(monday) {
   return Array.from({ length: 5 }, (_, i) => {
-    const d = new Date(monday);
-    d.setDate(d.getDate() + i);
-    return d;
+    const weekday = new Date(monday);
+    weekday.setDate(weekday.getDate() + i);
+    return weekday;
   });
 }
 
@@ -85,8 +85,8 @@ export default function BookingCalendar({ onSelectSlot, lawyerId }) {
   useEffect(() => { loadSlots(); }, [loadSlots]);
 
   /** 주 이동 */
-  const prevWeek = () => setMonday((prev) => { const d = new Date(prev); d.setDate(d.getDate() - 7); return d; });
-  const nextWeek = () => setMonday((prev) => { const d = new Date(prev); d.setDate(d.getDate() + 7); return d; });
+  const prevWeek = () => setMonday((prev) => { const date = new Date(prev); date.setDate(date.getDate() - 7); return date; });
+  const nextWeek = () => setMonday((prev) => { const date = new Date(prev); date.setDate(date.getDate() + 7); return date; });
 
   /** 슬롯 조회 (날짜 + 시간 매칭) */
   const getSlot = (date, time) => {

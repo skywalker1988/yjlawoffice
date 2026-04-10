@@ -84,10 +84,10 @@ export default function CasesPage() {
           >
             성공 사례
           </h1>
-          <p className="font-en reveal" style={{ fontSize: 13, letterSpacing: "0.3em", color: "rgba(255,255,255,0.4)", marginBottom: 24 }}>
+          <p className="font-en reveal" style={{ fontSize: 13, letterSpacing: "0.3em", color: "var(--white-40)", marginBottom: 24 }}>
             SUCCESS CASES
           </p>
-          <p className="reveal" style={{ fontSize: 15, color: "rgba(255,255,255,0.6)", fontWeight: 300, lineHeight: 1.9 }}>
+          <p className="reveal" style={{ fontSize: 15, color: "var(--white-60)", fontWeight: 300, lineHeight: 1.9 }}>
             윤정 법률사무소의 주요 성공 사례를 소개합니다.
           </p>
         </div>
@@ -110,7 +110,7 @@ export default function CasesPage() {
                   borderColor: selectedCategory === cat.key ? "var(--accent-gold)" : "rgba(0,0,0,0.12)",
                   borderRadius: 24,
                   background: selectedCategory === cat.key ? "var(--accent-gold)" : "transparent",
-                  color: selectedCategory === cat.key ? "#fff" : "#666",
+                  color: selectedCategory === cat.key ? "#fff" : "var(--gray-500)",
                   cursor: "pointer",
                   transition: "all 0.3s",
                   letterSpacing: "0.05em",
@@ -123,11 +123,11 @@ export default function CasesPage() {
 
           {/* 사례 목록 */}
           {loading ? (
-            <div className="text-center" style={{ padding: "80px 0", color: "#999" }}>
+            <div className="text-center" style={{ padding: "80px 0", color: "var(--text-muted)" }}>
               불러오는 중...
             </div>
           ) : cases.length === 0 ? (
-            <div className="text-center reveal" style={{ padding: "80px 0", color: "#999" }}>
+            <div className="text-center reveal" style={{ padding: "80px 0", color: "var(--text-muted)" }}>
               <p style={{ fontSize: 15 }}>등록된 성공 사례가 없습니다.</p>
             </div>
           ) : (
@@ -137,7 +137,7 @@ export default function CasesPage() {
                   key={item.id}
                   className="reveal hover:shadow-lg"
                   style={{
-                    border: "1px solid rgba(0,0,0,0.08)",
+                    border: "1px solid var(--border-color)",
                     borderRadius: 4,
                     padding: "28px 28px 24px",
                     background: "#fff",
@@ -149,7 +149,7 @@ export default function CasesPage() {
                     <span
                       style={{
                         fontSize: 12,
-                        color: "#999",
+                        color: "var(--text-muted)",
                         fontWeight: 500,
                         letterSpacing: "0.05em",
                       }}
@@ -173,12 +173,12 @@ export default function CasesPage() {
                   </div>
 
                   {/* 제목 */}
-                  <h3 style={{ fontSize: 17, fontWeight: 600, color: "#1a1a1a", lineHeight: 1.5, marginBottom: 12 }}>
+                  <h3 style={{ fontSize: 17, fontWeight: 600, color: "var(--text-primary)", lineHeight: 1.5, marginBottom: 12 }}>
                     {item.title}
                   </h3>
 
                   {/* 요약 */}
-                  <p style={{ fontSize: 14, color: "#666", lineHeight: 1.8 }}>
+                  <p style={{ fontSize: 14, color: "var(--gray-500)", lineHeight: 1.8 }}>
                     {item.summary}
                   </p>
 

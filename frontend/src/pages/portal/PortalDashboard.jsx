@@ -1,23 +1,9 @@
-/** 포털 대시보드 — 의뢰인 사건 목록, 환영 메시지 */
+/** 포털 대시보드 -- 의뢰인 사건 목록, 환영 메시지 */
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-
-const T = { accent: "#b08d57", text: "#1e293b", textSec: "#475569", textMuted: "#94a3b8", border: "#e5e8ed", card: "#ffffff" };
-
-const STATUS_MAP = {
-  "접수": { color: "#1976d2", bg: "#e3f2fd" },
-  "진행": { color: "#b08d57", bg: "#fff8e1" },
-  "완료": { color: "#2e7d32", bg: "#e8f5e9" },
-};
-
-const portalFetch = async (method, path, body) => {
-  const opts = { method, headers: { "Content-Type": "application/json", "x-portal-token": sessionStorage.getItem("portal_token") || "" } };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(`/api/sb/portal${path}`, opts);
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || "요청 실패");
-  return json;
-};
+import { portalApi } from "../../utils/portalApi";
+import { T } from "./portalStyles";
+import { STATUS_MAP } from "./portalConstants";
 
 export default function PortalDashboard() {
   const [cases, setCases] = useState([]);
@@ -26,7 +12,7 @@ export default function PortalDashboard() {
 
   useEffect(() => {
     setLoading(true);
-    portalFetch("GET", "/cases")
+    portalApi.get("/cases")
       .then((json) => {
         setCases(json.data ?? []);
         if (json.meta?.userName) setUserName(json.meta.userName);

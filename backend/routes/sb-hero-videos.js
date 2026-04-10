@@ -4,11 +4,13 @@
 const { Router } = require("express");
 const { db, sqlite } = require("../db");
 const { heroVideos } = require("../db/schema");
-const { eq, desc, asc, count } = require("drizzle-orm");
+const { eq, desc, asc } = require("drizzle-orm");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
+const { adminAuth } = require("../lib/auth");
+const { UUID_REGEX } = require("../services/helpers");
 
 const router = Router();
 
@@ -32,9 +34,10 @@ const upload = multer({
   }),
   limits: { fileSize: 100 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    const allowed = [".mp4", ".webm", ".mov"];
+    const allowedExts = [".mp4", ".webm", ".mov"];
+    const allowedMimes = ["video/mp4", "video/webm", "video/quicktime"];
     const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, allowed.includes(ext));
+    cb(null, allowedExts.includes(ext) && allowedMimes.includes(file.mimetype));
   },
 });
 
@@ -53,7 +56,8 @@ router.get("/", async (req, res) => {
     }
     res.json({ data: rows, error: null, meta: { total: rows.length } });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
@@ -65,26 +69,31 @@ router.get("/active", async (req, res) => {
       .limit(1);
     res.json({ data: video || null, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 // GET /:id — 단건 조회
 router.get("/:id", async (req, res) => {
   try {
+    if (!UUID_REGEX.test(req.params.id)) {
+      return res.status(400).json({ data: null, error: "유효하지 않은 ID 형식입니다", meta: null });
+    }
     const [video] = await db.select().from(heroVideos)
       .where(eq(heroVideos.id, req.params.id));
     if (!video) {
-      return res.status(404).json({ data: null, error: "Video not found", meta: null });
+      return res.status(404).json({ data: null, error: "영상을 찾을 수 없습니다", meta: null });
     }
     res.json({ data: video, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 // POST / — 새 영상 등록 (URL 방식)
-router.post("/", async (req, res) => {
+router.post("/", adminAuth, async (req, res) => {
   try {
     const { title, url, category } = req.body;
     if (!title || !url) {
@@ -97,12 +106,13 @@ router.post("/", async (req, res) => {
     }).returning();
     res.json({ data: inserted, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 // POST /upload — 파일 업로드 방식
-router.post("/upload", upload.single("file"), async (req, res) => {
+router.post("/upload", adminAuth, upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ data: null, error: "영상 파일이 필요합니다", meta: null });
@@ -116,17 +126,21 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     }).returning();
     res.json({ data: inserted, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 // PATCH /:id — 수정
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
+    if (!UUID_REGEX.test(id)) {
+      return res.status(400).json({ data: null, error: "유효하지 않은 ID 형식입니다", meta: null });
+    }
     const [existing] = await db.select().from(heroVideos).where(eq(heroVideos.id, id));
     if (!existing) {
-      return res.status(404).json({ data: null, error: "Video not found", meta: null });
+      return res.status(404).json({ data: null, error: "영상을 찾을 수 없습니다", meta: null });
     }
     const updateData = {};
     const allowedFields = ["title", "url", "category", "sortOrder"];
@@ -141,14 +155,23 @@ router.patch("/:id", async (req, res) => {
       .returning();
     res.json({ data: updated, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 // PATCH /:id/activate — 활성화 (다른 모든 영상 비활성화 후 이 영상만 활성화)
-router.patch("/:id/activate", async (req, res) => {
+router.patch("/:id/activate", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
+    if (!UUID_REGEX.test(id)) {
+      return res.status(400).json({ data: null, error: "유효하지 않은 ID 형식입니다", meta: null });
+    }
+    // 대상 비디오 존재 확인 (없으면 모든 비디오가 비활성화되는 사고 방지)
+    const [target] = await db.select().from(heroVideos).where(eq(heroVideos.id, id));
+    if (!target) {
+      return res.status(404).json({ data: null, error: "영상을 찾을 수 없습니다", meta: null });
+    }
     const now = new Date().toISOString().replace("T", " ").slice(0, 19);
     // 트랜잭션으로 원자적 처리
     sqlite.transaction(() => {
@@ -158,17 +181,21 @@ router.patch("/:id/activate", async (req, res) => {
     const [video] = await db.select().from(heroVideos).where(eq(heroVideos.id, id));
     res.json({ data: video, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 
 // DELETE /:id — 삭제
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", adminAuth, async (req, res) => {
   try {
     const { id } = req.params;
+    if (!UUID_REGEX.test(id)) {
+      return res.status(400).json({ data: null, error: "유효하지 않은 ID 형식입니다", meta: null });
+    }
     const [existing] = await db.select().from(heroVideos).where(eq(heroVideos.id, id));
     if (!existing) {
-      return res.status(404).json({ data: null, error: "Video not found", meta: null });
+      return res.status(404).json({ data: null, error: "영상을 찾을 수 없습니다", meta: null });
     }
     // 로컬 업로드 파일인 경우 파일도 삭제
     if (existing.url.startsWith("/uploads/videos/")) {
@@ -178,7 +205,8 @@ router.delete("/:id", async (req, res) => {
     await db.delete(heroVideos).where(eq(heroVideos.id, id));
     res.json({ data: { deleted: true }, error: null, meta: null });
   } catch (e) {
-    res.status(500).json({ data: null, error: e.message, meta: null });
+    console.error(e);
+    res.status(500).json({ data: null, error: "서버 내부 오류가 발생했습니다", meta: null });
   }
 });
 

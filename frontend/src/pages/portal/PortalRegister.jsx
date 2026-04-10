@@ -1,19 +1,9 @@
-/** 포털 회원가입 — 의뢰인 계정 생성 */
+/** 포털 회원가입 -- 의뢰인 계정 생성 */
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-
-const T = { accent: "#b08d57", text: "#1e293b", textSec: "#475569" };
-const fieldStyle = { width: "100%", padding: "12px 14px", fontSize: 14, border: "1px solid #d0d0d0", borderRadius: 6, background: "#fff", fontFamily: "inherit", outline: "none", boxSizing: "border-box" };
-const labelStyle = { fontSize: 12, fontWeight: 600, color: "#444", display: "block", marginBottom: 6 };
-
-const portalFetch = async (method, path, body) => {
-  const opts = { method, headers: { "Content-Type": "application/json", "x-portal-token": sessionStorage.getItem("portal_token") || "" } };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(`/api/sb/portal${path}`, opts);
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error || "요청 실패");
-  return json;
-};
+import { portalApi } from "../../utils/portalApi";
+import { T, fieldStyle, labelStyle } from "./portalStyles";
+import { showToast } from "../../utils/showToast";
 
 const INITIAL_FORM = { email: "", name: "", phone: "", password: "", passwordConfirm: "" };
 
@@ -28,7 +18,7 @@ export default function PortalRegister() {
     if (!form.email.trim()) return "이메일을 입력해주세요";
     if (!form.name.trim()) return "이름을 입력해주세요";
     if (!form.phone.trim()) return "연락처를 입력해주세요";
-    if (form.password.length < 6) return "비밀번호는 6자 이상이어야 합니다";
+    if (form.password.length < 8) return "비밀번호는 8자 이상이어야 합니다";
     if (form.password !== form.passwordConfirm) return "비밀번호가 일치하지 않습니다";
     return null;
   };
@@ -42,13 +32,13 @@ export default function PortalRegister() {
     setLoading(true);
 
     try {
-      await portalFetch("POST", "/register", {
+      await portalApi.post("/register", {
         email: form.email.trim(),
         name: form.name.trim(),
         phone: form.phone.trim(),
         password: form.password,
       });
-      alert("회원가입이 완료되었습니다. 로그인해주세요.");
+      showToast("회원가입이 완료되었습니다. 로그인해주세요.", "success");
       navigate("/portal/login", { replace: true });
     } catch (err) {
       setError(err.message || "회원가입에 실패했습니다");
