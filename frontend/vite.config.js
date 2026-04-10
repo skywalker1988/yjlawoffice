@@ -10,7 +10,9 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api/sb': 'http://localhost:5000',
+      '/api/sb': 'http://localhost:5001',
+      '/uploads': 'http://localhost:5001',
+      '/data': 'http://localhost:5001',
     },
   },
   build: {

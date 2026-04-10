@@ -65,6 +65,8 @@ import HomePage from "./pages/HomePage";
 import AboutPage from "./pages/AboutPage";
 import LawyersPage from "./pages/LawyersPage";
 import PracticePage from "./pages/PracticePage";
+import PracticeConstructionPage from "./pages/PracticeConstructionPage";
+import PracticeRealEstatePage from "./pages/PracticeRealEstatePage";
 import ConsultationPage from "./pages/ConsultationPage";
 
 /* ── 블로그 청크: 지연 로딩 ── */
@@ -184,6 +186,8 @@ export default function App() {
           <Route path="/" element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
           <Route path="/about" element={<ErrorBoundary><AboutPage /></ErrorBoundary>} />
           <Route path="/practice" element={<ErrorBoundary><PracticePage /></ErrorBoundary>} />
+          <Route path="/practice/construction" element={<ErrorBoundary><PracticeConstructionPage /></ErrorBoundary>} />
+          <Route path="/practice/realestate" element={<ErrorBoundary><PracticeRealEstatePage /></ErrorBoundary>} />
           <Route path="/lawyers" element={<ErrorBoundary><LawyersPage /></ErrorBoundary>} />
           <Route path="/consultation" element={<ErrorBoundary><ConsultationPage /></ErrorBoundary>} />
 
