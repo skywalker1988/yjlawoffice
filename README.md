@@ -133,7 +133,7 @@ npm install
 npm run dev
 ```
 
-프론트엔드 개발 서버가 `/api/sb/*` 요청을 백엔드(localhost:5000)로 프록시합니다.
+프론트엔드 개발 서버가 `/api/sb/*`, `/uploads/*`, `/data/*` 요청을 백엔드(localhost:5000)로 프록시합니다.
 
 ### 시드 데이터 (선택)
 

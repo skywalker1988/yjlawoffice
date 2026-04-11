@@ -178,7 +178,7 @@ history_events, documents_fts (FTS5 가상 테이블) + FTS 동기화 트리거
 # 백엔드 (포트 5000)
 cd backend && npm install && node index.js
 
-# 프론트엔드 (포트 5173, /api/sb → 5000 프록시)
+# 프론트엔드 (포트 5173, /api/sb·/uploads·/data → 5000 프록시)
 cd frontend && npm install && npm run dev
 ```
 

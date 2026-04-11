@@ -29,6 +29,17 @@ function mockRes() {
   return res;
 }
 
+/** 현재 미들웨어로 유효한 csrf-token을 발급받는다 */
+function issueToken() {
+  const req = mockReq({ method: "GET" });
+  const res = mockRes();
+  const next = vi.fn();
+
+  csrfProtection(req, res, next);
+
+  return res.cookies["csrf-token"]?.value;
+}
+
 describe("csrfProtection 미들웨어", () => {
   it("GET 요청 시 csrf-token 쿠키를 설정한다", () => {
     const req = mockReq({ method: "GET" });
@@ -45,10 +56,11 @@ describe("csrfProtection 미들웨어", () => {
     expect(next).toHaveBeenCalled();
   });
 
-  it("GET 요청 시 이미 csrf-token 쿠키가 있으면 새로 설정하지 않는다", () => {
+  it("GET 요청 시 이미 유효한 csrf-token 쿠키가 있으면 새로 설정하지 않는다", () => {
+    const token = issueToken();
     const req = mockReq({
       method: "GET",
-      headers: { Cookie: "csrf-token=existing-token-value" },
+      headers: { Cookie: `csrf-token=${token}` },
     });
     const res = mockRes();
     const next = vi.fn();
@@ -76,7 +88,7 @@ describe("csrfProtection 미들웨어", () => {
   });
 
   it("보호된 경로에 올바른 토큰을 보내면 통과한다", () => {
-    const token = "valid-csrf-token-12345";
+    const token = issueToken();
     const req = mockReq({
       method: "POST",
       path: "/api/sb/documents",
